@@ -26,3 +26,5 @@ This project is intended to be a Presage2 project which can be imported into Ecl
   [Presage2 storage docs]: https://github.com/Presage/Presage2/wiki/Storage
   [Log4j]: http://logging.apache.org/log4j/1.2/
   [github]: https://github.com/Presage/eclipse-quickstart/zipball/master
+
+# SpinWorld
