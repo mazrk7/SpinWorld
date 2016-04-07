@@ -1,28 +1,18 @@
 package spinworld.network;
 
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
-
 import spinworld.facts.Allocation;
-import spinworld.facts.Particle;
-import spinworld.network.Network;
 
 public class Network {
 	
 	// Unique network ID
 	final int id;
-	Set<Connection> connections = new CopyOnWriteArraySet<Connection>();
 	
 	// Allocation method for a network
 	Allocation allocationMethod;
 	
+	// Monitoring parameters within network
 	double monitoringLevel = 0.0;
 	double monitoringCost = 0.0;
-	
-	public Network(int id) {
-		super();
-		this.id = id;
-	}
 	
 	public Network(int id, Allocation allocationMethod) {
 		super();
@@ -39,39 +29,11 @@ public class Network {
 	
 	@Override
 	public String toString() {
-		return "Social Network [id=" + id + ", connections=" + connections.size() + "]";
+		return "Network " + id + "";
 	}
 
 	public int getId() {
 		return id;
-	}
-	
-	public void addConnection(Connection conn) {
-		connections.add(conn);
-	}
-	
-	public void removeConnection(Connection conn) {
-		connections.remove(conn);
-	}
-	
-	public boolean containsParticle(Particle p) {
-		boolean result = false;
-		
-		for (Connection conn : connections) {
-			if (conn.containsParticle(p)) {
-				result = true;
-				break;
-			}
-			else {
-				// Do nothing
-			}	
-		}
-		
-		return result;
-	}
-	
-	public boolean connectionExists(Connection conn) {
-		return connections.contains(conn);
 	}
 	
 	public Allocation getAllocationMethod() {

@@ -15,15 +15,15 @@ public class Demand extends ParticleAction {
 		super(t, particle);
 		this.quantity = quantity;
 	}
+	
+	public double getQuantity() {
+		return quantity;
+	}
 
 	@Override
 	public String toString() {
 		return "Demand [quantity=" + quantity + ", particle=" + particle.getName()
 				+ ", t=" + t + "]";
-	}
-
-	public double getQuantity() {
-		return quantity;
 	}
 
 }

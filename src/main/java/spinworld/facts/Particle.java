@@ -4,9 +4,7 @@ import java.util.UUID;
 
 import uk.ac.imperial.presage2.util.location.Location;
 
-/*
- * Moving particle in a linear square environment
- */
+// Moving particle in a linear square environment
 public class Particle {
 
 	UUID id;
@@ -15,9 +13,10 @@ public class Particle {
 	
 	// Number of collisions, represents number of particle's collisions
 	int noCollisions = 0;
-	// Number of collisions, represents number of particle's social connections
+	// Number of links, represents number of particle's social connections
 	int noLinks = 0;
-	int velocity;
+	
+	int velocity = 1;
 	
 	// Resources generated
 	double g = 0;
@@ -32,14 +31,10 @@ public class Particle {
 
 	// Alpha and beta are coefficients determining rate of reinforcement
 	// of satisfaction and dissatisfaction, respectively
-	// double alpha = 0.1;
-	// double beta = 0.1;
-	
-	// Role role = Role.PROSUMER;
-	
-	// Player history may be worth including
-	// Map<Cluster, PlayerHistory> history = new HashMap<Cluster, PlayerHistory>();
-
+	// Similar concept should be extended for cheating
+	double alpha = 0.1;
+	double beta = 0.1;
+		
 	// Size multiplier a.k.a. radius gives weighting to size of player
 	double radius = 1;
 
@@ -48,11 +43,21 @@ public class Particle {
 		this.id = id;
 		this.name = "n/a";
 	}
-
-	public Particle(UUID id, String name, double radius) {
+	
+	public Particle(UUID id, String name, double alpha, 
+			double beta, int velocity, Location loc) {
 		super();
 		this.id = id;
 		this.name = name;
+		this.alpha = alpha;
+		this.beta = beta;
+		this.velocity = velocity;
+		this.loc = loc;
+	}
+
+	public Particle(UUID id, String name, double alpha, double beta, 
+			double radius, int velocity, Location loc) {
+		this(id, name, alpha, beta, velocity, loc);
 		this.radius = radius;
 	}
 
@@ -103,6 +108,10 @@ public class Particle {
 		return noLinks;
 	}
 	
+	public double getRadius() {
+		return radius;
+	}
+	
 	public double getG() {
 		return g;
 	}
@@ -143,8 +152,12 @@ public class Particle {
 		this.appropriated = appropriated;
 	}
 	
-	public double getRadius() {
-		return radius;
+	public double getAlpha() {
+		return alpha;
+	}
+
+	public double getBeta() {
+		return beta;
 	}
 	
 	@Override

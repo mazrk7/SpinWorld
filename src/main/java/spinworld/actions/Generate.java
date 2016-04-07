@@ -22,7 +22,7 @@ public class Generate extends TimeStampedAction {
 				+ (rnd.nextDouble() * (particle.getRadius() - this.g));
 	}
 
-	// Generate constructor without random seed
+	// Generate constructor without random seed parameter
 	public Generate(Particle particle, int time) {
 		super(time);
 		this.particle = particle;
@@ -47,7 +47,7 @@ public class Generate extends TimeStampedAction {
 
 	@Override
 	public String toString() {
-		return "Generate [player=" + particle.getName() + ", g=" + g + ", q=" + q
+		return "Generate [particle=" + particle.getName() + ", g=" + g + ", q=" + q
 				+ ", t=" + t + "]";
 	}
 

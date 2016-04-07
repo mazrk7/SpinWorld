@@ -15,11 +15,11 @@ abstract class ParticleAction extends TimeStampedAction {
 		this.particle = particle;
 	}
 
-	public Particle getPlayer() {
+	public Particle getParticle() {
 		return particle;
 	}
 
-	public void setPlayer(Particle particle) {
+	public void setParticle(Particle particle) {
 		this.particle = particle;
 	}
 

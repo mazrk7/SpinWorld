@@ -5,19 +5,16 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.apache.log4j.Logger;
-import org.drools.core.util.StringUtils;
 import org.drools.runtime.StatefulKnowledgeSession;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 
+import spinworld.SpinWorldAgent.NetworkLeaveAlgorithm;
 import spinworld.actions.Generate;
-import spinworld.actions.SpinWorldHandler;
+import spinworld.actions.SpinWorldActionHandler;
 import spinworld.allocators.RandomAllocator;
-import spinworld.facts.Allocation;
 import spinworld.facts.Particle;
-import spinworld.network.Network;
-import spinworld.network.NetworkAgent;
 import spinworld.network.NetworkService;
 import uk.ac.imperial.presage2.core.environment.EnvironmentServiceProvider;
 import uk.ac.imperial.presage2.core.environment.UnavailableServiceException;
@@ -42,19 +39,19 @@ import uk.ac.imperial.presage2.util.network.NetworkModule;
 
 public class SpinWorldSimulation extends InjectedSimulation {
 	
-	private final Logger logger = Logger.getLogger(this.getClass());
+	private final Logger logger = Logger.getLogger("spinworld.RuleEngine");
 	// Allows the application to establish an iterative conversation with the
 	// engine, where the state of the session is kept across invocations
 	private StatefulKnowledgeSession session;
 	
 	private Set<Particle> particles = new HashSet<Particle>();
 	private Scenario scenario;
-	private SpinWorldService mobilityService;
+	private MobilityService mobilityService;
 	private NetworkService networkService;	
-	private ResourceAllocationService resourcesGame;
+	private SpinWorldService resourcesGame;
 	private java.util.Random rnd;
 	
-	protected int playerCtr = 0;
+	protected int particleCtr = 0;
 	protected int genCtr = 0;
 	
 	// Parameter for 2D size of environment
@@ -65,6 +62,14 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	@Parameter(name = "agents", optional = true)
 	public int agents = 1;
 	
+	// Propensity for agents to cheat
+	@Parameter(name = "cheat", optional = true)
+	public double cheat;
+	
+	// Radius of an agent
+	@Parameter(name = "radius", optional = true)
+	public int radius = 1;
+	
 	// Initial velocity v0 of each of the agents
 	@Parameter(name = "initVelocity", optional = true)
 	public int initVelocity = 1;
@@ -73,28 +78,38 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	@Parameter(name = "vConst", optional = true)
 	public int vConst = 1;
 	
-	// Radius of an agent
-	@Parameter(name = "radius", optional = true)
-	public int radius = 1;
+	@Parameter(name = "a", optional = true)
+	public double a = 2;
+	@Parameter(name = "b", optional = true)
+	public double b = 1;
+	@Parameter(name = "c", optional = true)
+	public double c = 1;
 	
-	@Parameter(name = "aCheat", optional = true)
-	public double aCheat;
-	@Parameter(name = "aSize", optional = true)
-	public double aSize = 1;
-	
-	@Parameter(name = "networks")
-	public String networks;
-	
+	@Parameter(name = "alpha")
+	public double alpha;
+	@Parameter(name = "beta")
+	public double beta;
 	@Parameter(name = "seed")
 	public int seed;
+	
+	@Parameter(name = "t1", optional = true)
+	public double t1 = 0.1;
+	@Parameter(name = "t2", optional = true)
+	public double t2 = 0.5;
+	
+	@Parameter(name = "cheatOn", optional = true)
+	public String cheatOn = "provision";
+
+	@Parameter(name = "networkLeave", optional = true)
+	public NetworkLeaveAlgorithm networkLeave = NetworkLeaveAlgorithm.THRESHOLD;
+
+	@Parameter(name = "resetSatisfaction", optional = true)
+	public boolean resetSatisfaction = false;
 	
 	@Parameter(name = "monitoringLevel", optional = true)
 	public double monitoringLevel = 1.0;
 	@Parameter(name = "monitoringCost", optional = true)
 	public double monitoringCost = 0.0;
-	
-	@Parameter(name = "cheatOn", optional = true)
-	public String cheatOn = "provision";
 	
 	public SpinWorldSimulation(Set<AbstractModule> modules) {
 		super(modules);
@@ -108,9 +123,9 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	@Inject
 	public void setServiceProvider(EnvironmentServiceProvider serviceProvider) {
 		try {
-			this.mobilityService = serviceProvider.getEnvironmentService(SpinWorldService.class);
+			this.mobilityService = serviceProvider.getEnvironmentService(MobilityService.class);
 			this.networkService = serviceProvider.getEnvironmentService(NetworkService.class);
-			this.resourcesGame = serviceProvider.getEnvironmentService(ResourceAllocationService.class);
+			this.resourcesGame = serviceProvider.getEnvironmentService(SpinWorldService.class);
 		} catch (UnavailableServiceException e) {
 			logger.warn("", e);
 		}
@@ -128,19 +143,22 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	@Override
 	protected Set<AbstractModule> getModules() {
 		Set<AbstractModule> modules = new HashSet<AbstractModule>();
+		
 		modules.add(Area.Bind.area2D(size, size).edgeHandler(WrapEdgeHandler.class));
 
 		modules.add(new AbstractEnvironmentModule()
-				.addActionHandler(SpinWorldHandler.class)
+				.addActionHandler(SpinWorldActionHandler.class)
 				.addParticipantEnvironmentService(ParticipantLocationService.class)
-				.addParticipantGlobalEnvironmentService(SpinWorldService.class)
+				.addParticipantGlobalEnvironmentService(MobilityService.class)
 				.addParticipantGlobalEnvironmentService(NetworkService.class)
-				.addParticipantGlobalEnvironmentService(ResourceAllocationService.class)
+				.addParticipantGlobalEnvironmentService(SpinWorldService.class)
 				.setStorage(RuleStorage.class));
+		
 		modules.add(new RuleModule().addClasspathDrlFile("ResourceAllocationMaster.drl")
 				.addClasspathDrlFile("Institution.drl")
 				.addClasspathDrlFile("RandomAllocation.drl")
 				.addStateTranslator(SimParticipantsTranslator.class));
+		
 		// Fully connected network
 		modules.add(NetworkModule.fullyConnectedNetworkModule());	
 		// Location plugin
@@ -162,77 +180,53 @@ public class SpinWorldSimulation extends InjectedSimulation {
 		session.setGlobal("session", session);
 		session.setGlobal("storage", this.storage);
 		session.setGlobal("rnd", new java.util.Random(rnd.nextLong()));
-
-		Network[] networkArr = initNetworks();
-
+		
 		for (int n = 0; n < agents; n++) {
 			createParticle("p" + n,  
 					new Location(Random.randomInt(size), Random.randomInt(size)),
-					initVelocity, aCheat, aSize, getCheatOn(),
-					networkArr[n % networkArr.length], scenario);
+					initVelocity, cheat, radius, getCheatOn(), scenario);
 		}
 		
-		// Generate resources and needed
+		// Generate resources needed
 		for (Particle p : particles) {
 			session.insert(new Generate(p, resourcesGame.getRoundNumber() + 1, rnd));
 		}
 	}
 	
-	protected Network[] initNetworks() {
-		String[] networkNames = StringUtils.split(this.networks, ',');
-		Network[] networks = new Network[networkNames.length];
-		
-		for (int i = 0; i < networkNames.length; i++) {
-			Allocation method = null;
-			// Assign allocation methods to initialised networks
-			for (Allocation a : Allocation.values()) {
-				if (networkNames[i].equalsIgnoreCase(a.name())) {
-					method = a;
-					break;
-				}
-			}
-			
-			if (method == null)
-				throw new RuntimeException("Unknown allocation method '"
-						+ networkNames[i] + "', could not create network!");
-			
-			Network c = new Network(this.resourcesGame.getNextNumNetwork(), method,
-					this.monitoringLevel, this.monitoringCost);
-			session.insert(c);
-
-			networks[i] = c;
-		}
-		
-		return networks;
-	}
-	
 	protected Cheat getCheatOn() {
 		for (Cheat c : Cheat.values()) {
-			if (this.cheatOn.equalsIgnoreCase(c.name())) {
+			if (this.cheatOn.equalsIgnoreCase(c.name()))
 				return c;
-			}
 		}
+		
 		Cheat[] cs = Cheat.values();
 		Cheat c = cs[rnd.nextInt(cs.length)];
 		logger.debug("Cheat on: " + c);
 		return c;
 	}
 	
-	protected NetworkAgent createParticle(String name, Location loc, int velocity, 
-			double radius, double pCheat, Cheat cheatOn, Network network, Scenario scenario) {
+	protected SpinWorldAgent createParticle(String name, Location loc, int velocity, 
+			double radius, double pCheat, Cheat cheatOn, Scenario scenario) {
 		UUID pid = UUID.randomUUID();
-		NetworkAgent ag = new NetworkAgent(pid, name, loc, velocity, radius,
-				pCheat, cheatOn, rnd.nextLong());
-		scenario.addParticipant(ag);	
-		Particle p = new Particle(pid, name, radius);
-		p.setLoc(loc);
-		p.setVelocity(velocity);		
+		
+		SpinWorldAgent ag = new SpinWorldAgent(pid, name, loc, velocity, radius,
+				a, b, c, pCheat, alpha, beta, cheatOn, getNetworkLeave(), 
+				resetSatisfaction, rnd.nextLong(), t1, t2);
+		scenario.addParticipant(ag);
+		
+		// ag.permCreateNetwork = this.dynamicNetworks;
+
+		Particle p = new Particle(pid, name, alpha, beta, radius, velocity, loc);		
 		particles.add(p);
 		
 		session.insert(p);
-		playerCtr++;
+		particleCtr++;
 		
 		return ag;
+	}
+	
+	public NetworkLeaveAlgorithm getNetworkLeave() {
+		return networkLeave;
 	}
 	
 	@EventListener

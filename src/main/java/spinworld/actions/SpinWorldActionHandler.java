@@ -1,14 +1,18 @@
 package spinworld.actions;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 import org.apache.log4j.Logger;
+import org.drools.ObjectFilter;
+import org.drools.runtime.StatefulKnowledgeSession;
 
 import com.google.inject.Inject;
 
+import spinworld.MobilityService;
 import spinworld.SpinWorldService;
 import spinworld.facts.Particle;
 import spinworld.network.NetworkService;
@@ -29,23 +33,30 @@ import uk.ac.imperial.presage2.util.location.area.EdgeException;
 import uk.ac.imperial.presage2.util.location.area.HasArea;
 
 @ServiceDependencies({ LocationService.class, AreaService.class })
-public class SpinWorldHandler implements ActionHandler {
+public class SpinWorldActionHandler implements ActionHandler {
 
-    final private Logger logger = Logger.getLogger(SpinWorldHandler.class);
-	Map<UUID, Particle> particles = new HashMap<UUID, Particle>();
+    final private Logger logger = Logger.getLogger(SpinWorldActionHandler.class);
 	
+	// Environmental properties for controlling movement of agents within global environment
 	final protected EnvironmentServiceProvider serviceProvider;
 	final protected HasArea environment;
 	final protected EnvironmentSharedStateAccess sharedState;
-	SpinWorldService mobilityService = null;
+	
+	final StatefulKnowledgeSession session;
+	Map<UUID, Particle> particles = new HashMap<UUID, Particle>();
+
+	MobilityService mobilityService = null;
 	NetworkService networkService = null;
+	SpinWorldService spinWorldService = null;
 	
 	@Inject
-	public SpinWorldHandler(HasArea environment,
+	public SpinWorldActionHandler(StatefulKnowledgeSession session,
+			HasArea environment,
 			EnvironmentServiceProvider serviceProvider,
 			EnvironmentSharedStateAccess sharedState)
 			throws UnavailableServiceException {
 		super();
+		this.session = session;
 		this.environment = environment;
 		this.serviceProvider = serviceProvider;
 		this.sharedState = sharedState;
@@ -53,22 +64,23 @@ public class SpinWorldHandler implements ActionHandler {
 	
 	@Override
 	public boolean canHandle(Action action) {
-		return action instanceof Move;
+		return action instanceof ParticleAction;
 	}
 	
-	protected SpinWorldService getMobilityService() {
+	MobilityService getMobilityService() {
 		if (mobilityService == null) {
 			try {
 				this.mobilityService = serviceProvider
-						.getEnvironmentService(SpinWorldService.class);
+						.getEnvironmentService(MobilityService.class);
 			} catch (UnavailableServiceException e) {
 				logger.warn("Could not load mobility service", e);
 			}
 		}
+		
 		return mobilityService;
 	}
 	
-	protected NetworkService getNetworkService() {
+	NetworkService getNetworkService() {
 		if (networkService == null) {
 			try {
 				this.networkService = serviceProvider
@@ -77,7 +89,37 @@ public class SpinWorldHandler implements ActionHandler {
 				logger.warn("Could not load network service", e);
 			}
 		}
+		
 		return networkService;
+	}
+	
+	SpinWorldService getSpinWorldService() {
+		if (this.spinWorldService == null) {
+			try {
+				this.spinWorldService = serviceProvider.getEnvironmentService(SpinWorldService.class);
+			} catch (UnavailableServiceException e) {
+				logger.warn("Could not get SpinWorld service", e);
+			}
+		}
+		
+		return this.spinWorldService;
+	}
+	
+	private synchronized Particle getParticle(final UUID id) {
+		if (!particles.containsKey(id)) {
+			Collection<Object> rawParticles = session
+					.getObjects(new ObjectFilter() {
+						@Override
+						public boolean accept(Object object) {
+							return object instanceof Particle;
+						}
+					});
+			for (Object pObj : rawParticles) {
+				Particle p = (Particle) pObj;
+				particles.put(p.getId(), p);
+			}
+		}
+		return particles.get(id);
 	}
 	
 	@Override
@@ -86,6 +128,24 @@ public class SpinWorldHandler implements ActionHandler {
 		getMobilityService();
 		getNetworkService();
 		
+		Particle p = getParticle(actor);
+		
+		// Perform resource allocation action
+		if (action instanceof ParticleAction) {
+			if (logger.isDebugEnabled())
+				logger.debug("Handling: " + action);
+
+			((ParticleAction) action).setParticle(p);
+		}
+		
+		// Time stamp resource allocation action
+		if (action instanceof TimeStampedAction) {
+			if (logger.isDebugEnabled())
+				logger.debug("Handling: " + action);
+			
+			((TimeStampedAction) action).setT(getSpinWorldService().getRoundNumber());
+		}
+	
 		// If mobile agent action is to move
 		if (action instanceof Move) {
 			if (logger.isDebugEnabled())
@@ -120,15 +180,15 @@ public class SpinWorldHandler implements ActionHandler {
 			this.mobilityService.setAgentLocation(actor, target);
 
 			// Check if any collisions occurred at this target location
-			Set<Particle> collidedAgents = this.mobilityService.getCollidedAgents(actor, target);
+			Set<Particle> collidedParticles = this.mobilityService.getCollidedAgents(actor, target);
 
-			if (!collidedAgents.isEmpty())
-				this.networkService.formLinks(actor, collidedAgents);
-				
-			return null;
+			if (!collidedParticles.isEmpty())
+				this.networkService.assignLinks(actor, collidedParticles);	
 		}
 		
-		throw new ActionHandlingException("MoveHandler was asked to handle non Move action!");
+		session.insert(action);
+
+		return null;
 	}
 
 }

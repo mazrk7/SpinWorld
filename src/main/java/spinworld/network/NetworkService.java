@@ -1,16 +1,23 @@
 package spinworld.network;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.apache.log4j.Logger;
+import org.drools.runtime.ObjectFilter;
+import org.drools.runtime.StatefulKnowledgeSession;
+import org.drools.runtime.rule.QueryResults;
+import org.drools.runtime.rule.QueryResultsRow;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 
 import spinworld.facts.Particle;
 import uk.ac.imperial.presage2.core.Time;
@@ -18,131 +25,145 @@ import uk.ac.imperial.presage2.core.environment.EnvironmentRegistrationRequest;
 import uk.ac.imperial.presage2.core.environment.EnvironmentService;
 import uk.ac.imperial.presage2.core.environment.EnvironmentServiceProvider;
 import uk.ac.imperial.presage2.core.environment.EnvironmentSharedStateAccess;
+import uk.ac.imperial.presage2.core.event.EventBus;
 
 @Singleton
 public class NetworkService extends EnvironmentService {
 
 	final private Logger logger = Logger.getLogger(this.getClass());
+	final StatefulKnowledgeSession session;
+
 	Map<UUID, Particle> particles = new HashMap<UUID, Particle>();
+	Map<UUID, Set<Particle>> linkedParticles = new HashMap<UUID, Set<Particle>>();
+	Map<UUID, MemberOf> members = new HashMap<UUID, MemberOf>();
 	Set<Network> networks = new CopyOnWriteArraySet<Network>();
 	
 	private int numNetworks = 0;
 	final protected EnvironmentServiceProvider serviceProvider;
 	
-	// Radius of an agents
-	@Inject
-	@Named("params.radius")
-	private int radius;
-	
-	// Type of allocation between networks
-	@Inject
-	@Named("params.allocation")
-	private String allocation;
-	
 	@Inject
 	protected NetworkService(EnvironmentSharedStateAccess sharedState,
-			EnvironmentServiceProvider serviceProvider) {
+			EnvironmentServiceProvider serviceProvider,
+			StatefulKnowledgeSession session, EventBus eb) {
 		super(sharedState);
 		this.serviceProvider = serviceProvider;
+		this.session = session;
+		eb.subscribe(this);
 	}
 	
 	@Override
 	public void registerParticipant(EnvironmentRegistrationRequest req) {
-		UUID id = req.getParticipantID();
-		NetworkAgent ag = (NetworkAgent) req.getParticipant();
-		Particle p = new Particle(id, ag.getName(), radius);
-		particles.put(id, p);
+
 	}
 	
+	// Query session in order to access players within environment shared state
 	private synchronized Particle getParticle(final UUID id) {
-		return particles.get(id);
-	}
-	
-	public int getAgentNoLinks(UUID particle) {
-		return getParticle(particle).getNoLinks();
-	}
-	
-	public Network getAgentNetwork(UUID particle) {
-		Particle p = getParticle(particle);
-		Network result = null;
-		
-		for (Network net : this.networks) {
-			if (net.containsParticle(p)) {
-				result = net;
-				break;
-			}
-			else {
-				// Do Nothing
+		if (!particles.containsKey(id)) {
+			Collection<Object> rawParticles = session
+					.getObjects(new ObjectFilter() {
+						@Override
+						public boolean accept(Object object) {
+							return object instanceof Particle;
+						}
+					});
+			
+			for (Object pObj : rawParticles) {
+				Particle p = (Particle) pObj;
+				particles.put(p.getId(), p);
 			}
 		}
 		
-		return result;
+		return particles.get(id);
+	}
+	
+	// Similarly query session for access to MemberOf structure
+	private synchronized MemberOf getMemberOf(final UUID id) {
+		MemberOf m = members.get(id);
+		if (m == null || session.getFactHandle(m) == null) {
+			members.remove(id);
+			QueryResults results = session.getQueryResults("getMemberOf",
+					new Object[] { getParticle(id) });
+			
+			for (QueryResultsRow row : results) {
+				members.put(id, (MemberOf) row.get("m"));
+				return members.get(id);
+			}
+			
+			return null;
+		}
+		
+		return m;
+	}
+	
+	public Network getNetwork(final UUID particle) {
+		MemberOf m = getMemberOf(particle);
+		if (m != null)
+			return m.getNetwork();
+		else
+			return null;
+	}
+
+	public synchronized Set<Network> getNetworks() {
+		// If we allow for dynamic creation of network
+		// we must check which ones exist every time
+		if (this.networks.isEmpty()) {
+			// Check which ones currently exist
+			Collection<Object> networkSearch = session
+					.getObjects(new ObjectFilter() {
+						@Override
+						public boolean accept(Object object) {
+							return object instanceof Network;
+						}
+					});
+			
+			// Add clusters to list
+			for (Object object : networkSearch) {
+				this.networks.add((Network) object);
+			}
+		}
+		
+		return Collections.unmodifiableSet(this.networks);
+	}
+	
+	public int getNumNetworks(){
+		return getNetworks().size();
+	}
+	
+	// Update network integer number
+	public int getNextNumNetwork(){
+		this.networks.clear();
+		return numNetworks++;
+	}
+	
+	public int getNoLinks(final UUID particle) {
+		return getParticle(particle).getNoLinks();
 	}
 	
 	public void incrementAgentNoLinks(UUID particle) {
 		getParticle(particle).incrementNoLinks();
 	}
 	
-	private int getNextNumNetwork(){
-		// Clear?
-		return this.numNetworks++;
+	public void assignLinks(UUID id, Set<Particle> collidedParticles) {		
+		linkedParticles.put(id, collidedParticles);	
 	}
 	
-	public void formLinks(UUID id, Set<Particle> collidedAgents) {
-		Particle particle = getParticle(id);
-		
-		for (Particle p : collidedAgents) {
-			// Establish a connection
-			logger.info("Establishing a connection between particles " + particle.getName() 
-				+ " and " + p.getName());
-			establishConnection(particle, p);
-		}	
+	public Set<Particle> getLinks(UUID id) {		
+		return linkedParticles.get(id);	
 	}
 	
-	private void establishConnection(Particle particle, Particle otherParticle) {
-		Connection conn = new Connection(particle, otherParticle);
-		boolean isConnected = false;
-		
-		if (this.networks.isEmpty()) {
-			logger.info("No network currently exists, creating the first one.");
-			int id = getNextNumNetwork();
-			Network newNet = new Network(id);
-			addNetworkConnections(newNet, conn);
-			this.networks.add(newNet);
-			isConnected = true;
-		}
-		else {
-			for (Network net : this.networks) {
-				if (net.connectionExists(conn)) {
-					logger.info("Connection already exists in network " + net.getId());
-					isConnected = true;
-					break;
-				}
-				else if ((net.containsParticle(particle) || net.containsParticle(otherParticle))
-						&& !net.connectionExists(conn)) {
-					logger.info("Adding " + conn.toString() + " to network " + net.getId());
-					addNetworkConnections(net, conn);
-					isConnected = true;
-					break;
-				}
+	public void clearLinks(UUID id) {		
+		linkedParticles.get(id).clear();	
+	}
+	
+	// Get particles that are not part of a network
+	public Set<UUID> getOrphanParticles(){
+		Set<UUID> op = new HashSet<UUID>();
+		for (Entry<UUID, Particle> p : this.particles.entrySet()){
+			if (getNetwork(p.getKey()) == null){
+				op.add(p.getKey());
 			}
 		}
-		
-		if (!isConnected) {
-			int id = getNextNumNetwork();
-			Network newNet = new Network(id);
-			logger.info("Creating a new network with id " + id + " for " + conn.toString());
-			addNetworkConnections(newNet, conn);
-			this.networks.add(newNet);
-		}		
-	}
-	
-	private void addNetworkConnections(Network net, Connection conn) {
-		Particle x = conn.getParticleX();
-		Particle y = conn.getParticleY();
-		incrementAgentNoLinks(x.getId());
-		incrementAgentNoLinks(y.getId());
-		net.addConnection(conn);
+		return op;
 	}
 	
 	public void printNetworks(Time t) {	

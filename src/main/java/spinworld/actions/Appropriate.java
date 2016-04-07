@@ -14,15 +14,15 @@ public class Appropriate extends ParticleAction {
 		super(t, particle);
 		this.quantity = quantity;
 	}
+	
+	public double getQuantity() {
+		return quantity;
+	}
 
 	@Override
 	public String toString() {
 		return "Appropriate [quantity=" + quantity + ", particle="
 				+ particle.getName() + ", t=" + t + "]";
-	}
-
-	public double getQuantity() {
-		return quantity;
 	}
 	
 }

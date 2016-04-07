@@ -10,7 +10,7 @@ import org.drools.runtime.StatefulKnowledgeSession;
 import spinworld.actions.Allocate;
 import spinworld.facts.Particle;
 
-// Allocate resources to players in a random order, possibly leading to depletion
+// Allocate resources to players in a random order from the common pool
 public class RandomAllocator {
 
 	public static Random rnd;

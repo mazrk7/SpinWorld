@@ -16,15 +16,15 @@ public class Provision extends ParticleAction {
 		super(t, particle);
 		this.quantity = quantity;
 	}
+	
+	public Double getQuantity() {
+		return quantity;
+	}
 
 	@Override
 	public String toString() {
 		return "Provision [quantity=" + quantity + ", particle="
 				+ particle.getName() + ", t=" + t + "]";
-	}
-
-	public Double getQuantity() {
-		return quantity;
 	}
 	
 }
