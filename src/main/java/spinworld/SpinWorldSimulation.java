@@ -154,7 +154,7 @@ public class SpinWorldSimulation extends InjectedSimulation {
 				.addParticipantGlobalEnvironmentService(SpinWorldService.class)
 				.setStorage(RuleStorage.class));
 		
-		modules.add(new RuleModule().addClasspathDrlFile("ResourceAllocationMaster.drl")
+		modules.add(new RuleModule().addClasspathDrlFile("SpinWorld.drl")
 				.addClasspathDrlFile("Institution.drl")
 				.addClasspathDrlFile("RandomAllocation.drl")
 				.addStateTranslator(SimParticipantsTranslator.class));

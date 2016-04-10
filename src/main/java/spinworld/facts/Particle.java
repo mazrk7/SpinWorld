@@ -1,6 +1,8 @@
 package spinworld.facts;
 
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import uk.ac.imperial.presage2.util.location.Location;
 
@@ -37,6 +39,8 @@ public class Particle {
 		
 	// Size multiplier a.k.a. radius gives weighting to size of player
 	double radius = 1;
+	
+	Set<Particle> linkedParticles = new CopyOnWriteArraySet<Particle>();
 
 	public Particle(UUID id) {
 		super();
@@ -98,14 +102,32 @@ public class Particle {
 	public int getNoCollisions() {
 		return noCollisions;
 	}
-	
-	// Increment number of social connections of particle
-	public void incrementNoLinks() {
-		this.noLinks++;
-	}
-	
+		
 	public int getNoLinks() {
 		return noLinks;
+	}
+	
+	// Form a social connection for particle
+	public void assignLink(Particle link) {
+		if (!this.linkedParticles.contains(link)) {
+			linkedParticles.add(link);
+			this.noLinks++;
+		}
+	}
+	
+	// Remove a social connection for particle
+	public void removeLink(Particle link) {
+		if (!this.linkedParticles.contains(link)) {
+			linkedParticles.remove(link);
+			this.noLinks--;
+		}
+	}
+	
+	public Set<Particle> getLinks() {
+		if (linkedParticles != null)
+			return linkedParticles;
+		else
+			return null;
 	}
 	
 	public double getRadius() {

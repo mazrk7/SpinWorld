@@ -1,0 +1,137 @@
+package spinworld
+
+import java.lang.Math
+import java.util.Collections
+import java.util.List
+import java.util.ArrayList
+import java.util.Iterator
+
+import spinworld.actions.*
+import spinworld.facts.*
+import spinworld.network.*
+import spinworld.RoundType
+import spinworld.Globals
+
+global org.apache.log4j.Logger logger
+global java.util.Random rnd
+
+declare Violation
+	@role( event )
+	particle : Particle	@key
+	network : spinworld.network.Network	@key
+	time : int	@key
+	on : String
+end
+
+declare Monitored
+	@role( event )
+	particle : Particle	@key
+	network : spinworld.network.Network	@key
+	time : int	@key
+end
+
+declare TaskComplete
+	@role( event )
+	task : String	@key
+	time : int	@key
+end
+
+query compliantRound(Network n, Particle p, int $t)
+	not(exists( Violation( $p, $n, $t; ) ))
+end
+
+rule "Monitor particles"
+	salience 5 // After provision
+	no-loop
+	when
+		Round( $t : number, type == RoundType.DEMAND )
+		not TaskComplete("monitoring", $t;)
+		$n : Network( monitoringLevel > 0 )
+		$pool : ProvisionPool( network == $n )
+		$alp : AllocationPool( network == $n )
+		$poolMembers : List(size > 0) from accumulate( MemberOf( network == $n, $p : particle ), collectList( $p ) )
+	then
+		int toMonitor = (int) Math.ceil( $poolMembers.size() * $n.getMonitoringLevel() );
+		logger.info("Monitoring " + toMonitor + " particles.");
+		List members = new ArrayList($poolMembers);
+		Collections.shuffle(members);
+		Iterator it = members.iterator();
+		double resources = $pool.getQuantity();
+		while( resources > $n.getMonitoringCost() && toMonitor-- > 0 && it.hasNext() ) {
+			Particle p = (Particle) it.next();
+			Monitored m = new Monitored(p, $n, $t);
+			insert( m );
+			resources -= $n.getMonitoringCost();
+			logger.info(m);
+		}
+		modify($pool) {
+			setQuantity(resources);
+		}
+		modify($alp) {
+			setQuantity(resources);
+		}
+		logger.info("Pool is now: " + $pool);
+		insert( new TaskComplete("monitoring", $t) );
+end
+
+rule "Detect cheat on provision"
+	salience 1
+	when
+		Round( $t : number, type == RoundType.APPROPRIATE )
+		MemberOf( $p : particle, $n : network )
+		Monitored($p, $n, $t ;)
+		Generate( t == $t, $g : g, $q : q, particle == $p )
+		Provision( particle == $p, t == $t, quantity < $g )
+	then
+		Violation v = new Violation($p, $n, $t);
+		v.setOn("provision");
+		logger.info(v);
+		insert( v );
+end
+
+rule "Detect cheat on demand"
+	salience 1
+	when
+		Round( $t : number, type == RoundType.APPROPRIATE )
+		MemberOf( $p : particle, $n : network )
+		Monitored($p, $n, $t ;)
+		Generate( t == $t, $g : g, $q : q, particle == $p )
+		Demand( particle == $p, t == $t, quantity > $q )
+	then
+		Violation v = new Violation($p, $n, $t);
+		v.setOn("demand");
+		logger.info(v);
+		insert( v );
+end
+
+rule "Detect cheat on appropriate"
+	salience 1
+	when
+		Round( $t : number, type == RoundType.APPROPRIATE )
+		MemberOf( $p : particle, $n : network )
+		Monitored($p, $n, $t ;)
+		Generate( t == $t, $g : g, $q : q, particle == $p )
+		Allocate( $r : quantity, particle == $p, t == $t )
+		Appropriate( $rP : quantity, particle == $p, t == $t, quantity > $r )
+	then
+		Violation v = new Violation( $p, $n, $t );
+		v.setOn("appropriate");
+		logger.info(v);
+		insert( v );
+end
+
+rule "Prune monitored"
+	when
+		Round( $t : number )
+		$m : Monitored( $t > time + 10 )
+	then
+		retract($m);
+end
+
+rule "Prune tasks"
+	when
+		Round( $t : number )
+		$n : TaskComplete( $t > time + 10 )
+	then
+		retract($n);
+end

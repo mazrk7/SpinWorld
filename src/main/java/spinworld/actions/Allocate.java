@@ -23,7 +23,7 @@ public class Allocate extends TimeStampedAction {
 		this.order = order;
 	}
 
-	public Particle getPlayer() {
+	public Particle getParticle() {
 		return particle;
 	}
 

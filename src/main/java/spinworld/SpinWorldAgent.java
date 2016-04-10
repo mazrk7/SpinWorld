@@ -13,7 +13,6 @@ import java.util.UUID;
 
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
-import org.drools.runtime.StatefulKnowledgeSession;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -49,8 +48,6 @@ public class SpinWorldAgent extends MobileAgent {
 		INSTANT, THRESHOLD, UTILITY, AGE
 	};
 	
-	private StatefulKnowledgeSession session;
-
 	// Monitoring level of created networks
 	@Inject
 	@Named("params.monitoringLevel")
@@ -171,7 +168,7 @@ public class SpinWorldAgent extends MobileAgent {
 		this.network = this.networkService.getNetwork(getID());
 		this.collidedParticles = this.networkService.getLinks(getID());
 		
-		if (!this.collidedParticles.isEmpty()) {			
+		if (this.collidedParticles != null) {			
 			for (Particle p : collidedParticles) {
 				Network otherNetwork = this.networkService.getNetwork(p.getId());
 				if (network == null && otherNetwork == null) {
@@ -182,14 +179,11 @@ public class SpinWorldAgent extends MobileAgent {
 					logger.info("Joining another network.");
 					joinNetwork(otherNetwork);
 				}
-				else if (network != null && otherNetwork != null) {
+				else if (network != null && otherNetwork != null && !network.equals(otherNetwork)) {
 					logger.info("Assessing another network.");
 					assessNetwork(otherNetwork);
 				}
 			}
-			
-			this.collidedParticles.clear();
-			this.networkService.clearLinks(getID());
 		}
 		
 		this.noLinks = this.networkService.getNoLinks(getID());
@@ -295,6 +289,7 @@ public class SpinWorldAgent extends MobileAgent {
 		if (this.network == null)
 			return;
 		try {
+			this.networkService.detachLinks(getID());
 			environment.act(new LeaveNetwork(this.network), getID(), authkey);
 			this.network = null;
 		} catch (ActionHandlingException e) {
@@ -332,9 +327,10 @@ public class SpinWorldAgent extends MobileAgent {
 			Allocation method = methods[pick];
 			Network net = new Network(this.networkService.getNextNumNetwork(), method,
 					this.monitoringLevel, this.monitoringCost);
-			session.insert(net);
 
 			environment.act(new CreateNetwork(net), getID(), authkey);
+			this.network = net;
+			this.resourcesGame.session.insert(net);
 			numNetworksCreated++;	
 		} catch (ActionHandlingException e) {
 			logger.warn("Failed to create network", e);

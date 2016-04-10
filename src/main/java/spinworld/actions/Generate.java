@@ -33,7 +33,7 @@ public class Generate extends TimeStampedAction {
 						.randomDouble() * (particle.getRadius() - this.g));
 	}
 
-	public Particle getPlayer() {
+	public Particle getParticle() {
 		return particle;
 	}
 

@@ -64,7 +64,7 @@ public class SpinWorldActionHandler implements ActionHandler {
 	
 	@Override
 	public boolean canHandle(Action action) {
-		return action instanceof ParticleAction;
+		return (action instanceof ParticleAction) || (action instanceof Move);
 	}
 	
 	MobilityService getMobilityService() {
@@ -182,8 +182,11 @@ public class SpinWorldActionHandler implements ActionHandler {
 			// Check if any collisions occurred at this target location
 			Set<Particle> collidedParticles = this.mobilityService.getCollidedAgents(actor, target);
 
-			if (!collidedParticles.isEmpty())
-				this.networkService.assignLinks(actor, collidedParticles);	
+			if (!collidedParticles.isEmpty()) {
+				for (Particle cp : collidedParticles) {
+					this.networkService.assignLink(actor, cp);	
+				}
+			}
 		}
 		
 		session.insert(action);

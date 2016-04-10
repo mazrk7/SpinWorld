@@ -34,7 +34,6 @@ public class NetworkService extends EnvironmentService {
 	final StatefulKnowledgeSession session;
 
 	Map<UUID, Particle> particles = new HashMap<UUID, Particle>();
-	Map<UUID, Set<Particle>> linkedParticles = new HashMap<UUID, Set<Particle>>();
 	Map<UUID, MemberOf> members = new HashMap<UUID, MemberOf>();
 	Set<Network> networks = new CopyOnWriteArraySet<Network>();
 	
@@ -79,6 +78,7 @@ public class NetworkService extends EnvironmentService {
 	// Similarly query session for access to MemberOf structure
 	private synchronized MemberOf getMemberOf(final UUID id) {
 		MemberOf m = members.get(id);
+		
 		if (m == null || session.getFactHandle(m) == null) {
 			members.remove(id);
 			QueryResults results = session.getQueryResults("getMemberOf",
@@ -97,6 +97,7 @@ public class NetworkService extends EnvironmentService {
 	
 	public Network getNetwork(final UUID particle) {
 		MemberOf m = getMemberOf(particle);
+		
 		if (m != null)
 			return m.getNetwork();
 		else
@@ -116,7 +117,7 @@ public class NetworkService extends EnvironmentService {
 						}
 					});
 			
-			// Add clusters to list
+			// Add networks to list
 			for (Object object : networkSearch) {
 				this.networks.add((Network) object);
 			}
@@ -139,38 +140,51 @@ public class NetworkService extends EnvironmentService {
 		return getParticle(particle).getNoLinks();
 	}
 	
-	public void incrementAgentNoLinks(UUID particle) {
-		getParticle(particle).incrementNoLinks();
+	public void assignLink(UUID id, Particle collidedParticle) {	
+		getParticle(id).assignLink(collidedParticle);		
 	}
 	
-	public void assignLinks(UUID id, Set<Particle> collidedParticles) {		
-		linkedParticles.put(id, collidedParticles);	
+	public synchronized Set<Particle> getLinks(UUID id) {	
+		return getParticle(id).getLinks();
 	}
 	
-	public Set<Particle> getLinks(UUID id) {		
-		return linkedParticles.get(id);	
+	public void detachLinks(UUID id) {
+		Set<Particle> linkedParticles = getLinks(id);
+		Particle p = getParticle(id);
+		
+		for (Particle lp : linkedParticles) {
+			p.removeLink(lp);
+			lp.removeLink(p);
+		}
+		
+		if (p.getNoLinks() != 0)
+			logger.info("Error detaching links from particle " + p.getName());
 	}
-	
-	public void clearLinks(UUID id) {		
-		linkedParticles.get(id).clear();	
-	}
-	
+
 	// Get particles that are not part of a network
 	public Set<UUID> getOrphanParticles(){
 		Set<UUID> op = new HashSet<UUID>();
+		
 		for (Entry<UUID, Particle> p : this.particles.entrySet()){
 			if (getNetwork(p.getKey()) == null){
 				op.add(p.getKey());
 			}
 		}
+		
 		return op;
 	}
 	
 	public void printNetworks(Time t) {	
 		logger.info("Total number of networks existing at time cycle " + t + " is: ");
-		for (Network net : this.networks) {
-			logger.info(net.toString());
-		}	
+		Set<Network> roundNetworks = getNetworks();
+		
+		if(!roundNetworks.isEmpty()) {
+			for (Network net : roundNetworks) {
+				logger.info(net.toString());
+			}	
+		}
+		else
+			logger.info("0");
 	}
 	
 	// For all agents that have formed a network larger than threshold
