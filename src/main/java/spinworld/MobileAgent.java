@@ -68,9 +68,9 @@ public class MobileAgent extends AbstractParticipant {
 	// At every time cycle, execute function of agent - core workings
 	@Override
 	public void execute() {
-		myLocation = mobilityService.getAgentLocation(getID());
-		velocity = mobilityService.getAgentVelocity(getID());
-		noCollisions = mobilityService.getAgentNoCollisions(getID());
+		myLocation = mobilityService.getLocation(getID());
+		velocity = mobilityService.getVelocity(getID());
+		noCollisions = mobilityService.getNoCollisions(getID());
 	 
 		logger.info("My location is: " + this.myLocation + " and my velocity is " + this.velocity);
 		saveDataToDB();

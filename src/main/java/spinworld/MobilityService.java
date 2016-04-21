@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.apache.log4j.Logger;
 import org.drools.runtime.ObjectFilter;
@@ -39,6 +38,10 @@ public class MobilityService extends EnvironmentService {
 	
 	final protected EnvironmentServiceProvider serviceProvider;
 	LocationService locationService = null;
+	
+	@Inject
+	@Named("params.size")
+	private int size;
 	
 	// Influential variability factor of velocity 
 	@Inject
@@ -92,66 +95,78 @@ public class MobilityService extends EnvironmentService {
 		return particles.get(id);
 	}
 	
-	public Location getAgentLocation(UUID particle) {
+	public Location getLocation(UUID particle) {
 		locationService = getLocationService();
 		return locationService.getAgentLocation(particle);
 	}
 	
-	public void setAgentLocation(final UUID particle, final Location loc) {
+	public void setLocation(final UUID particle, final Location loc) {
 		locationService = getLocationService();
 		locationService.setAgentLocation(particle, loc);
 		getParticle(particle).setLoc(loc);
 	}
 	
-	public int getAgentVelocity(UUID particle) {
+	public int getVelocity(UUID particle) {
 		return getParticle(particle).getVelocity();
 	}
 	
-	public void setAgentVelocity(final UUID particle, final int velocity) {
+	public void setVelocity(final UUID particle, final int velocity) {
 		getParticle(particle).setVelocity(velocity);
 	}
 	
-	public String getAgentName(UUID particle) {
+	private String getName(UUID particle) {
 		return getParticle(particle).getName();
 	}
+	
+	// Limited velocity change to dimensions of environment
+	public void updateVelocity(UUID particle) {
+		int updateVelocity = getVelocity(particle) + vConst * getNoCollisions(particle);	
+		
+		if (updateVelocity > size)
+			setVelocity(particle, size);
+		else
+			setVelocity(particle, updateVelocity);
+	}
 
-	public int getAgentNoCollisions(UUID particle) {
+	public int getNoCollisions(UUID particle) {
 		return getParticle(particle).getNoCollisions();
 	}
 	
-	public void onAgentCollision(UUID particle, UUID otherParticle) {
-		getParticle(particle).incrementCollisionCount();
-		getParticle(otherParticle).incrementCollisionCount();
-		logger.info("Collision between particles " + getAgentName(particle) + " and " + getAgentName(otherParticle));
+	public void collide(UUID particle, UUID otherParticle) {
+		getParticle(particle).collide(getParticle(otherParticle));
+		getParticle(otherParticle).collide(getParticle(particle));
+		logger.info("Collision between particles " + getName(particle) + " and " + getName(otherParticle));
 		
-		updateAgentVelocity(particle);
-		updateAgentVelocity(otherParticle);
+		updateVelocity(particle);
+		updateVelocity(otherParticle);
 	}
 	
-	public void updateAgentVelocity(UUID particle) {
-		setAgentVelocity(particle, getAgentVelocity(particle) + vConst*getAgentNoCollisions(particle));
+	public synchronized Set<Particle> getCollisions(UUID id) {	
+		return getParticle(id).getCollisions();
+	}	
+	
+	public void clearCollisions(UUID id) {
+		getParticle(id).clearCollisions();
 	}
 	
-	public Set<Particle> getCollidedAgents(final UUID pId, final Location target) {
-		Set<Particle> collidedAgents = new CopyOnWriteArraySet<Particle>();
+	// TODO: Fix collision framework, needs to be event-based
+	public Set<Particle> getCollidedParticles(final UUID pId, final Location target) {
 		Particle particle = getParticle(pId);
 		
 		for (UUID otherId : this.particles.keySet()) {
 			Particle otherParticle = getParticle(otherId);
 			
-			if (!particle.equals(otherParticle) && target.equals(getAgentLocation(otherId))) {
-				onAgentCollision(pId, otherId);			
-				collidedAgents.add(otherParticle);
-			}
+			if (!particle.equals(otherParticle) && target.equals(getLocation(otherId)))
+				collide(pId, otherId);			
 		}
 		
-		return collidedAgents;
+		return getCollisions(pId);
 	}
 	
 	public void printCollisions(Time t) {	
 		logger.info("Total number of collisions at time cycle " + t + " is: ");
 		for (UUID id : this.particles.keySet()) {
-			logger.info(getAgentNoCollisions(id) + " for particle " + getAgentName(id));
+			logger.info(getNoCollisions(id) + " for particle " + getName(id));
 		}	
 	}
 	

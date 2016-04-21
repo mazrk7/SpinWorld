@@ -19,43 +19,43 @@ global org.apache.log4j.Logger logger
 global uk.ac.imperial.presage2.core.db.StorageService storage
 
 declare Round
-	@role( event )
+	@role(event)
 end
 
 declare Provision
-	@role( event )
+	@role(event)
 end
 
 declare Demand
-	@role( event )
+	@role(event)
 end
 
 declare Generate
-	@role( event )
+	@role(event)
 end
 
 declare Allocate
-	@role( event )
+	@role(event)
 end
 
 declare Appropriate
-	@role( event )
-end
-
-declare JoinNetwork
-	@role( event )
-end
-
-declare LeaveNetwork
-	@role( event )
+	@role(event)
 end
 
 declare CreateNetwork
-	@role( event )
+	@role(event)
+end
+
+declare JoinNetwork
+	@role(event)
+end
+
+declare LeaveNetwork
+	@role(event)
 end
 
 declare CheckEmptyNetwork
-	@role( event )
+	@role(event)
 end
 
 declare LeftNetwork
@@ -73,74 +73,74 @@ declare AllocationPool
 end
 
 declare Processed
-	@role( event )
+	@role(event)
 	act: Object	@key
 end
 
-declare IsHead
-	@role( event )
+/* declare IsHead
+	@role(event)
 	particle : Particle	@key
 	network : Network	@key
 	time : int	@key
-end
+end */
 
 query getMemberOf(Particle p)
-	m : MemberOf( particle == p )
+	m : MemberOf(particle == p)
 end
 
 query networkMembers(Network n)
-	MemberOf( p : particle, network == n )
+	MemberOf(p : particle, network == n)
 end
 
 rule "Prune actions"
 	when
-		Round( $no : number )
-		$a : TimeStampedAction( t < $no - 5)
+		Round($no : number)
+		$a : TimeStampedAction(t < $no - 5)
 	then
-		retract( $a )
+		retract($a)
 end
 
 rule "Discard Rounds"
 	salience 1000
 	when
-		$r : Round( $no : number )
-		$r2 : Round( number < $no )
+		$r : Round($no : number)
+		$r2 : Round(number < $no)
 	then
 		logger.info($r);
-		retract( $r2 );
+		retract($r2);
 end
 
 rule "Discard Rounds Intermediate"
 	salience 1000
 	when
-		$r : Round( $no : number, type == RoundType.APPROPRIATE )
-		$r2 : Round( number == $no, type == RoundType.DEMAND )
+		$r : Round($no : number, type == RoundType.APPROPRIATE)
+		$r2 : Round(number == $no, type == RoundType.DEMAND)
 	then
 		logger.info($r);
-		retract( $r2 );
+		retract($r2);
 end
 
 rule "Init Provision Pool"
 	when
-		$n : Network( )
-		not( ProvisionPool( network == $n ) )
+		$n : Network()
+		not(ProvisionPool(network == $n))
 	then
-		insert(new ProvisionPool( $n, 0 ) );
+		insert(new ProvisionPool($n, 0));
 end
 
 rule "Init Allocation Pool"
 	when
-		$n : Network( )
-		not( AllocationPool( network == $n ) )
+		$n : Network()
+		not(AllocationPool(network == $n))
 	then
-		insert(new AllocationPool( $n, 0 ) );
+		insert(new AllocationPool($n, 0));
 end
 
 rule "AllocationPool mirrors ProvisionPool increases"
 	when
-		$n : Network( )
-		$p : ProvisionPool( network == $n, $pq : quantity )
-		$a : AllocationPool( network == $n, $aq : quantity, quantity < $pq )
+		$n : Network()
+		$p : ProvisionPool(network == $n, $pq : quantity)
+		$a : AllocationPool(network == $n, $aq : quantity, quantity < $pq)
 	then
 		modify($a) {
 			setQuantity($pq);
@@ -150,132 +150,131 @@ end
 rule "Accumulate Provisions"
 	salience 10
     when
-		$r : Round( type == RoundType.DEMAND )
-		$n : Network( )
-		$provision : Provision( $p : particle, this coincides $r )
-		MemberOf( particle == $p, network == $n )
-		$pool : ProvisionPool( network == $n )
-		not( Processed( $provision ;) )
+		$r : Round(type == RoundType.DEMAND)
+		$n : Network()
+		$provision : Provision($p : particle, this coincides $r)
+		MemberOf(particle == $p, network == $n)
+		$pool : ProvisionPool(network == $n)
+		not(Processed($provision ;))
     then
     	modify($pool) {
     		setQuantity($pool.getQuantity() + $provision.getQuantity());
     	}
-    	insert( new Processed( $provision ) );
-        logger.info( $provision  +" pool is now "+ $pool);
+    	
+    	insert(new Processed($provision));
+        logger.info($provision  + " pool is now " + $pool);
 end
 
 rule "Process Demand"
 	salience 10
 	when
-		$r : Round( type == RoundType.DEMAND )
-		$d : Demand( this coincides $r, $p : particle, $q : quantity )
-		not( Processed( $d ;) )
+		$r : Round(type == RoundType.DEMAND)
+		$d : Demand(this coincides $r, $p : particle, $q : quantity)
+		not(Processed($d ;))
 	then
 		modify($p) {
 			setD($q);
 		}
-		insert( new Processed( $d ) );
+		
+		insert(new Processed($d));
 		logger.info($d);
 end
 
 rule "Set g and q"
 	when
-		$action : Generate( $p : particle, $g : g, $q : q)
-		not( Processed( $action ;) )
+		$action : Generate($p : particle, $g : g, $q : q)
+		not(Processed($action ;))
 	then
 		modify($p) {
-			setG( $g ),
-			setQ( $q );
+			setG($g),
+			setQ($q);
 		}
-		insert( new Processed( $action ) );
+		
+		insert(new Processed($action));
 		logger.info($action);
 end
 
 rule "Process Allocations"
 	when
-		$a : Allocate( $p : particle, $q : quantity )
-		not Processed( $a ;) 
+		$a : Allocate($p : particle, $q : quantity)
+		not Processed($a ;) 
 	then
-		logger.info("Processing allocation: "+ $a );
+		logger.info("Processing allocation: " + $a);
+		
 		modify($p) {
 			setAllocated($q);
 		}
-		insert( new Processed( $a ) );
+		
+		insert(new Processed($a));
 end
 
 rule "Process Appropriate"
 	salience -5 + $o
 	when
-		$a : Appropriate( $particle : particle, $q : quantity )
-		not Processed( $a ;)
-		$al : Allocate( particle == $particle, $alQ : quantity, $o : order )
-		MemberOf( particle == $particle, $n : network )
-		$pool : AllocationPool( network == $n )
+		$a : Appropriate($particle : particle, $q : quantity)
+		not Processed($a ;)
+		$al : Allocate(particle == $particle, $alQ : quantity, $o : order)
+		MemberOf(particle == $particle, $n : network)
+		$pool : AllocationPool(network == $n)
 	then
-		double canTake = Math.min( $pool.getQuantity(), $q );
+		double canTake = Math.min($pool.getQuantity(), $q);
+		
 		modify($particle) {
 			setAppropriated(canTake);
 		}
+		
 		modify($pool) {
-			setQuantity( $pool.getQuantity() - canTake );
+			setQuantity($pool.getQuantity() - canTake);
 		}
-		insert( new Processed( $a ) );
-		logger.info("Processing appropriate: "+ $a);
+		
+		insert(new Processed($a));
+		logger.info("Processing appropriate: " + $a);
+end
+
+rule "Create network"
+	salience 11
+	when
+		$a : CreateNetwork($n : network)
+		not Processed($a ;)
+	then
+		insert(new Processed($a));
+		logger.info("Created network: " + $a.getNetwork() + " with alloc " + $a.getNetwork().getAllocationMethod());	
 end
 
 rule "Join network"
-	salience 11
+	salience 12
 	when
-		$j : JoinNetwork( $n : network, $p : particle )
-		not MemberOf( particle == $p )
-		not Processed( $j ;)
+		$j : JoinNetwork($n : network, $p : particle)
+		not Processed($j ;)
 	then
-		insert( new MemberOf( $p, $n ) );
-		insert( new Processed( $j ) );
-		logger.info("Joined network: "+ $p +", "+ $n );
+		insert(new Processed($j));
+		logger.info("Joined network: " + $p + ", " + $n);
 end
 
 rule "Leave network"
-	salience 12
+	salience 13
 	when
-		$a : LeaveNetwork( $n : network, $p : particle )
-		$m : MemberOf( network == $n, particle == $p )
-		not Processed( $a ;)
+		$a : LeaveNetwork($n : network, $p : particle)
+		$m : MemberOf(network == $n, particle == $p)
+		not Processed($a ;)
 	then
-		retract( $m );
-		insert( new Processed( $a ) );
-		insert( new LeftNetwork( $n ) );
-		logger.info("Left network " + $n + " : "+ $p );
-end
-
-rule "List Create network"
-	salience 100
-	when
-		$a : CreateNetwork( $n : network )
-		$l : List(size > 0) from collect( $cn : CreateNetwork( $nl : network ) )
-	then
-		CreateNetwork cn = (CreateNetwork) $l.get( Random.randomInt( $l.size() ) );
-		logger.info("Creating network: "+ cn.getNetwork() + " with alloc " + cn.getNetwork().getAllocationMethod() );	
-		insert(cn.getNetwork());
-		ArrayList copiedList = new ArrayList( $l ); 
-		for(Object o: copiedList){
-			#logger.info("List retract " + o);
-			retract(o);
-		}
+		retract($m);
+		insert(new Processed($a));
+		insert(new LeftNetwork($n));
+		logger.info("Left network " + $n + " : " + $p);
 end
 
 rule "Check empty network"
 	salience 10
 	when
-		$n : Network( )
-		not( exists( MemberOf( network == $n ) ) )
-		$l : LeftNetwork( network == $n )
+		$n : Network()
+		not(exists(MemberOf(network == $n)))
+		$l : LeftNetwork(network == $n)
 	then
 		retract($n);
 		retract($l);
 		logger.info("Deleting network: " + $n);
 end
-
 
 /* rule "Assign network head"
 	/salience -1
@@ -290,7 +289,7 @@ end
 		not( exists( Particle( role == Role.HEAD ) from $members ) )
 	then
 		Particle randomMember =  (Particle) $members.get( Random.randomInt( $members.size() ) );
-		logger.info("New head: "+ randomMember);
+		logger.info("New head: " + randomMember);
 		randomMember.setRole( Role.HEAD );
 end */
 
@@ -309,7 +308,7 @@ end */
 		insert( e );
 end */
 
-/*rule "Unassign network head after 20 rounds"
+/* rule "Unassign network head after 20 rounds"
 	when
 		$p : Particle( role == Role.HEAD )
 		$h : List( size > 0, size % 20 == 0 ) from collect( IsHead( particle == $p ) over window:time( 50s ) )
@@ -317,29 +316,31 @@ end */
 		modify($p) {
 			setRole( Role.PROSUMER )
 		}
-		logger.info("No longer network head: "+ $p );
-end*/
+		logger.info("No longer network head: " + $p );
+end */
 
 rule "Surplus allocated pool"
 	salience -100
 	no-loop
 	when
-		$r : Round( type == RoundType.APPROPRIATE )
-		$n : Network( )
-		$a : AllocationPool( )
-		not( Processed( $a ;) )
+		$r : Round(type == RoundType.APPROPRIATE)
+		$n : Network()
+		$a : AllocationPool()
+		not(Processed($a ;))
 	then
-		logger.info($a.getQuantity() +" pool surplus");
+		logger.info($a.getQuantity() + " pool surplus");
+		
 		modify($a) {
 			setQuantity(0);
 		}
-		insert( new Processed( $a ) );
+		
+		insert(new Processed($a));
 end
 
 rule "Prune processed"
 	when
-		$p : Processed( $o : act )
-		not Object( this == $o )
+		$p : Processed($o : act)
+		not Object(this == $o)
 	then
-		retract( $p );
+		retract($p);
 end

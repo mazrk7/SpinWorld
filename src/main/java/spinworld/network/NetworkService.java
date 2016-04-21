@@ -75,7 +75,7 @@ public class NetworkService extends EnvironmentService {
 		return particles.get(id);
 	}
 	
-	// Similarly query session for access to MemberOf structure
+	// Similarly query session for access to MemberOf structures
 	private synchronized MemberOf getMemberOf(final UUID id) {
 		MemberOf m = members.get(id);
 		
@@ -140,12 +140,18 @@ public class NetworkService extends EnvironmentService {
 		return getParticle(particle).getNoLinks();
 	}
 	
-	public void assignLink(UUID id, Particle collidedParticle) {	
-		getParticle(id).assignLink(collidedParticle);		
+	public void assignLink(UUID id, Particle p) {	
+		getParticle(id).assignLink(p);
+		p.assignLink(getParticle(id));
 	}
 	
 	public synchronized Set<Particle> getLinks(UUID id) {	
 		return getParticle(id).getLinks();
+	}
+	
+	public void removeLink(UUID id, Particle p) {	
+		getParticle(id).removeLink(p);	
+		p.removeLink(getParticle(id));
 	}
 	
 	public void detachLinks(UUID id) {
@@ -153,12 +159,28 @@ public class NetworkService extends EnvironmentService {
 		Particle p = getParticle(id);
 		
 		for (Particle lp : linkedParticles) {
-			p.removeLink(lp);
-			lp.removeLink(p);
+			removeLink(id, lp);
+			removeLink(lp.getId(), p);
 		}
 		
 		if (p.getNoLinks() != 0)
 			logger.info("Error detaching links from particle " + p.getName());
+	}
+	
+	public void reserveSlot(UUID id, Network net) {
+		getParticle(id).reserveSlot(net);
+	}
+	
+	public void occupySlot(UUID id) {
+		getParticle(id).occupySlot();
+	}
+	
+	public boolean isReserved(UUID id) {
+		return getParticle(id).isReserved();
+	}
+	
+	public Network getReservedNetwork(UUID id) {
+		return getParticle(id).getReservation();
 	}
 
 	// Get particles that are not part of a network
@@ -174,17 +196,13 @@ public class NetworkService extends EnvironmentService {
 		return op;
 	}
 	
-	public void printNetworks(Time t) {	
-		logger.info("Total number of networks existing at time cycle " + t + " is: ");
+	public void printNoRoundNetworks(Time t) {	
 		Set<Network> roundNetworks = getNetworks();
 		
-		if(!roundNetworks.isEmpty()) {
-			for (Network net : roundNetworks) {
-				logger.info(net.toString());
-			}	
-		}
+		if(!roundNetworks.isEmpty())
+			logger.info("Total number of networks existing at time cycle " + t + " is: " + roundNetworks.size());
 		else
-			logger.info("0");
+			logger.info("Total number of networks existing at time cycle " + t + " is: 0");
 	}
 	
 	// For all agents that have formed a network larger than threshold

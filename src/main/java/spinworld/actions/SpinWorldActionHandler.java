@@ -15,6 +15,7 @@ import com.google.inject.Inject;
 import spinworld.MobilityService;
 import spinworld.SpinWorldService;
 import spinworld.facts.Particle;
+import spinworld.network.MemberOf;
 import spinworld.network.NetworkService;
 import uk.ac.imperial.presage2.core.Action;
 import uk.ac.imperial.presage2.core.environment.ActionHandler;
@@ -131,32 +132,24 @@ public class SpinWorldActionHandler implements ActionHandler {
 		Particle p = getParticle(actor);
 		
 		// Perform resource allocation action
-		if (action instanceof ParticleAction) {
-			if (logger.isDebugEnabled())
-				logger.debug("Handling: " + action);
-
+		if (action instanceof ParticleAction)
 			((ParticleAction) action).setParticle(p);
-		}
 		
 		// Time stamp resource allocation action
-		if (action instanceof TimeStampedAction) {
-			if (logger.isDebugEnabled())
-				logger.debug("Handling: " + action);
-			
+		if (action instanceof TimeStampedAction)
 			((TimeStampedAction) action).setT(getSpinWorldService().getRoundNumber());
-		}
 	
+		if (action instanceof JoinNetwork)
+			session.insert(new MemberOf(p, ((JoinNetwork) action).getNetwork()));
+		
 		// If mobile agent action is to move
-		if (action instanceof Move) {
-			if (logger.isDebugEnabled())
-				logger.debug("Handling move " + action + " from " + mobilityService.getAgentName(actor));
-			
+		if (action instanceof Move) {			
 			final Move m = (Move) action;
 			Location loc = null;
 			
 			// Get the agent's current location
 			try {
-				loc = mobilityService.getAgentLocation(actor);
+				loc = mobilityService.getLocation(actor);
 			} catch (CannotSeeAgent e) {
 				throw new ActionHandlingException(e);
 			}
@@ -177,10 +170,10 @@ public class SpinWorldActionHandler implements ActionHandler {
 			}
 			
 			// If the move is valid, update the agent's location to target
-			this.mobilityService.setAgentLocation(actor, target);
+			this.mobilityService.setLocation(actor, target);
 
 			// Check if any collisions occurred at this target location
-			Set<Particle> collidedParticles = this.mobilityService.getCollidedAgents(actor, target);
+			Set<Particle> collidedParticles = this.mobilityService.getCollidedParticles(actor, target);
 
 			if (!collidedParticles.isEmpty()) {
 				for (Particle cp : collidedParticles) {
@@ -191,6 +184,9 @@ public class SpinWorldActionHandler implements ActionHandler {
 		
 		session.insert(action);
 
+		if (logger.isDebugEnabled())
+			logger.debug("Handling: " + action);
+		
 		return null;
 	}
 

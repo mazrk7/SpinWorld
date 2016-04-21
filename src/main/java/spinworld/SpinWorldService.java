@@ -29,6 +29,7 @@ public class SpinWorldService extends EnvironmentService {
 	
 	Map<UUID, Particle> particles = new HashMap<UUID, Particle>();
 	
+	// Initialised round
 	RoundType round = RoundType.INIT;
 	int roundNumber = 0;
 	

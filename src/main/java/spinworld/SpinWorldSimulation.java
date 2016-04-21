@@ -184,7 +184,7 @@ public class SpinWorldSimulation extends InjectedSimulation {
 		for (int n = 0; n < agents; n++) {
 			createParticle("p" + n,  
 					new Location(Random.randomInt(size), Random.randomInt(size)),
-					initVelocity, cheat, radius, getCheatOn(), scenario);
+					initVelocity, radius, cheat, getCheatOn(), scenario);
 		}
 		
 		// Generate resources needed
@@ -202,11 +202,12 @@ public class SpinWorldSimulation extends InjectedSimulation {
 		Cheat[] cs = Cheat.values();
 		Cheat c = cs[rnd.nextInt(cs.length)];
 		logger.debug("Cheat on: " + c);
+		
 		return c;
 	}
 	
 	protected SpinWorldAgent createParticle(String name, Location loc, int velocity, 
-			double radius, double pCheat, Cheat cheatOn, Scenario scenario) {
+			int radius, double pCheat, Cheat cheatOn, Scenario scenario) {
 		UUID pid = UUID.randomUUID();
 		
 		SpinWorldAgent ag = new SpinWorldAgent(pid, name, loc, velocity, radius,
@@ -214,8 +215,6 @@ public class SpinWorldSimulation extends InjectedSimulation {
 				resetSatisfaction, rnd.nextLong(), t1, t2);
 		scenario.addParticipant(ag);
 		
-		// ag.permCreateNetwork = this.dynamicNetworks;
-
 		Particle p = new Particle(pid, name, alpha, beta, radius, velocity, loc);		
 		particles.add(p);
 		
@@ -237,7 +236,7 @@ public class SpinWorldSimulation extends InjectedSimulation {
 		}
 		
 		mobilityService.printCollisions(e.getTime());
-		networkService.printNetworks(e.getTime());
+		networkService.printNoRoundNetworks(e.getTime());
 		// mobilityService.setStaticNetworkAgents();
 	}
 	
