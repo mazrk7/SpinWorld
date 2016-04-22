@@ -238,7 +238,8 @@ rule "Create network"
 		not Processed($a ;)
 	then
 		insert(new Processed($a));
-		logger.info("Created network: " + $a.getNetwork() + " with alloc " + $a.getNetwork().getAllocationMethod());	
+		logger.info("Created network: " + $a.getParticle() + ", " + $a.getNetwork() + 
+			" with alloc " + $a.getNetwork().getAllocationMethod());	
 end
 
 rule "Join network"

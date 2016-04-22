@@ -100,6 +100,8 @@ public class NetworkService extends EnvironmentService {
 		
 		if (m != null)
 			return m.getNetwork();
+		else if (isReserved(particle))
+			return getReservedNetwork(particle);
 		else
 			return null;
 	}

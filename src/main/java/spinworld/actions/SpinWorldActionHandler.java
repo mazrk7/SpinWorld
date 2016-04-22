@@ -138,9 +138,6 @@ public class SpinWorldActionHandler implements ActionHandler {
 		// Time stamp resource allocation action
 		if (action instanceof TimeStampedAction)
 			((TimeStampedAction) action).setT(getSpinWorldService().getRoundNumber());
-	
-		if (action instanceof JoinNetwork)
-			session.insert(new MemberOf(p, ((JoinNetwork) action).getNetwork()));
 		
 		// If mobile agent action is to move
 		if (action instanceof Move) {			
@@ -183,6 +180,11 @@ public class SpinWorldActionHandler implements ActionHandler {
 		}
 		
 		session.insert(action);
+		
+		if (action instanceof CreateNetwork)
+			session.insert(new MemberOf(p, ((CreateNetwork) action).getNetwork()));	
+		else if (action instanceof JoinNetwork)
+			session.insert(new MemberOf(p, ((JoinNetwork) action).getNetwork()));
 
 		if (logger.isDebugEnabled())
 			logger.debug("Handling: " + action);
