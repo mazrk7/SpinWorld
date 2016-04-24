@@ -17,7 +17,7 @@ public class Provision extends ParticleAction {
 		this.quantity = quantity;
 	}
 	
-	public Double getQuantity() {
+	public double getQuantity() {
 		return quantity;
 	}
 

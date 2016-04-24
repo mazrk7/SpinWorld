@@ -62,7 +62,7 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	@Parameter(name = "agents", optional = true)
 	public int agents = 1;
 	
-	// Propensity for agents to cheat
+	// Propensity for an agent to cheat
 	@Parameter(name = "cheat", optional = true)
 	public double cheat;
 	
@@ -78,6 +78,7 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	@Parameter(name = "vConst", optional = true)
 	public int vConst = 1;
 	
+	// Utility parameters
 	@Parameter(name = "a", optional = true)
 	public double a = 2;
 	@Parameter(name = "b", optional = true)
@@ -85,21 +86,28 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	@Parameter(name = "c", optional = true)
 	public double c = 1;
 	
+	// Satisfaction parameters
 	@Parameter(name = "alpha")
 	public double alpha;
 	@Parameter(name = "beta")
 	public double beta;
+	
+	// Rnd seed
 	@Parameter(name = "seed")
 	public int seed;
 	
+	// Threshold rate at which agent will look for new networks
 	@Parameter(name = "t1", optional = true)
 	public double t1 = 0.1;
+	// Threshold rate at which agent will leave a network permanently
 	@Parameter(name = "t2", optional = true)
 	public double t2 = 0.5;
 	
+	// Round type for which agents will cheat on
 	@Parameter(name = "cheatOn", optional = true)
 	public String cheatOn = "provision";
 
+	// Network leave algorithm
 	@Parameter(name = "networkLeave", optional = true)
 	public NetworkLeaveAlgorithm networkLeave = NetworkLeaveAlgorithm.THRESHOLD;
 
@@ -236,7 +244,7 @@ public class SpinWorldSimulation extends InjectedSimulation {
 		}
 		
 		mobilityService.printCollisions(e.getTime());
-		networkService.printNoRoundNetworks(e.getTime());
+		networkService.printNetworks(e.getTime());
 		// mobilityService.setStaticNetworkAgents();
 	}
 	

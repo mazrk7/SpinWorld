@@ -198,24 +198,33 @@ public class NetworkService extends EnvironmentService {
 		return op;
 	}
 	
-	public void printNoRoundNetworks(Time t) {	
+	public void printNetworks(Time t) {	
 		Set<Network> roundNetworks = getNetworks();
 		
-		if(!roundNetworks.isEmpty())
+		if(!roundNetworks.isEmpty()) {
 			logger.info("Total number of networks existing at time cycle " + t + " is: " + roundNetworks.size());
+			
+			for (Network net : roundNetworks) {
+				logger.info("For " + net + ", the particles are:");
+				for (Entry<UUID, MemberOf> mem : this.members.entrySet()){
+					if (mem.getValue().network != null && mem.getValue().network.equals(net))
+						logger.info(mem.getValue());
+				}
+			}
+		}
 		else
 			logger.info("Total number of networks existing at time cycle " + t + " is: 0");
 	}
 	
 	// For all agents that have formed a network larger than threshold
 	// in terms of population, make them have 0 velocity i.e. static
-	/*public void setStaticNetworkAgents() {
+	/* public void setStaticNetworkAgents() {
 		for (UUID id : this.particles.keySet()) {
 			if (getAgentNoCollisions(id) >= (int)(networkThreshold * particles.size())) {
 				logger.info("Agent " + getAgentName(id) + " is part of a sufficient social network and is therefore static.");
 				setAgentVelocity(id, 0);
 			}
 		}
-	}*/
+	} */
 
 }

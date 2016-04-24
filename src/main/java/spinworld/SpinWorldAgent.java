@@ -97,10 +97,21 @@ public class SpinWorldAgent extends MobileAgent {
 	boolean permCreateNetwork = false;
 	boolean dead = false;
 	boolean compliantRound = true;
+	
+	// Sort of like weekly evaluation for strategy
+	final int strategyLength = 7;
+	boolean[] strategy;
+	int strategyPtr = 0;
 
-	public SpinWorldAgent(UUID id, String name, Location myLocation, int velocity, double radius, double a, double b,
-			double c, double pCheat, double alpha, double beta, Cheat cheatOn, NetworkLeaveAlgorithm netLeave,
-			boolean resetSatisfaction, long rndSeed, double t1, double t2) {
+	double prevUtility = 0;
+	boolean prevChange;
+
+	int complyCount = 0;
+	int defectCount = 0;
+
+	public SpinWorldAgent(UUID id, String name, Location myLocation, int velocity, double radius, 
+			double a, double b, double c, double pCheat, double alpha, double beta, Cheat cheatOn, 
+			NetworkLeaveAlgorithm netLeave, boolean resetSatisfaction, long rndSeed, double t1, double t2) {
 		super(id, name, myLocation, velocity, radius);
 		this.pCheat = pCheat;
 		this.alpha = alpha;
@@ -125,6 +136,30 @@ public class SpinWorldAgent extends MobileAgent {
 		case AGE:
 			this.networkEvaluation = new LimitLife(t1, t2);
 		}
+		
+		// Generate strategy
+		this.strategy = new boolean[strategyLength];
+		
+		// Probabilistic cheating depending on agent likelihood to cheat
+		// Defect the round if deciding to cheat
+		// Else comply with the round
+		for (int i = 0; i < strategyLength; i++) {
+			if (rnd.nextDouble() < this.pCheat) {
+				this.strategy[i] = false;
+				defectCount++;
+			} else {
+				this.strategy[i] = true;
+				complyCount++;
+			}
+		}
+		
+		// Previous round strategy initialised to a random Boolean
+		this.prevChange = rnd.nextBoolean();
+		this.rollingUtility = new DescriptiveStatistics(strategyLength);
+		// Propensity to cheat updated according to number of rounds defected
+		this.pCheat = ((double) defectCount) / strategyLength;
+		
+		logger.info("Initial strategy: " + strategyToString(strategy));
 	}
 
 	@Override
@@ -253,9 +288,75 @@ public class SpinWorldAgent extends MobileAgent {
 		saveDataToDB();
 	}
 
-	// Probabilistic cheating
 	protected boolean chooseStrategy() {
-		return rnd.nextDouble() >= pCheat;
+		// Choose strategies for each round
+		boolean strat = this.strategy[strategyPtr++];
+		
+		// If 7 rounds have passed
+		if (strategyPtr >= strategyLength) {
+			// Modify strategy depending on current utility
+			double currentUtility = this.rollingUtility.getMean();
+			
+			if (currentUtility > prevUtility) {
+				// Last change improved utility, so repeat it
+				modifyStrategy();
+			} else {
+				// Revert last change
+				prevChange = !prevChange;
+				modifyStrategy();
+			}
+			
+			// Reset the strategy pointer for another 20 rounds
+			this.strategyPtr = 0;
+			// Update utility
+			this.prevUtility = currentUtility;
+			this.rollingUtility.clear();
+		}
+		
+		return strat;
+	}
+
+	private void modifyStrategy() {
+		// Always complied or defected, pure strategy so no modification
+		if ((prevChange && defectCount == 0) || (!prevChange && complyCount == 0)) {
+			logger.info("Cannot modify strategy, already pure.");
+			return;
+		}
+		
+		do {
+			int i = rnd.nextInt(strategyLength);
+			
+			// Find a round strategy that is not equal to the beneficial strategy & update it
+			if (this.strategy[i] != prevChange) {
+				this.strategy[i] = prevChange;
+				
+				if (prevChange) {
+					defectCount--;
+					complyCount++;
+				} else {
+					defectCount++;
+					complyCount--;
+				}
+				
+				break;
+			}
+		} while (true);
+		
+		// Re-compute the agent's propensity to cheat
+		this.pCheat = ((double) defectCount) / strategyLength;
+		
+		logger.info("Updated strategy: " + strategyToString(strategy));
+	}
+
+	// Prints the strategy plan of the agent
+	private static String strategyToString(boolean[] strategy) {
+		StringBuilder s = new StringBuilder();
+		
+		for (int i = 0; i < strategy.length; i++) {
+			s.append(strategy[i] ? 'C' : 'D');
+		}
+		
+		return s.toString();
 	}
 
 	// Demand amount d, act upon environment
@@ -355,7 +456,9 @@ public class SpinWorldAgent extends MobileAgent {
 			this.d = 0;
 		}
 
+		// Total resources of agent
 		double rTotal = rP + (g - p);
+		// Total utility in this round
 		double u = ut.getUtility(g, q, d, p, r, rP);
 
 		if (rP >= d)
@@ -509,10 +612,10 @@ public class SpinWorldAgent extends MobileAgent {
 		double tolerance1;
 		double tolerance2;
 
-		// Threshold rate at which agent will leave a network permanently
-		double t2 = 0.0;
 		// Threshold rate at which agent will look for new networks
 		double t1 = 0.0;
+		// Threshold rate at which agent will leave a network permanently
+		double t2 = 0.0;
 		// Threshold rate at which agent will stop playing the game
 		double t3 = 0.0;
 
@@ -693,10 +796,11 @@ public class SpinWorldAgent extends MobileAgent {
 
 		public double getUtility(double g, double q, double d, double p, double r, double rP) {
 			double rTotal = rP + (g - p);
+			
 			if (rTotal >= q)
-				return a + b * (rTotal / q - 1);
+				return a + b * ((rTotal/q) - 1);
 			else
-				return c * rTotal / q;
+				return c * (rTotal/q);
 		}
 
 		public double estimateFullComplyUtility(double scarcity) {

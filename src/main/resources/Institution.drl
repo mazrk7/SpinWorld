@@ -11,6 +11,7 @@ import spinworld.facts.*
 import spinworld.network.*
 import spinworld.RoundType
 import spinworld.Globals
+import spinworld.GraduationLevel
 
 global org.apache.log4j.Logger logger
 global java.util.Random rnd
@@ -20,6 +21,7 @@ declare Violation
 	particle : Particle	@key
 	network : spinworld.network.Network	@key
 	time : int	@key
+	severity : double
 	on : String
 end
 
@@ -28,6 +30,14 @@ declare Monitored
 	particle : Particle	@key
 	network : spinworld.network.Network	@key
 	time : int	@key
+end
+
+declare Sanction
+	@role(event)
+	particle : Particle	@key
+	network : spinworld.network.Network	@key
+	time : int	@key
+	level : GraduationLevel
 end
 
 declare TaskComplete
@@ -79,6 +89,32 @@ rule "Monitor particles"
 		insert(new TaskComplete("monitoring", $t));
 end
 
+rule "Sanction particles"
+	salience 10
+	when 
+		Round($t : number, type == RoundType.APPROPRIATE)
+		not TaskComplete("sanctioning", $t;)
+		Violation($p : particle, $n : network, time == $t, $s : severity)
+	then
+		if($s < 0.1) {
+			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.NO_SANCTION);
+			insert(sanc);
+			logger.info(sanc);
+		}
+		else if($s >= 0.1 && $s < 0.7) {
+			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.WARNING);
+			insert(sanc);
+			logger.info(sanc);	
+		}
+		else if($s >= 0.7 && $s <= 1) {
+			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.EXPULSION);
+			insert(sanc);
+			logger.info(sanc);	
+		}
+		
+		insert(new TaskComplete("sanctioning", $t));
+end
+	
 rule "Detect cheat on provision"
 	salience 1
 	when
@@ -86,10 +122,15 @@ rule "Detect cheat on provision"
 		MemberOf($p : particle, $n : network)
 		Monitored($p, $n, $t ;)
 		Generate(t == $t, $g : g, $q : q, particle == $p)
-		Provision(particle == $p, t == $t, quantity < $g)
+		$provision : Provision(particle == $p, t == $t, quantity < $g)
+		$pool : AllocationPool(network == $n)
 	then
+		double resources = $pool.getQuantity();
+
 		Violation v = new Violation($p, $n, $t);
+		v.setSeverity(($g - $provision.getQuantity())/resources);
 		v.setOn("provision");
+		
 		logger.info(v);
 		insert(v);
 end
@@ -101,10 +142,15 @@ rule "Detect cheat on demand"
 		MemberOf($p : particle, $n : network)
 		Monitored($p, $n, $t ;)
 		Generate(t == $t, $g : g, $q : q, particle == $p)
-		Demand(particle == $p, t == $t, quantity > $q)
+		$demand : Demand(particle == $p, t == $t, quantity > $q)
+		$pool : AllocationPool(network == $n)
 	then
+		double resources = $pool.getQuantity();
+	
 		Violation v = new Violation($p, $n, $t);
+		v.setSeverity(($demand.getQuantity() - $q)/resources);
 		v.setOn("demand");
+		
 		logger.info(v);
 		insert(v);
 end
@@ -117,10 +163,15 @@ rule "Detect cheat on appropriate"
 		Monitored($p, $n, $t ;)
 		Generate(t == $t, $g : g, $q : q, particle == $p)
 		Allocate($r : quantity, particle == $p, t == $t)
-		Appropriate($rP : quantity, particle == $p, t == $t, quantity > $r)
+		$approp : Appropriate($rP : quantity, particle == $p, t == $t, quantity > $r)
+		$pool : AllocationPool(network == $n)
 	then
+		double resources = $pool.getQuantity();
+	
 		Violation v = new Violation($p, $n, $t);
+		v.setSeverity(($approp.getQuantity() - $r)/resources);
 		v.setOn("appropriate");
+		
 		logger.info(v);
 		insert(v);
 end
