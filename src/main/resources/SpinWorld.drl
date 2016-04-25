@@ -234,12 +234,13 @@ end
 rule "Create network"
 	salience 11
 	when
-		$a : CreateNetwork($n : network)
+		$a : CreateNetwork($n : network, $p : particle)
 		not Processed($a ;)
 	then
 		insert(new Processed($a));
-		logger.info("Created network: " + $a.getParticle() + ", " + $a.getNetwork() + 
-			" with alloc " + $a.getNetwork().getAllocationMethod());	
+		logger.info("Created " + $a.getNetwork() + " with alloc " 
+			+ $a.getNetwork().getAllocationMethod() + " for particles: " 
+			+ $a.getParticle() + ", " + $a.getCollidedParticle());	
 end
 
 rule "Join network"

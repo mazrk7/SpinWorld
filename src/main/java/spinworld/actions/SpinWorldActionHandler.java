@@ -181,8 +181,10 @@ public class SpinWorldActionHandler implements ActionHandler {
 		
 		session.insert(action);
 		
-		if (action instanceof CreateNetwork)
+		if (action instanceof CreateNetwork) {
 			session.insert(new MemberOf(p, ((CreateNetwork) action).getNetwork()));	
+			session.insert(new MemberOf(((CreateNetwork) action).getCollidedParticle(), ((CreateNetwork) action).getNetwork()));	
+		}
 		else if (action instanceof JoinNetwork)
 			session.insert(new MemberOf(p, ((JoinNetwork) action).getNetwork()));
 

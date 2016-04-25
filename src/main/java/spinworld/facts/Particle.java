@@ -45,6 +45,8 @@ public class Particle {
 	Set<Particle> linkedParticles = new CopyOnWriteArraySet<Particle>();
 	
 	Network reserveNetworkSlot = null;
+	
+	int sanctionHistory = 0;
 
 	public Particle(UUID id) {
 		super();
@@ -218,6 +220,18 @@ public class Particle {
 		return reserveNetworkSlot;
 	}
 	
+	public int getSanctionHistory() {
+		return sanctionHistory;
+	}
+	
+	public void incrementSanctionCount() {
+		this.sanctionHistory++;
+	}
+	
+	public void clearSanctionHistory() {
+		this.sanctionHistory = 0;
+	}
+		
 	@Override
 	public int hashCode() {
 		final int prime = 31;

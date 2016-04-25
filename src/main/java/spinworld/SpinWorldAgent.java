@@ -211,18 +211,19 @@ public class SpinWorldAgent extends MobileAgent {
 		
 		if (!this.collisions.isEmpty()) {
 			for (Particle p : collisions) {
+				Network otherNetwork = this.networkService.getNetwork(p.getId());
+				
 				if (network == null) {
-					if (this.networkService.getNetwork(p.getId()) == null)
+					if (otherNetwork == null)
 						createNetwork(p);
-					else if (this.networkService.getNetwork(p.getId()) != null)
-						joinNetwork(this.networkService.getNetwork(p.getId()));
+					else if (otherNetwork != null)
+						joinNetwork(otherNetwork);
 				}
 				else if (network != null) {
-					if (this.networkService.getNetwork(p.getId()) == null)
+					if (otherNetwork == null)
 						this.networkService.reserveSlot(p.getId(), network);
-					else if (this.networkService.getNetwork(p.getId()) != null 
-							&& !network.equals(this.networkService.getNetwork(p.getId())))
-						assessNetwork(this.networkService.getNetwork(p.getId()));
+					else if (otherNetwork != null && !network.equals(otherNetwork))
+						assessNetwork(otherNetwork);
 				}
 			}
 				
@@ -390,22 +391,23 @@ public class SpinWorldAgent extends MobileAgent {
 	
 	protected synchronized void createNetwork(Particle p) {
 		try {
-			if (this.networkService.getNetwork(p.getId()) == null) {
+			Network otherNet = this.networkService.getNetwork(p.getId());
+			
+			if (otherNet == null) {
 				Allocation[] methods = { Allocation.RANDOM };
 				int pick = rnd.nextInt(methods.length);
 				Allocation method = methods[pick];
 				Network net = new Network(this.networkService.getNextNumNetwork(), method, 
-						this.monitoringLevel, this.monitoringCost);
-				this.networkService.reserveSlot(p.getId(), net);
-	
-				environment.act(new CreateNetwork(net), getID(), authkey);
+					this.monitoringLevel, this.monitoringCost);
+
+				environment.act(new CreateNetwork(net, p), getID(), authkey);
 				this.resourcesGame.session.insert(net);
 				this.network = net;
-				
+			
 				numNetworksCreated++;
 			}
 			else
-				joinNetwork(this.networkService.getNetwork(p.getId()));
+				joinNetwork(otherNet);
 		} catch (ActionHandlingException e) {
 			logger.warn("Failed to create network", e);
 		}
@@ -413,8 +415,12 @@ public class SpinWorldAgent extends MobileAgent {
 
 	protected void joinNetwork(Network net) {
 		try {
-			environment.act(new JoinNetwork(net), getID(), authkey);
-			this.network = net;
+			if (this.network == null) {
+				environment.act(new JoinNetwork(net), getID(), authkey);
+				this.network = net;
+			}
+			else
+				return;
 		} catch (ActionHandlingException e) {
 			logger.warn("Failed to join network", e);
 		}
