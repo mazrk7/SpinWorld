@@ -104,4 +104,8 @@ public class SpinWorldService extends EnvironmentService {
 		return getParticle(particle).getAppropriated();
 	}
 	
+	public int getSanctionCount(UUID particle) {
+		return getParticle(particle).getSanctionHistory();
+	}
+	
 }

@@ -3,7 +3,6 @@ package spinworld.actions;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import org.apache.log4j.Logger;
@@ -63,11 +62,6 @@ public class SpinWorldActionHandler implements ActionHandler {
 		this.sharedState = sharedState;
 	}
 	
-	@Override
-	public boolean canHandle(Action action) {
-		return (action instanceof ParticleAction) || (action instanceof Move);
-	}
-	
 	MobilityService getMobilityService() {
 		if (mobilityService == null) {
 			try {
@@ -124,6 +118,11 @@ public class SpinWorldActionHandler implements ActionHandler {
 	}
 	
 	@Override
+	public boolean canHandle(Action action) {
+		return (action instanceof ParticleAction) || (action instanceof Move);
+	}
+	
+	@Override
 	public Input handle(Action action, UUID actor)
 			throws ActionHandlingException {
 		getMobilityService();
@@ -168,15 +167,9 @@ public class SpinWorldActionHandler implements ActionHandler {
 			
 			// If the move is valid, update the agent's location to target
 			this.mobilityService.setLocation(actor, target);
-
+			
 			// Check if any collisions occurred at this target location
-			Set<Particle> collidedParticles = this.mobilityService.getCollidedParticles(actor, target);
-
-			if (!collidedParticles.isEmpty()) {
-				for (Particle cp : collidedParticles) {
-					this.networkService.assignLink(actor, cp);	
-				}
-			}
+			this.mobilityService.checkForCollisions(actor, target);
 		}
 		
 		session.insert(action);

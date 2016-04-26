@@ -92,6 +92,12 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	@Parameter(name = "beta")
 	public double beta;
 	
+	// Cheating benefit parameters
+	@Parameter(name = "theta")
+	public double theta;
+	@Parameter(name = "phi")
+	public double phi;
+	
 	// Rnd seed
 	@Parameter(name = "seed")
 	public int seed;
@@ -220,7 +226,7 @@ public class SpinWorldSimulation extends InjectedSimulation {
 		
 		SpinWorldAgent ag = new SpinWorldAgent(pid, name, loc, velocity, radius,
 				a, b, c, pCheat, alpha, beta, cheatOn, getNetworkLeave(), 
-				resetSatisfaction, rnd.nextLong(), t1, t2);
+				resetSatisfaction, rnd.nextLong(), t1, t2, theta, phi);
 		scenario.addParticipant(ag);
 		
 		Particle p = new Particle(pid, name, alpha, beta, radius, velocity, loc);		
@@ -245,7 +251,6 @@ public class SpinWorldSimulation extends InjectedSimulation {
 		
 		mobilityService.printCollisions(e.getTime());
 		networkService.printNetworks(e.getTime());
-		// mobilityService.setStaticNetworkAgents();
 	}
 	
 }

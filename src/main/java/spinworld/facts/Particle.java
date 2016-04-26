@@ -44,7 +44,7 @@ public class Particle {
 	Set<Particle> collidedParticles = new CopyOnWriteArraySet<Particle>();
 	Set<Particle> linkedParticles = new CopyOnWriteArraySet<Particle>();
 	
-	Network reserveNetworkSlot = null;
+	Network reservedNetworkSlot = null;
 	
 	int sanctionHistory = 0;
 
@@ -202,22 +202,22 @@ public class Particle {
 	}
 	
 	public void reserveSlot(Network net) {
-		reserveNetworkSlot = net;
+		reservedNetworkSlot = net;
 	}
 	
 	public void occupySlot() {
-		reserveNetworkSlot = null;
+		reservedNetworkSlot = null;
 	}
 	
 	public boolean isReserved() {
-		if (reserveNetworkSlot != null)
+		if (reservedNetworkSlot != null)
 			return true;
 		else 
 			return false;
 	}
 	
 	public Network getReservation() {
-		return reserveNetworkSlot;
+		return reservedNetworkSlot;
 	}
 	
 	public int getSanctionHistory() {

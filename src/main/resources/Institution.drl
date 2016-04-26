@@ -135,7 +135,7 @@ rule "Detect cheat on provision"
 		$provision : Provision(particle == $p, t == $t, quantity < $g)
 	then
 		Violation v = new Violation($p, $n, $t);
-		v.setSeverity(($g - $provision.getQuantity())/$g);
+		v.setSeverity($g - $provision.getQuantity());
 		v.setOn("provision");
 		
 		logger.info(v);
@@ -152,7 +152,7 @@ rule "Detect cheat on demand"
 		$demand : Demand(particle == $p, t == $t, quantity > $q)
 	then	
 		Violation v = new Violation($p, $n, $t);
-		v.setSeverity(($demand.getQuantity() - $q)/$q);
+		v.setSeverity($demand.getQuantity() - $q);
 		v.setOn("demand");
 		
 		logger.info(v);
@@ -170,7 +170,7 @@ rule "Detect cheat on appropriate"
 		$approp : Appropriate($rP : quantity, particle == $p, t == $t, quantity > $r)
 	then	
 		Violation v = new Violation($p, $n, $t);
-		v.setSeverity(($approp.getQuantity() - $r)/$r);
+		v.setSeverity($approp.getQuantity() - $r);
 		v.setOn("appropriate");
 		
 		logger.info(v);

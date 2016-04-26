@@ -114,12 +114,8 @@ public class MobilityService extends EnvironmentService {
 		getParticle(particle).setVelocity(velocity);
 	}
 	
-	private String getName(UUID particle) {
-		return getParticle(particle).getName();
-	}
-	
 	// Limited velocity change to dimensions of environment
-	public void updateVelocity(UUID particle) {
+	private void updateVelocity(final UUID particle) {
 		int updateVelocity = getVelocity(particle) + vConst * getNoCollisions(particle);	
 		
 		if (updateVelocity > size)
@@ -133,9 +129,12 @@ public class MobilityService extends EnvironmentService {
 	}
 	
 	public void collide(UUID particle, UUID otherParticle) {
-		getParticle(particle).collide(getParticle(otherParticle));
-		getParticle(otherParticle).collide(getParticle(particle));
-		logger.info("Collision between particles " + getName(particle) + " and " + getName(otherParticle));
+		Particle a = getParticle(particle);
+		Particle b = getParticle(otherParticle);
+		
+		a.collide(b);
+		b.collide(a);
+		logger.info("Collision between particles " + a.getName() + " and " + b.getName());
 		
 		updateVelocity(particle);
 		updateVelocity(otherParticle);
@@ -149,25 +148,26 @@ public class MobilityService extends EnvironmentService {
 		getParticle(id).clearCollisions();
 	}
 	
-	// TODO: Fix collision framework, needs to be event-based
-	public Set<Particle> getCollidedParticles(final UUID pId, final Location target) {
+	public void checkForCollisions(final UUID pId, final Location target) {
 		Particle particle = getParticle(pId);
 		
 		for (UUID otherId : this.particles.keySet()) {
 			Particle otherParticle = getParticle(otherId);
 			
 			if (!particle.equals(otherParticle) && target.equals(getLocation(otherId)))
-				collide(pId, otherId);			
-		}
-		
-		return getCollisions(pId);
+				collide(pId, otherId);	
+		}	
 	}
 	
 	public void printCollisions(Time t) {	
-		logger.info("Total number of collisions at time cycle " + t + " is: ");
+		int totalCollisions = 0;
+		
 		for (UUID id : this.particles.keySet()) {
-			logger.info(getNoCollisions(id) + " for particle " + getName(id));
+			logger.info(getNoCollisions(id) + " collision(s) for particle " + getParticle(id).getName());
+			totalCollisions += getNoCollisions(id);
 		}	
+		
+		logger.info("Total number of collisions at time cycle " + t + " is: " + totalCollisions);
 	}
 	
 }

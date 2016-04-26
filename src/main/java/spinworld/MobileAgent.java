@@ -70,15 +70,16 @@ public class MobileAgent extends AbstractParticipant {
 	public void execute() {
 		myLocation = mobilityService.getLocation(getID());
 		velocity = mobilityService.getVelocity(getID());
-		noCollisions = mobilityService.getNoCollisions(getID());
 	 
 		logger.info("My location is: " + this.myLocation + " and my velocity is " + this.velocity);
-		saveDataToDB();
 	 	
 		if (velocity != 0) {
 			Move m = new Move(velocity*(Random.randomInt(3) - 1), velocity*(Random.randomInt(3) - 1));
 			submitMove(m);
 		}
+		
+		noCollisions = mobilityService.getNoCollisions(getID());
+		saveDataToDB();
 	}
 	
 	// Submit move action to the environment
