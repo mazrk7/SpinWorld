@@ -35,8 +35,8 @@ public class NetworkService extends EnvironmentService {
 
 	Map<UUID, Particle> particles = new HashMap<UUID, Particle>();
 	Map<UUID, MemberOf> members = new HashMap<UUID, MemberOf>();
-	Set<Network> networks = new CopyOnWriteArraySet<Network>();
-	
+	Map<UUID, Network> reservedNetworks = new HashMap<UUID, Network>();
+
 	private int numNetworks = 0;
 	final protected EnvironmentServiceProvider serviceProvider;
 	
@@ -77,55 +77,81 @@ public class NetworkService extends EnvironmentService {
 	
 	// Similarly query session for access to MemberOf structures
 	private synchronized MemberOf getMemberOf(final UUID id) {
-		MemberOf m = members.get(id);
+		QueryResults results = session.getQueryResults("getMemberOf",
+				new Object[] { getParticle(id) });
 		
-		if (m == null || session.getFactHandle(m) == null) {
-			members.remove(id);
-			QueryResults results = session.getQueryResults("getMemberOf",
-					new Object[] { getParticle(id) });
+		for (QueryResultsRow row : results) {
+			if (members.containsKey(id))
+				members.remove(id);
 			
-			for (QueryResultsRow row : results) {
-				members.put(id, (MemberOf) row.get("m"));
-				return members.get(id);
-			}
-			
-			return null;
+			members.put(id, (MemberOf) row.get("m"));	
+			return members.get(id);
 		}
 		
-		return m;
+		return null;
 	}
 	
-	public Network getNetwork(final UUID particle) {
-		MemberOf m = getMemberOf(particle);
+	// Similarly query session for access to MemberOf structures
+	private synchronized Set<MemberOf> getMembersOfNet(final Network net) {	
+		Set<MemberOf> netMembers = new CopyOnWriteArraySet<MemberOf>();
+		
+		QueryResults results = session.getQueryResults("networkMembers",
+				new Object[] { net });
+		
+		for (QueryResultsRow row : results) {
+			netMembers.add((MemberOf) row.get("m"));
+		}
+		
+		return Collections.unmodifiableSet(netMembers);
+	}
+	
+	public synchronized Network getNetwork(final UUID pId) {
+		MemberOf m = getMemberOf(pId);
 		
 		if (m != null)
 			return m.getNetwork();
-		else if (isReserved(particle))
-			return getReservedNetwork(particle);
+		else if (isReserved(pId))
+			return reservedNetworks.get(pId);
 		else
 			return null;
 	}
 
 	public synchronized Set<Network> getNetworks() {
-		// If we allow for dynamic creation of network
+		Set<Network> networks = new CopyOnWriteArraySet<Network>();
+
+		// If we allow for dynamic creation of clusters,
 		// we must check which ones exist every time
-		if (this.networks.isEmpty()) {
-			// Check which ones currently exist
-			Collection<Object> networkSearch = session
-					.getObjects(new ObjectFilter() {
-						@Override
-						public boolean accept(Object object) {
-							return object instanceof Network;
-						}
-					});
+		Collection<Object> netSearch = session
+				.getObjects(new ObjectFilter() {
+
+					@Override
+					public boolean accept(Object object) {
+						return object instanceof Network;
+					}
+				});
 			
-			// Add networks to list
-			for (Object object : networkSearch) {
-				this.networks.add((Network) object);
-			}
+		for (Object object : netSearch) {
+			networks.add((Network) object);
 		}
 		
-		return Collections.unmodifiableSet(this.networks);
+		return Collections.unmodifiableSet(networks);
+	}
+	
+	public boolean isReserved(final UUID pId) {
+		if (reservedNetworks.containsKey(pId))
+			return true;
+		else
+			return false;
+	}
+	
+	public void reserveNetwork(final UUID pId, final Network net) {
+		if (!reservedNetworks.containsKey(pId))
+			reservedNetworks.put(pId, net);
+	}
+	
+	public void clearReservation(final UUID pId) {
+		if (reservedNetworks.containsKey(pId))
+			reservedNetworks.remove(pId);
 	}
 	
 	public int getNumNetworks(){
@@ -134,55 +160,30 @@ public class NetworkService extends EnvironmentService {
 	
 	// Update network integer number
 	public int getNextNumNetwork(){
-		this.networks.clear();
 		return numNetworks++;
 	}
 	
-	public int getNoLinks(final UUID particle) {
-		return getParticle(particle).getNoLinks();
+	public int getNoLinks(final UUID pId, final Network net) {
+		if (!getMembersOfNet(net).isEmpty())
+			return getMembersOfNet(net).size();
+		else
+			return 0;
 	}
 	
-	public void assignLink(UUID id, Particle p) {	
-		getParticle(id).assignLink(p);
-		p.assignLink(getParticle(id));
+	// Create membership for the two particles forming a network
+	public void createMembership(final UUID pId, final Particle collision, final Network net) {
+		session.insert(new MemberOf(getParticle(pId), net));	
+		session.insert(new MemberOf(collision, net));	
 	}
 	
-	public synchronized Set<Particle> getLinks(UUID id) {	
-		return getParticle(id).getLinks();
+	// Join membership of this particle to a network
+	public void joinMembership(final UUID pId, final Network net) {
+		session.insert(new MemberOf(getParticle(pId), net));	
 	}
 	
-	public void removeLink(UUID id, Particle p) {	
-		getParticle(id).removeLink(p);	
-		p.removeLink(getParticle(id));
-	}
-	
-	public void detachLinks(UUID id) {
-		Set<Particle> linkedParticles = getLinks(id);
-		Particle p = getParticle(id);
-		
-		for (Particle lp : linkedParticles) {
-			removeLink(id, lp);
-			removeLink(lp.getId(), p);
-		}
-		
-		if (p.getNoLinks() != 0)
-			logger.info("Error detaching links from particle " + p.getName());
-	}
-	
-	public void reserveSlot(UUID id, Network net) {
-		getParticle(id).reserveSlot(net);
-	}
-	
-	public void occupySlot(UUID id) {
-		getParticle(id).occupySlot();
-	}
-	
-	public boolean isReserved(UUID id) {
-		return getParticle(id).isReserved();
-	}
-	
-	public Network getReservedNetwork(UUID id) {
-		return getParticle(id).getReservation();
+	// Retract membership of this particle from a network
+	public void retractMembership(final UUID pId) {
+		session.retract(session.getFactHandle(getMemberOf(pId)));
 	}
 
 	// Get particles that are not part of a network
@@ -200,18 +201,18 @@ public class NetworkService extends EnvironmentService {
 	
 	public void printNetworks(Time t) {	
 		Set<Network> roundNetworks = getNetworks();
-		
+
 		logger.info("Total number of networks existing at time cycle " + t + " is: " + roundNetworks.size());
 
 		if (!roundNetworks.isEmpty()) {
 			for (Network net : roundNetworks) {
 				logger.info("For " + net + ", the particles are:");
-				for (Entry<UUID, MemberOf> mem : this.members.entrySet()){
-					if (mem.getValue().network != null && mem.getValue().network.equals(net))
-						logger.info(mem.getValue());
+				Set<MemberOf> membersOfNet = getMembersOfNet(net);
+				for (MemberOf mem : membersOfNet){
+					logger.info(mem);
 				}
 			}
 		}
 	}
-
+	
 }

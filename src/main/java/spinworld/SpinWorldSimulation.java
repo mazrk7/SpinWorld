@@ -250,6 +250,7 @@ public class SpinWorldSimulation extends InjectedSimulation {
 		}
 		
 		mobilityService.printCollisions(e.getTime());
+		mobilityService.clearCollisions();
 		networkService.printNetworks(e.getTime());
 	}
 	

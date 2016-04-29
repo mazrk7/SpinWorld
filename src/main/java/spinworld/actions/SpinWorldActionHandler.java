@@ -14,7 +14,6 @@ import com.google.inject.Inject;
 import spinworld.MobilityService;
 import spinworld.SpinWorldService;
 import spinworld.facts.Particle;
-import spinworld.network.MemberOf;
 import spinworld.network.NetworkService;
 import uk.ac.imperial.presage2.core.Action;
 import uk.ac.imperial.presage2.core.environment.ActionHandler;
@@ -130,19 +129,11 @@ public class SpinWorldActionHandler implements ActionHandler {
 		
 		Particle p = getParticle(actor);
 		
-		// Perform resource allocation action
-		if (action instanceof ParticleAction)
-			((ParticleAction) action).setParticle(p);
-		
-		// Time stamp resource allocation action
-		if (action instanceof TimeStampedAction)
-			((TimeStampedAction) action).setT(getSpinWorldService().getRoundNumber());
-		
 		// If mobile agent action is to move
 		if (action instanceof Move) {			
 			final Move m = (Move) action;
 			Location loc = null;
-			
+
 			// Get the agent's current location
 			try {
 				loc = mobilityService.getLocation(actor);
@@ -160,26 +151,27 @@ public class SpinWorldActionHandler implements ActionHandler {
 					final Move mNew = environment.getArea()
 							.getValidMove(loc, m);
 					target = new Location(loc.add(mNew));
+					
+					// If the move is valid, update the agent's location to target
+					this.mobilityService.setLocation(actor, target);
+					
+					// Check if any collisions occurred at this target location
+					this.mobilityService.checkForCollisions(actor, target);
 				} catch (EdgeException e) {
 					throw new ActionHandlingException(e);
 				}
 			}
-			
-			// If the move is valid, update the agent's location to target
-			this.mobilityService.setLocation(actor, target);
-			
-			// Check if any collisions occurred at this target location
-			this.mobilityService.checkForCollisions(actor, target);
 		}
+				
+		// Perform resource allocation action
+		if (action instanceof ParticleAction)
+			((ParticleAction) action).setParticle(p);
+		
+		// Time stamp resource allocation action
+		if (action instanceof TimeStampedAction)
+			((TimeStampedAction) action).setT(getSpinWorldService().getRoundNumber());
 		
 		session.insert(action);
-		
-		if (action instanceof CreateNetwork) {
-			session.insert(new MemberOf(p, ((CreateNetwork) action).getNetwork()));	
-			session.insert(new MemberOf(((CreateNetwork) action).getCollidedParticle(), ((CreateNetwork) action).getNetwork()));	
-		}
-		else if (action instanceof JoinNetwork)
-			session.insert(new MemberOf(p, ((JoinNetwork) action).getNetwork()));
 
 		if (logger.isDebugEnabled())
 			logger.debug("Handling: " + action);

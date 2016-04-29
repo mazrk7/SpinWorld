@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.apache.log4j.Logger;
 import org.drools.runtime.ObjectFilter;
@@ -35,9 +36,12 @@ public class MobilityService extends EnvironmentService {
 	final StatefulKnowledgeSession session;
 
 	Map<UUID, Particle> particles = new HashMap<UUID, Particle>();
-	
+	Map<UUID, Set<Particle>> collisions = new HashMap<UUID, Set<Particle>>();
+	int noCollisions = 0;
+
 	final protected EnvironmentServiceProvider serviceProvider;
 	LocationService locationService = null;
+	AreaService areaService = null;
 	
 	@Inject
 	@Named("params.size")
@@ -67,6 +71,7 @@ public class MobilityService extends EnvironmentService {
 				logger.warn("Could not load location service", e);
 			}
 		}
+		
 		return locationService;
 	}
 	
@@ -95,79 +100,83 @@ public class MobilityService extends EnvironmentService {
 		return particles.get(id);
 	}
 	
-	public Location getLocation(UUID particle) {
+	public Location getLocation(UUID pId) {
 		locationService = getLocationService();
-		return locationService.getAgentLocation(particle);
+		return locationService.getAgentLocation(pId);
 	}
 	
-	public void setLocation(final UUID particle, final Location loc) {
+	public void setLocation(final UUID pId, final Location loc) {
 		locationService = getLocationService();
-		locationService.setAgentLocation(particle, loc);
-		getParticle(particle).setLoc(loc);
+		locationService.setAgentLocation(pId, loc);
+		getParticle(pId).setLoc(loc);
 	}
 	
-	public int getVelocity(UUID particle) {
-		return getParticle(particle).getVelocity();
+	public int getVelocity(UUID pId) {
+		return getParticle(pId).getVelocity();
 	}
 	
-	public void setVelocity(final UUID particle, final int velocity) {
-		getParticle(particle).setVelocity(velocity);
+	public void setVelocity(final UUID pId, final int velocity) {
+		getParticle(pId).setVelocity(velocity);
 	}
 	
 	// Limited velocity change to dimensions of environment
-	private void updateVelocity(final UUID particle) {
-		int updateVelocity = getVelocity(particle) + vConst * getNoCollisions(particle);	
+	public void updateVelocity(final UUID pId, int noLinks) {
+		int updateVelocity = getVelocity(pId) + vConst * noLinks;	
 		
 		if (updateVelocity > size)
-			setVelocity(particle, size);
+			setVelocity(pId, size);
 		else
-			setVelocity(particle, updateVelocity);
-	}
-
-	public int getNoCollisions(UUID particle) {
-		return getParticle(particle).getNoCollisions();
+			setVelocity(pId, updateVelocity);
 	}
 	
-	public void collide(UUID particle, UUID otherParticle) {
-		Particle a = getParticle(particle);
-		Particle b = getParticle(otherParticle);
-		
-		a.collide(b);
-		b.collide(a);
-		logger.info("Collision between particles " + a.getName() + " and " + b.getName());
-		
-		updateVelocity(particle);
-		updateVelocity(otherParticle);
+	public int getNoCollisions(final UUID pId) {
+		if (this.collisions.containsKey(pId))
+			return this.collisions.get(pId).size();
+		else
+			return 0;
 	}
 	
-	public synchronized Set<Particle> getCollisions(UUID id) {	
-		return getParticle(id).getCollisions();
+	public synchronized Set<Particle> getCollisions(final UUID pId) {	
+		if (this.collisions.containsKey(pId))
+			return this.collisions.get(pId);
+		else
+			return null;
 	}	
 	
-	public void clearCollisions(UUID id) {
-		getParticle(id).clearCollisions();
+	private void addCollisions(UUID pId, Set<Particle> collisionCandidates) {		
+		collisions.put(pId, collisionCandidates);
 	}
 	
-	public void checkForCollisions(final UUID pId, final Location target) {
-		Particle particle = getParticle(pId);
+	public void checkForCollisions(final UUID pId, final Location target) {		
+		Set<Particle> collisionCandidates = new CopyOnWriteArraySet<Particle>();
+		boolean collisionHappened = false;
 		
-		for (UUID otherId : this.particles.keySet()) {
-			Particle otherParticle = getParticle(otherId);
-			
-			if (!particle.equals(otherParticle) && target.equals(getLocation(otherId)))
-				collide(pId, otherId);	
-		}	
+		for (UUID otherId : this.particles.keySet()) {			
+			if (!getParticle(pId).equals(getParticle(otherId)) && target.equals(getLocation(otherId))) {
+				collisionCandidates.add(getParticle(otherId));
+				
+				logger.info("Collision between particles " + getParticle(pId).getName() + 
+						" and " + getParticle(otherId).getName());
+				this.noCollisions++;
+				
+				collisionHappened = true;
+			}
+		}
+		
+		if (collisionHappened)
+			addCollisions(pId, collisionCandidates);
 	}
 	
-	public void printCollisions(Time t) {	
-		int totalCollisions = 0;
-		
-		for (UUID id : this.particles.keySet()) {
-			logger.info(getNoCollisions(id) + " collision(s) for particle " + getParticle(id).getName());
-			totalCollisions += getNoCollisions(id);
-		}	
-		
-		logger.info("Total number of collisions at time cycle " + t + " is: " + totalCollisions);
+	public void printCollisions(Time t) {
+		logger.info("Total running number of collisions at time cycle " + t + " is: " + noCollisions);
+
+		for (UUID id : this.collisions.keySet()) {
+			logger.info(getNoCollisions(id) + " time cycle collision(s) for particle " + getParticle(id).getName());
+		}		
+	}
+	
+	public void clearCollisions() {
+		this.collisions.clear();
 	}
 	
 }

@@ -77,19 +77,12 @@ declare Processed
 	act: Object	@key
 end
 
-/* declare IsHead
-	@role(event)
-	particle : Particle	@key
-	network : Network	@key
-	time : int	@key
-end */
-
 query getMemberOf(Particle p)
 	m : MemberOf(particle == p)
 end
 
 query networkMembers(Network n)
-	MemberOf(p : particle, network == n)
+	m : MemberOf(p : particle, network == n)
 end
 
 rule "Prune actions"
@@ -257,13 +250,11 @@ rule "Leave network"
 	salience 13
 	when
 		$a : LeaveNetwork($n : network, $p : particle)
-		$m : MemberOf(network == $n, particle == $p)
 		not Processed($a ;)
 	then
-		retract($m);
 		insert(new Processed($a));
 		insert(new LeftNetwork($n));
-		logger.info("Left network " + $n + " : " + $p);
+		logger.info("Left " + $n + " : " + $p);
 end
 
 rule "Check empty network"
@@ -277,49 +268,6 @@ rule "Check empty network"
 		retract($l);
 		logger.info("Deleting network: " + $n);
 end
-
-/* rule "Assign network head"
-	/salience -1
-	no-loop
-	when
-		$n : Network( )
-		$members : List(size > 0) from accumulate(
-			$p : Particle( ) and
-			MemberOf( network == $n, particle == $p )
-			, collectList( $p )
-		)
-		not( exists( Particle( role == Role.HEAD ) from $members ) )
-	then
-		Particle randomMember =  (Particle) $members.get( Random.randomInt( $members.size() ) );
-		logger.info("New head: " + randomMember);
-		randomMember.setRole( Role.HEAD );
-end */
-
-/* rule "Network head event"
-	no-loop
-	salience -2
-	when
-		Round( type == RoundType.DEMAND, $t : number )
-		$p : Particle( role == Role.HEAD )
-		$n : Network( )
-		MemberOf( particle == $p, network == $n )
-		not( IsHead( particle == $p, network == $n, time == $t ) )
-	then
-		IsHead e = new IsHead( $p, $n, $t );
-		logger.info(e);
-		insert( e );
-end */
-
-/* rule "Unassign network head after 20 rounds"
-	when
-		$p : Particle( role == Role.HEAD )
-		$h : List( size > 0, size % 20 == 0 ) from collect( IsHead( particle == $p ) over window:time( 50s ) )
-	then
-		modify($p) {
-			setRole( Role.PROSUMER )
-		}
-		logger.info("No longer network head: " + $p );
-end */
 
 rule "Surplus allocated pool"
 	salience -100

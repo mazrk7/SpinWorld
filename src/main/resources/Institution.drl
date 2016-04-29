@@ -104,7 +104,7 @@ rule "Sanction particles"
 			insert(sanc);
 			logger.info(sanc);
 		}
-		else if($s >= 0.1 && $s < 0.8) {
+		else if($s >= 0.1 && $s < 0.9) {
 			$p.incrementSanctionCount();
 		
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.WARNING);
@@ -112,7 +112,7 @@ rule "Sanction particles"
 			logger.info(sanc);	
 		}
 		
-		if($s >= 0.8 || sanctionCount >= 3) {
+		if($s >= 0.9 || sanctionCount >= 3) {
 			$p.clearSanctionHistory();
 		
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.EXPULSION);
@@ -121,7 +121,7 @@ rule "Sanction particles"
 			
 			retract($m);
 			insert(new LeftNetwork($n));
-			logger.info($p + " expelled from network: " + $n);
+			logger.info("Expulsion from network: " + $n + $p + " expelled from network: " + $n);
 		}
 end
 	

@@ -77,8 +77,6 @@ public class SpinWorldAgent extends MobileAgent {
 
 	Cheat cheatOn = Cheat.PROVISION;
 
-	int noLinks = 0;
-
 	Network network = null;
 	Set<Particle> collisions = new CopyOnWriteArraySet<Particle>();
 	Map<Network, DescriptiveStatistics> networkUtilities = new HashMap<Network, DescriptiveStatistics>();
@@ -111,7 +109,7 @@ public class SpinWorldAgent extends MobileAgent {
 	
 	double theta = .1;
 	double phi = .1;
-
+			
 	public SpinWorldAgent(UUID id, String name, Location myLocation, int velocity, double radius, 
 			double a, double b, double c, double pCheat, double alpha, double beta, Cheat cheatOn, 
 			NetworkLeaveAlgorithm netLeave, boolean resetSatisfaction, long rndSeed, double t1, 
@@ -213,31 +211,18 @@ public class SpinWorldAgent extends MobileAgent {
 		
 		if (this.networkService.isReserved(getID())) {
 			joinNetwork(network);
-			this.networkService.occupySlot(getID());
+			this.networkService.clearReservation(getID());
 		}
 		
-		if (!this.collisions.isEmpty()) {
+		if (this.collisions != null) {
+			int noLinks = this.networkService.getNoLinks(getID(), network);
+					
 			for (Particle p : collisions) {
-				this.networkService.assignLink(getID(), p);	
-				Network otherNetwork = this.networkService.getNetwork(p.getId());
-				
-				if (network == null) {
-					if (otherNetwork == null)
-						createNetwork(p);
-					else if (otherNetwork != null)
-						joinNetwork(otherNetwork);
-				}
-				else if (network != null) {
-					if (otherNetwork == null)
-						this.networkService.reserveSlot(p.getId(), network);
-					else if (otherNetwork != null && !network.equals(otherNetwork))
-						assessNetwork(otherNetwork);
-				}
+				formNetworks(p);
 			}
-				
-			// Clear the collisions for the particle in this round
-			this.mobilityService.clearCollisions(getID());
-			this.collisions.clear();
+			
+			if (noLinks < this.networkService.getNoLinks(getID(), network))
+				this.mobilityService.updateVelocity(getID(), this.networkService.getNoLinks(getID(), network));
 		}
 		
 		if (!dead && permCreateNetwork && this.network == null && resourcesGame.getRoundNumber() > 1
@@ -424,34 +409,51 @@ public class SpinWorldAgent extends MobileAgent {
 		}
 	}
 	
-	protected synchronized void createNetwork(Particle p) {
-		try {
-			Network otherNet = this.networkService.getNetwork(p.getId());
-			
-			if (otherNet == null) {
-				Allocation[] methods = { Allocation.RANDOM };
-				int pick = rnd.nextInt(methods.length);
-				Allocation method = methods[pick];
-				Network net = new Network(this.networkService.getNextNumNetwork(), method, 
-					this.monitoringLevel, this.monitoringCost);
-
-				environment.act(new CreateNetwork(net, p), getID(), authkey);
-				this.resourcesGame.session.insert(net);
-				this.network = net;
-			
-				numNetworksCreated++;
+	private void formNetworks(Particle p) {
+		synchronized(this.networkService) {
+			this.network = this.networkService.getNetwork(getID());
+			Network otherNetwork = this.networkService.getNetwork(p.getId());
+	
+			if (network == null) {
+				if (otherNetwork == null)
+					createNetwork(p);
+				else if (otherNetwork != null)
+					joinNetwork(otherNetwork);
 			}
-			else
-				joinNetwork(otherNet);
+			else if (network != null) {
+				if (otherNetwork == null)
+					this.networkService.reserveNetwork(p.getId(), network);
+				else if (otherNetwork != null && !network.equals(otherNetwork))
+					assessNetwork(otherNetwork);
+			}
+		}
+	}
+	
+	protected void createNetwork(Particle p) {
+		try {	
+			Allocation[] methods = { Allocation.RANDOM };
+			int pick = rnd.nextInt(methods.length);
+			Allocation method = methods[pick];
+			Network net = new Network(this.networkService.getNextNumNetwork(), method, 
+				this.monitoringLevel, this.monitoringCost);
+			this.network = net;
+
+			
+			this.networkService.createMembership(getID(), p, net);
+			this.resourcesGame.session.insert(net);
+			environment.act(new CreateNetwork(net, p), getID(), authkey);
+						
+			numNetworksCreated++;
 		} catch (ActionHandlingException e) {
 			logger.warn("Failed to create network", e);
 		}
 	}
 
-	protected synchronized void joinNetwork(Network net) {
+	protected void joinNetwork(Network net) {
 		try {
-			environment.act(new JoinNetwork(net), getID(), authkey);
-			this.network = net;
+	    	this.networkService.joinMembership(getID(), net);
+	    	environment.act(new JoinNetwork(net), getID(), authkey);
+		   	this.network = net;
 		} catch (ActionHandlingException e) {
 			logger.warn("Failed to join network", e);
 		}
@@ -461,8 +463,8 @@ public class SpinWorldAgent extends MobileAgent {
 		if (this.network == null)
 			return;
 		try {
-			environment.act(new LeaveNetwork(this.network), getID(), authkey);
-			this.networkService.detachLinks(getID());
+		    this.networkService.retractMembership(getID());
+		    environment.act(new LeaveNetwork(this.network), getID(), authkey);
 			this.network = null;
 		} catch (ActionHandlingException e) {
 			logger.warn("Failed to leave network", e);
@@ -474,8 +476,10 @@ public class SpinWorldAgent extends MobileAgent {
 		Network preferred = networkEvaluation.preferredNetwork(otherNet);
 
 		// If the networks differ by preference
-		if (preferred != this.network && preferred != null)
+		if (preferred != this.network && preferred != null) {
+			leaveNetwork();
 			joinNetwork(preferred);
+		}
 	}
 
 	protected void calculateScores() {
@@ -860,7 +864,6 @@ public class SpinWorldAgent extends MobileAgent {
 		// Check DB is available
 		if (this.persist != null) {
 			// Save number of social contacts of this agent
-			this.persist.getState(time).setProperty("noLinks", ((Integer) (this.noLinks)).toString());
 			if (this.network != null)
 				this.persist.getState(time).setProperty("network", ((Integer) (this.network.getId())).toString());
 		}

@@ -1,23 +1,15 @@
 package spinworld.facts;
 
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArraySet;
 
-import spinworld.network.Network;
 import uk.ac.imperial.presage2.util.location.Location;
 
-// Moving particle in a linear square environment
+// Mobile particle in a linear square environment
 public class Particle {
 
 	UUID id;
 	final String name;
 	Location loc;
-	
-	// Number of collisions, represents number of particle's collisions
-	int noCollisions = 0;
-	// Number of links, represents number of particle's social connections
-	int noLinks = 0;
 	
 	int velocity = 1;
 	
@@ -40,12 +32,7 @@ public class Particle {
 		
 	// Size multiplier a.k.a. radius of particle acts as a weighting for resource allocation
 	double radius = 1;
-	
-	Set<Particle> collidedParticles = new CopyOnWriteArraySet<Particle>();
-	Set<Particle> linkedParticles = new CopyOnWriteArraySet<Particle>();
-	
-	Network reservedNetworkSlot = null;
-	
+			
 	int sanctionHistory = 0;
 
 	public Particle(UUID id) {
@@ -100,55 +87,6 @@ public class Particle {
 		this.velocity = velocity;
 	}
 	
-	public int getNoCollisions() {
-		return noCollisions;
-	}
-	
-	public void collide(Particle p) {
-		if (!this.collidedParticles.contains(p)) {
-			collidedParticles.add(p);
-			this.noCollisions++;
-		}
-	}
-	
-	public void clearCollisions() {
-		collidedParticles.clear();
-	}
-	
-	public Set<Particle> getCollisions() {
-		if (this.collidedParticles != null)
-			return collidedParticles;
-		else
-			return null;
-	}
-		
-	public int getNoLinks() {
-		return noLinks;
-	}
-	
-	// Form a social connection for particle
-	public void assignLink(Particle p) {
-		if (!this.linkedParticles.contains(p)) {
-			linkedParticles.add(p);
-			this.noLinks++;
-		}
-	}
-	
-	// Remove a social connection for particle
-	public void removeLink(Particle p) {
-		if (this.linkedParticles.contains(p)) {
-			linkedParticles.remove(p);
-			this.noLinks--;
-		}
-	}
-	
-	public Set<Particle> getLinks() {
-		if (this.linkedParticles != null)
-			return linkedParticles;
-		else
-			return null;
-	}
-	
 	public double getRadius() {
 		return radius;
 	}
@@ -199,25 +137,6 @@ public class Particle {
 
 	public double getBeta() {
 		return beta;
-	}
-	
-	public void reserveSlot(Network net) {
-		reservedNetworkSlot = net;
-	}
-	
-	public void occupySlot() {
-		reservedNetworkSlot = null;
-	}
-	
-	public boolean isReserved() {
-		if (reservedNetworkSlot != null)
-			return true;
-		else 
-			return false;
-	}
-	
-	public Network getReservation() {
-		return reservedNetworkSlot;
 	}
 	
 	public int getSanctionHistory() {
