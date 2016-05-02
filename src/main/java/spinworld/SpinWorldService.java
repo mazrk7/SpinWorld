@@ -14,6 +14,7 @@ import com.google.inject.Singleton;
 
 import spinworld.facts.Particle;
 import spinworld.facts.Round;
+import spinworld.network.Network;
 import uk.ac.imperial.presage2.core.environment.EnvironmentRegistrationRequest;
 import uk.ac.imperial.presage2.core.environment.EnvironmentService;
 import uk.ac.imperial.presage2.core.environment.EnvironmentSharedStateAccess;
@@ -88,24 +89,28 @@ public class SpinWorldService extends EnvironmentService {
 		return roundNumber;
 	}
 
-	public double getG(UUID particle) {
-		return getParticle(particle).getG();
+	public double getG(UUID pId) {
+		return getParticle(pId).getG();
 	}
 
-	public double getQ(UUID particle) {
-		return getParticle(particle).getQ();
+	public double getQ(UUID pId) {
+		return getParticle(pId).getQ();
 	}
 
-	public double getAllocated(UUID particle) {
-		return getParticle(particle).getAllocated();
+	public double getAllocated(UUID pId) {
+		return getParticle(pId).getAllocated();
 	}
 
-	public double getAppropriated(UUID particle) {
-		return getParticle(particle).getAppropriated();
+	public double getAppropriated(UUID pId) {
+		return getParticle(pId).getAppropriated();
 	}
 	
-	public int getSanctionCount(UUID particle) {
-		return getParticle(particle).getSanctionHistory();
+	public int getWarningCount(UUID pId, Network net) {
+		return getParticle(pId).getWarningCount(net);
+	}
+	
+	public double getObservedCatchRate(UUID pId, Network net) {
+		return getParticle(pId).getObservedCatchRate(net);
 	}
 	
 }

@@ -57,6 +57,11 @@ public class SpinWorldAgent extends MobileAgent {
 	@Inject
 	@Named("params.monitoringCost")
 	private double monitoringCost;
+	
+	// Number of warnings in created networks
+	@Inject
+	@Named("params.noWarnings")
+	private int noWarnings;
 
 	double g = 0; // Resources generated
 	double q = 0; // Resources needed
@@ -109,7 +114,7 @@ public class SpinWorldAgent extends MobileAgent {
 	
 	double theta = .1;
 	double phi = .1;
-			
+				
 	public SpinWorldAgent(UUID id, String name, Location myLocation, int velocity, double radius, 
 			double a, double b, double c, double pCheat, double alpha, double beta, Cheat cheatOn, 
 			NetworkLeaveAlgorithm netLeave, boolean resetSatisfaction, long rndSeed, double t1, 
@@ -315,9 +320,10 @@ public class SpinWorldAgent extends MobileAgent {
 				defectBenefit = defectBenefit/defectCount;
 				complyBenefit = complyBenefit/complyCount;
 			
-				double risk = this.resourcesGame.getSanctionCount(getID())/3.0;
+				double risk = ((double) this.resourcesGame.getWarningCount(getID(), this.network))/this.network.getNoWarnings();
+				double catchRate = this.resourcesGame.getObservedCatchRate(getID(), this.network);
 			
-				reinforcementToCheat(defectBenefit, complyBenefit, risk, this.network.getMonitoringLevel());
+				reinforcementToCheat(defectBenefit, complyBenefit, risk, catchRate);
 				
 				// Modify strategy depending on the reinforcement of propensity to cheat
 				modifyStrategy();
@@ -359,15 +365,14 @@ public class SpinWorldAgent extends MobileAgent {
 	private void reinforcementToCheat(double defectBenefit, double complyBenefit, double risk, double catchRate) {
 		if (defectBenefit > complyBenefit) {
 			double benefit = defectBenefit - complyBenefit;
-			double reinforcement = theta * benefit - phi * risk;
-			reinforcement *= (1-catchRate);
+			double reinforcement = theta * (benefit - ((risk+catchRate)/2.0));
 			
 			if (reinforcement > 0.0)
-				this.pCheat *= (1 + reinforcement);
+				this.pCheat = this.pCheat + reinforcement * (1 - pCheat);
 		}
 		else {		
 			double benefit = complyBenefit - defectBenefit;
-			this.pCheat *= (1 - benefit * theta);
+			this.pCheat = this.pCheat - phi * benefit * this.pCheat;
 		}
 	}
 
@@ -437,7 +442,7 @@ public class SpinWorldAgent extends MobileAgent {
 			int pick = rnd.nextInt(methods.length);
 			Allocation method = methods[pick];
 			Network net = new Network(this.networkService.getNextNumNetwork(), method, 
-				this.monitoringLevel, this.monitoringCost);
+				this.monitoringLevel, this.monitoringCost, this.noWarnings);
 			this.network = net;
 
 			

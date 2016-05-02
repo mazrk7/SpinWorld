@@ -8,7 +8,7 @@ public enum GraduationLevel {
 	EXPULSION(2);
 	
 	private int value;
-	     
+		     
 	private GraduationLevel(int value) {
 	    this.value = value;
 	}

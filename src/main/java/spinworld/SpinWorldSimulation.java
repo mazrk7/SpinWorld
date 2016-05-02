@@ -124,6 +124,8 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	public double monitoringLevel = 1.0;
 	@Parameter(name = "monitoringCost", optional = true)
 	public double monitoringCost = 0.0;
+	@Parameter(name = "noWarnings", optional = true)
+	public int noWarnings = 3;
 	
 	public SpinWorldSimulation(Set<AbstractModule> modules) {
 		super(modules);

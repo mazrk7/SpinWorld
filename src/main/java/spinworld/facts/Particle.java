@@ -1,7 +1,14 @@
 package spinworld.facts;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
+import spinworld.GraduationLevel;
+import spinworld.network.Network;
 import uk.ac.imperial.presage2.util.location.Location;
 
 // Mobile particle in a linear square environment
@@ -33,8 +40,9 @@ public class Particle {
 	// Size multiplier a.k.a. radius of particle acts as a weighting for resource allocation
 	double radius = 1;
 			
-	int sanctionHistory = 0;
-
+	Map<Network, ArrayList<GraduationLevel>> sanctionHistory = new HashMap<Network, ArrayList<GraduationLevel>>();
+	Map<Network, ArrayList<Boolean>> observedCatchHistory = new HashMap<Network, ArrayList<Boolean>>();
+	
 	public Particle(UUID id) {
 		super();
 		this.id = id;
@@ -139,16 +147,52 @@ public class Particle {
 		return beta;
 	}
 	
-	public int getSanctionHistory() {
-		return sanctionHistory;
+	public ArrayList<GraduationLevel> getSanctionHistory(Network net) {
+		if (sanctionHistory.containsKey(net)) 
+			return sanctionHistory.get(net);
+		else
+			return null;
 	}
 	
-	public void incrementSanctionCount() {
-		this.sanctionHistory++;
+	public void updateSanctionHistory(Network net, GraduationLevel sanction) {
+		if (sanctionHistory.containsKey(net)) 
+			sanctionHistory.get(net).add(sanction);
+		else
+			sanctionHistory.put(net, new ArrayList<GraduationLevel>(Arrays.asList(sanction)));
 	}
 	
-	public void clearSanctionHistory() {
-		this.sanctionHistory = 0;
+	public int getWarningCount(Network net) {
+		int warningCount = 0;
+		
+		if (sanctionHistory.containsKey(net))
+			warningCount = Collections.frequency(sanctionHistory.get(net), GraduationLevel.WARNING);
+		
+		return warningCount;		
+	}
+	
+	public ArrayList<Boolean> getObservedCatchHistory(Network net) {
+		if (observedCatchHistory.containsKey(net)) 
+			return observedCatchHistory.get(net);
+		else
+			return null;
+	}
+	
+	public void updateObservedCatchHistory(Network net, Boolean cheat) {
+		if (observedCatchHistory.containsKey(net)) 
+			observedCatchHistory.get(net).add(cheat);
+		else
+			observedCatchHistory.put(net, new ArrayList<Boolean>(Arrays.asList(cheat)));
+	}
+	
+	public double getObservedCatchRate(Network net) {
+		double catchRate = 0.0;
+		
+		if (observedCatchHistory.containsKey(net)) {
+			int catchCount = Collections.frequency(observedCatchHistory.get(net), true);			
+			catchRate = ((double) catchCount)/observedCatchHistory.get(net).size();
+		}
+		
+		return catchRate;
 	}
 		
 	@Override

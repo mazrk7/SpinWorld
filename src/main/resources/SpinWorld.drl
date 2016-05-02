@@ -251,7 +251,7 @@ rule "Leave network"
 	when
 		$a : LeaveNetwork($n : network, $p : particle)
 		not Processed($a ;)
-	then
+	then		
 		insert(new Processed($a));
 		insert(new LeftNetwork($n));
 		logger.info("Left " + $n + " : " + $p);

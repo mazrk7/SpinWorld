@@ -18,6 +18,8 @@ public class Network {
 	double monitoringLevel = 0.0;
 	double monitoringCost = 0.0;
 	
+	int noWarnings = 0;
+	
 	Set<Particle> bannedParticles = new HashSet<Particle>();
 	
 	public Network(int id, Allocation allocationMethod) {
@@ -27,10 +29,11 @@ public class Network {
 	}
 	
 	public Network(int id, Allocation allocationMethod, double monitoringLevel,
-			double monitoringCost) {
+			double monitoringCost, int noWarnings) {
 		this(id, allocationMethod);
 		this.monitoringLevel = monitoringLevel;
 		this.monitoringCost = monitoringCost;
+		this.noWarnings = noWarnings;
 	}
 	
 	@Override
@@ -53,6 +56,10 @@ public class Network {
 	// Normalise against average provision
 	public double getMonitoringCost() {
 		return monitoringCost * 0.5;
+	}
+	
+	public int getNoWarnings() {
+		return this.noWarnings;
 	}
 	
 	public void banParticle(Particle p) {

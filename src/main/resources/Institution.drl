@@ -41,6 +41,14 @@ declare Sanction
 	level : GraduationLevel
 end
 
+declare Observation
+	@role(event)
+	particle : Particle	@key
+	observed : Particle	@key
+	network : spinworld.network.Network	@key
+	time : int	@key
+end
+
 declare TaskComplete
 	@role(event)
 	task : String	@key
@@ -97,24 +105,26 @@ rule "Sanction particles"
 		Violation($p : particle, $n : network, time == $t, $s : severity)
 		$m : MemberOf(network == $n, particle == $p)
 	then		
-		int sanctionCount = $p.getSanctionHistory();
-		
-		if($s < 0.1) {			
+		int warningCount = $p.getWarningCount($n);
+
+		if($s < 0.1) {	
+			$p.updateSanctionHistory($n, GraduationLevel.NO_SANCTION);
+				
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.NO_SANCTION);
 			insert(sanc);
 			logger.info(sanc);
 		}
 		else if($s >= 0.1 && $s < 0.9) {
-			$p.incrementSanctionCount();
+			$p.updateSanctionHistory($n, GraduationLevel.WARNING);
 		
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.WARNING);
 			insert(sanc);
 			logger.info(sanc);	
 		}
 		
-		if($s >= 0.9 || sanctionCount >= 3) {
-			$p.clearSanctionHistory();
-		
+		if($s >= 0.9 || warningCount >= $n.getNoWarnings()) {	
+			$p.updateSanctionHistory($n, GraduationLevel.EXPULSION);
+				
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.EXPULSION);
 			insert(sanc);
 			logger.info(sanc);	
@@ -125,6 +135,21 @@ rule "Sanction particles"
 			$n.banParticle($p);
 		}
 end
+
+rule "Observe sanctioning"
+	salience 10
+	when 
+		Round($t : number, type == RoundType.APPROPRIATE)
+		Sanction($pSanc : particle, $n : network, time == $t, $l : level)
+		$m : MemberOf(network == $n, $p : particle)
+	then		
+		if (!$pSanc.equals($p)) {
+			$p.updateObservedCatchHistory($n, Boolean.TRUE);		
+			Observation obsv = new Observation($p, $pSanc, $n, $t);
+			insert(obsv);
+			logger.info(obsv);
+		}
+end	
 	
 rule "Detect cheat on provision"
 	salience 1
@@ -141,6 +166,18 @@ rule "Detect cheat on provision"
 		
 		logger.info(v);
 		insert(v);
+end
+
+rule "Could not detect cheat on provision"
+	salience 1
+	when
+		Round($t : number, type == RoundType.APPROPRIATE)
+		MemberOf($p : particle, $n : network)
+		not Monitored($p, $n, $t ;)
+		Generate(t == $t, $g : g, $q : q, particle == $p)
+		Provision(particle == $p, t == $t, quantity < $g)
+	then
+		$p.updateObservedCatchHistory($n, Boolean.FALSE);	
 end
 
 rule "Detect cheat on demand"
@@ -160,6 +197,18 @@ rule "Detect cheat on demand"
 		insert(v);
 end
 
+rule "Could not detect cheat on demand"
+	salience 1
+	when
+		Round($t : number, type == RoundType.APPROPRIATE)
+		MemberOf($p : particle, $n : network)
+		not Monitored($p, $n, $t ;)
+		Generate(t == $t, $g : g, $q : q, particle == $p)
+		Demand(particle == $p, t == $t, quantity > $q)
+	then
+		$p.updateObservedCatchHistory($n, Boolean.FALSE);
+end
+
 rule "Detect cheat on appropriate"
 	salience 1
 	when
@@ -176,6 +225,19 @@ rule "Detect cheat on appropriate"
 		
 		logger.info(v);
 		insert(v);
+end
+
+rule "Could not detect cheat on appropriate"
+	salience 1
+	when
+		Round($t : number, type == RoundType.APPROPRIATE)
+		MemberOf($p : particle, $n : network)
+		not Monitored($p, $n, $t ;)
+		Generate(t == $t, $g : g, $q : q, particle == $p)
+		Allocate($r : quantity, particle == $p, t == $t)
+		Appropriate($rP : quantity, particle == $p, t == $t, quantity > $r)	
+	then
+		$p.updateObservedCatchHistory($n, Boolean.FALSE);		
 end
 
 rule "Prune monitored"
