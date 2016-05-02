@@ -209,11 +209,13 @@ public class SpinWorldAgent extends MobileAgent {
 		this.network = this.networkService.getNetwork(getID());
 		this.collisions = this.mobilityService.getCollisions(getID());
 		
-		if (this.networkService.isReserved(getID())) {
+		if (this.networkService.isReserved(getID()) && this.network != null) {
 			joinNetwork(network);
 			this.networkService.clearReservation(getID());
 		}
-		
+		else if (this.networkService.isReserved(getID()))
+			this.networkService.clearReservation(getID());
+
 		if (this.collisions != null) {
 			int noLinks = this.networkService.getNoLinks(getID(), network);
 					
@@ -317,7 +319,7 @@ public class SpinWorldAgent extends MobileAgent {
 			
 				reinforcementToCheat(defectBenefit, complyBenefit, risk, this.network.getMonitoringLevel());
 				
-				// Modify strategy depending on reinforcement of propensity to cheat
+				// Modify strategy depending on the reinforcement of propensity to cheat
 				modifyStrategy();
 			}
 			
@@ -450,6 +452,8 @@ public class SpinWorldAgent extends MobileAgent {
 	}
 
 	protected void joinNetwork(Network net) {
+		if (this.networkService.isBanned(getID(), net))
+			return;
 		try {
 	    	this.networkService.joinMembership(getID(), net);
 	    	environment.act(new JoinNetwork(net), getID(), authkey);

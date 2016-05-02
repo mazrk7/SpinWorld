@@ -1,6 +1,10 @@
 package spinworld.network;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import spinworld.facts.Allocation;
+import spinworld.facts.Particle;
 
 public class Network {
 	
@@ -13,6 +17,8 @@ public class Network {
 	// Monitoring parameters within network
 	double monitoringLevel = 0.0;
 	double monitoringCost = 0.0;
+	
+	Set<Particle> bannedParticles = new HashSet<Particle>();
 	
 	public Network(int id, Allocation allocationMethod) {
 		super();
@@ -47,6 +53,17 @@ public class Network {
 	// Normalise against average provision
 	public double getMonitoringCost() {
 		return monitoringCost * 0.5;
+	}
+	
+	public void banParticle(Particle p) {
+		bannedParticles.add(p);
+	}
+	
+	public boolean isBanned(Particle p) {
+		if (bannedParticles.contains(p))
+			return true;
+		else
+			return false;
 	}
 
 	@Override

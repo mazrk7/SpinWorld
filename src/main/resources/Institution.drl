@@ -121,7 +121,8 @@ rule "Sanction particles"
 			
 			retract($m);
 			insert(new LeftNetwork($n));
-			logger.info("Expulsion from network: " + $n + $p + " expelled from network: " + $n);
+			logger.info("Expulsion: " + $p + " from " + $n);
+			$n.banParticle($p);
 		}
 end
 	

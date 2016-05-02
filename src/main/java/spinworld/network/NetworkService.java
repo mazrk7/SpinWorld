@@ -35,8 +35,9 @@ public class NetworkService extends EnvironmentService {
 
 	Map<UUID, Particle> particles = new HashMap<UUID, Particle>();
 	Map<UUID, MemberOf> members = new HashMap<UUID, MemberOf>();
+	Set<Network> networks = new CopyOnWriteArraySet<Network>();
 	Map<UUID, Network> reservedNetworks = new HashMap<UUID, Network>();
-
+	
 	private int numNetworks = 0;
 	final protected EnvironmentServiceProvider serviceProvider;
 	
@@ -77,18 +78,22 @@ public class NetworkService extends EnvironmentService {
 	
 	// Similarly query session for access to MemberOf structures
 	private synchronized MemberOf getMemberOf(final UUID id) {
-		QueryResults results = session.getQueryResults("getMemberOf",
-				new Object[] { getParticle(id) });
+		MemberOf m = members.get(id);
 		
-		for (QueryResultsRow row : results) {
-			if (members.containsKey(id))
-				members.remove(id);
+		if (m == null || session.getFactHandle(m) == null) {
+			members.remove(id);
+			QueryResults results = session.getQueryResults("getMemberOf",
+					new Object[] { getParticle(id) });
 			
-			members.put(id, (MemberOf) row.get("m"));	
-			return members.get(id);
+			for (QueryResultsRow row : results) {
+				members.put(id, (MemberOf) row.get("m"));
+				return members.get(id);
+			}
+			
+			return null;
 		}
 		
-		return null;
+		return m;
 	}
 	
 	// Similarly query session for access to MemberOf structures
@@ -110,15 +115,21 @@ public class NetworkService extends EnvironmentService {
 		
 		if (m != null)
 			return m.getNetwork();
-		else if (isReserved(pId))
-			return reservedNetworks.get(pId);
+		else if (isReserved(pId)) {
+			Set<Network> nets = getNetworks();
+
+			if (nets.contains(reservedNetworks.get(pId)))
+				return reservedNetworks.get(pId);
+			else 
+				return null;
+		}
 		else
 			return null;
 	}
 
 	public synchronized Set<Network> getNetworks() {
-		Set<Network> networks = new CopyOnWriteArraySet<Network>();
-
+		networks.clear();
+		
 		// If we allow for dynamic creation of clusters,
 		// we must check which ones exist every time
 		Collection<Object> netSearch = session
@@ -183,7 +194,12 @@ public class NetworkService extends EnvironmentService {
 	
 	// Retract membership of this particle from a network
 	public void retractMembership(final UUID pId) {
-		session.retract(session.getFactHandle(getMemberOf(pId)));
+		if (session.getFactHandle(getMemberOf(pId)) != null)
+			session.retract(session.getFactHandle(getMemberOf(pId)));
+	}
+
+	public boolean isBanned(final UUID pId, final Network net) {
+		return net.isBanned(getParticle(pId));
 	}
 
 	// Get particles that are not part of a network
