@@ -18,7 +18,7 @@ public class Network {
 	double monitoringLevel = 0.0;
 	double monitoringCost = 0.0;
 	
-	int noWarnings = 0;
+	int noWarnings = 1;
 	
 	Set<Particle> bannedParticles = new HashSet<Particle>();
 	
