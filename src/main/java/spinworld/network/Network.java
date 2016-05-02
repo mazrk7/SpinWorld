@@ -18,8 +18,10 @@ public class Network {
 	double monitoringLevel = 0.0;
 	double monitoringCost = 0.0;
 	
+	// Number of warnings a network will give to a particle as punishment
 	int noWarnings = 1;
 	
+	// List of particles that are banned from the network
 	Set<Particle> bannedParticles = new HashSet<Particle>();
 	
 	public Network(int id, Allocation allocationMethod) {
