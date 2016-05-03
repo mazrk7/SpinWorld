@@ -54,6 +54,10 @@ public class Network {
 	public double getMonitoringLevel() {
 		return monitoringLevel;
 	}
+	
+	public void setMonitoringLevel(double mFreq) {
+		this.monitoringLevel = mFreq;
+	}
 
 	// Normalise against average provision
 	public double getMonitoringCost() {

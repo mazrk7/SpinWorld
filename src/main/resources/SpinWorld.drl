@@ -225,7 +225,7 @@ rule "Process Appropriate"
 end
 
 rule "Create network"
-	salience 11
+	salience 20
 	when
 		$a : CreateNetwork($n : network, $p : particle)
 		not Processed($a ;)
@@ -237,7 +237,7 @@ rule "Create network"
 end
 
 rule "Join network"
-	salience 12
+	salience 11
 	when
 		$j : JoinNetwork($n : network, $p : particle)
 		not Processed($j ;)
@@ -247,7 +247,7 @@ rule "Join network"
 end
 
 rule "Leave network"
-	salience 13
+	salience 12
 	when
 		$a : LeaveNetwork($n : network, $p : particle)
 		not Processed($a ;)

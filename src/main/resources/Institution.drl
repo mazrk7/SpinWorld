@@ -99,13 +99,14 @@ rule "Monitor particles"
 end
 
 rule "Sanction particles"
-	salience 10
+	salience 2 // After monitoring & detection of cheating
 	when 
 		Round($t : number, type == RoundType.APPROPRIATE)
 		Violation($p : particle, $n : network, time == $t, $s : severity)
 		$m : MemberOf(network == $n, particle == $p)
 	then		
 		int warningCount = $p.getWarningCount($n);
+		double mFreq = $n.getMonitoringLevel();
 
 		if($s < 0.1) {	
 			$p.updateSanctionHistory($n, GraduationLevel.NO_SANCTION);
@@ -134,10 +135,28 @@ rule "Sanction particles"
 			logger.info("Expulsion: " + $p + " from " + $n);
 			$n.banParticle($p);
 		}
+		
+					
+		mFreq = mFreq + $s * (1-mFreq);
+		$n.setMonitoringLevel(mFreq);
 end
 
-rule "Observe sanctioning"
-	salience 10
+rule "Reduce monitoring frequency"
+	salience 5
+	when
+		Round($t : number, type == RoundType.APPROPRIATE)
+		$n : Network()
+		exists(MemberOf(network == $n))
+		not(exists(Violation($p : particle, network == $n, time == $t, $s : severity)))
+	then
+		double mFreq = $n.getMonitoringLevel();
+		
+		mFreq = mFreq - 0.1 * mFreq;
+		$n.setMonitoringLevel(mFreq);
+end
+
+rule "Observation of network sanctioning"
+	salience 1 // After sanctioning
 	when 
 		Round($t : number, type == RoundType.APPROPRIATE)
 		Sanction($pSanc : particle, $n : network, time == $t, $l : level)
@@ -152,7 +171,7 @@ rule "Observe sanctioning"
 end	
 	
 rule "Detect cheat on provision"
-	salience 1
+	salience 3
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)
@@ -169,7 +188,7 @@ rule "Detect cheat on provision"
 end
 
 rule "Could not detect cheat on provision"
-	salience 1
+	salience 3
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)
@@ -181,7 +200,7 @@ rule "Could not detect cheat on provision"
 end
 
 rule "Detect cheat on demand"
-	salience 1
+	salience 3
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)
@@ -198,7 +217,7 @@ rule "Detect cheat on demand"
 end
 
 rule "Could not detect cheat on demand"
-	salience 1
+	salience 3
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)
@@ -210,7 +229,7 @@ rule "Could not detect cheat on demand"
 end
 
 rule "Detect cheat on appropriate"
-	salience 1
+	salience 3
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)
@@ -228,7 +247,7 @@ rule "Detect cheat on appropriate"
 end
 
 rule "Could not detect cheat on appropriate"
-	salience 1
+	salience 3
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)

@@ -375,6 +375,10 @@ public class SpinWorldAgent extends MobileAgent {
 			this.pCheat = this.pCheat - phi * benefit * this.pCheat;
 		}
 	}
+	
+	/* At the end of each round, mf increased or decreased by 1 using the following rule: 
+		if an agent reported a violation (disclosed that its appropriation was less than its allocation) 
+		mf increased; if for the last 10 rounds no violation was reported, mf decreased. */
 
 	// Prints the strategy plan of the agent
 	private static String strategyToString(boolean[] strategy) {
