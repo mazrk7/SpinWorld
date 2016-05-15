@@ -22,7 +22,6 @@ import uk.ac.imperial.presage2.core.environment.ActionHandlingException;
 import uk.ac.imperial.presage2.core.environment.ParticipantSharedState;
 import uk.ac.imperial.presage2.core.environment.UnavailableServiceException;
 import uk.ac.imperial.presage2.core.messaging.Input;
-import uk.ac.imperial.presage2.core.simulator.SimTime;
 import uk.ac.imperial.presage2.util.location.Location;
 
 import spinworld.RoundType;
@@ -129,7 +128,7 @@ public class SpinWorldAgent extends MobileAgent {
 		this.rnd = new java.util.Random(rndSeed);
 		
 		this.networkLeave = netLeave;
-		int leaveThreshold = 3;
+		int leaveThreshold = 10;
 
 		switch (netLeave) {
 		case INSTANT:
@@ -288,8 +287,6 @@ public class SpinWorldAgent extends MobileAgent {
 				appropriate(resourcesGame.getAllocated(getID()));
 			}
 		}
-
-		saveDataToDB();
 	}
 
 	protected boolean chooseStrategy() {
@@ -438,9 +435,7 @@ public class SpinWorldAgent extends MobileAgent {
 	
 	protected void createNetwork(Particle p) {
 		try {	
-			Allocation[] methods = { Allocation.RANDOM };
-			int pick = rnd.nextInt(methods.length);
-			Allocation method = methods[pick];
+			Allocation method = Allocation.RANDOM;
 			Network net = new Network(this.networkService.getNextNumNetwork(), method, 
 				this.monitoringLevel, this.monitoringCost, this.noWarnings);
 			this.network = net;
@@ -865,17 +860,6 @@ public class SpinWorldAgent extends MobileAgent {
 
 	interface NetworkFilter {
 		boolean isSubsetMember(Network n);
-	}
-
-	private void saveDataToDB() {
-		// Get current simulation time
-		int time = SimTime.get().intValue();
-		// Check DB is available
-		if (this.persist != null) {
-			// Save number of social contacts of this agent
-			if (this.network != null)
-				this.persist.getState(time).setProperty("network", ((Integer) (this.network.getId())).toString());
-		}
 	}
 
 }
