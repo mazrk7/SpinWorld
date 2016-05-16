@@ -129,6 +129,11 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	@Parameter(name = "noWarnings", optional = true)
 	public int noWarnings = 3;
 	
+	@Parameter(name = "severityUB", optional = true)
+	public double severityUB = 0.8;
+	@Parameter(name = "severityLB", optional = true)
+	public double severityLB = 0.2;
+	
 	public SpinWorldSimulation(Set<AbstractModule> modules) {
 		super(modules);
 	}

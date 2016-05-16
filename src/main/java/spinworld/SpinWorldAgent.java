@@ -61,6 +61,14 @@ public class SpinWorldAgent extends MobileAgent {
 	@Inject
 	@Named("params.noWarnings")
 	private int noWarnings;
+	
+	// Upper and lower bound of severity scale for networks
+	@Inject
+	@Named("params.severityLB")
+	private double severityLB;
+	@Inject
+	@Named("params.severityUB")
+	private double severityUB;
 
 	double g = 0; // Resources generated
 	double q = 0; // Resources needed
@@ -362,7 +370,7 @@ public class SpinWorldAgent extends MobileAgent {
 	}
 	
 	private void reinforcementToCheat(double benefit) {
-		this.risk = ((double) this.resourcesGame.getWarningCount(getID(), this.network))/this.network.getNoWarnings();
+		this.risk = this.resourcesGame.getRiskRate(getID(), this.network);
 		this.catchRate = this.resourcesGame.getObservedCatchRate(getID(), this.network);
 		
 		double reinforcement = theta * benefit - phi * risk - zeta * catchRate;
@@ -435,7 +443,7 @@ public class SpinWorldAgent extends MobileAgent {
 		try {	
 			Allocation method = Allocation.RANDOM;
 			Network net = new Network(this.networkService.getNextNumNetwork(), method, 
-				this.monitoringLevel, this.monitoringCost, this.noWarnings);
+				this.monitoringLevel, this.monitoringCost, this.noWarnings, this.severityLB, this.severityUB);
 			this.network = net;
 
 			
@@ -526,6 +534,7 @@ public class SpinWorldAgent extends MobileAgent {
 			state.setProperty("network", Integer.toString(this.network != null ? this.network.getId() : -1));
 			state.setProperty("pCheat", Double.toString(pCheat));
 			state.setProperty("catchRate", Double.toString(catchRate));
+			state.setProperty("risk", Double.toString(risk));
 		}
 
 		if (!networkUtilities.containsKey(this.network)) {

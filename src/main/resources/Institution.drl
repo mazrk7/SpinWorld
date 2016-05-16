@@ -107,15 +107,17 @@ rule "Sanction particles"
 	then		
 		int warningCount = $p.getWarningCount($n);
 		double mFreq = $n.getMonitoringLevel();
-
-		if($s < 0.1) {	
+		double lowerB = $n.getSeverityLB();
+		double upperB = $n.getSeverityUB();
+		
+		if($s < lowerB) {	
 			$p.updateSanctionHistory($n, GraduationLevel.NO_SANCTION);
 				
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.NO_SANCTION);
 			insert(sanc);
 			logger.info(sanc);
 		}
-		else if($s >= 0.1 && $s < 0.9) {
+		else if($s >= lowerB && $s < upperB) {
 			$p.updateSanctionHistory($n, GraduationLevel.WARNING);
 		
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.WARNING);
@@ -123,7 +125,7 @@ rule "Sanction particles"
 			logger.info(sanc);	
 		}
 		
-		if($s >= 0.9 || warningCount >= $n.getNoWarnings()) {	
+		if($s >= upperB || warningCount >= $n.getNoWarnings()) {	
 			$p.updateSanctionHistory($n, GraduationLevel.EXPULSION);
 				
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.EXPULSION);

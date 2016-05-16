@@ -103,6 +103,7 @@ public class SpinWorldGUI {
 		
 		List<HeatMap> maps = new ArrayList<HeatMap>();
 		maps.add(new UtilityCatchMap(sim, windowSize));
+		maps.add(new UtilityRiskMap(sim, windowSize));
 
 		final Frame f = new Frame("SPINWORLD");
 		final Panel p = new Panel(new GridLayout(2, 2));

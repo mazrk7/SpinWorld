@@ -194,6 +194,10 @@ public class Particle {
 		
 		return catchRate;
 	}
+	
+	public double getRiskRate(Network net) {	
+		return ((double) getWarningCount(net))/net.getNoWarnings();
+	}
 		
 	@Override
 	public int hashCode() {

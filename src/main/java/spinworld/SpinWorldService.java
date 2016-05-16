@@ -105,12 +105,12 @@ public class SpinWorldService extends EnvironmentService {
 		return getParticle(pId).getAppropriated();
 	}
 	
-	public int getWarningCount(UUID pId, Network net) {
-		return getParticle(pId).getWarningCount(net);
-	}
-	
 	public double getObservedCatchRate(UUID pId, Network net) {
 		return getParticle(pId).getObservedCatchRate(net);
+	}
+	
+	public double getRiskRate(UUID pId, Network net) {
+		return getParticle(pId).getRiskRate(net);
 	}
 	
 }

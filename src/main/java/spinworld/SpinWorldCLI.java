@@ -52,6 +52,7 @@ public class SpinWorldCLI extends Presage2CLI {
 		experiments.put("large_pop", "Large population.");
 		experiments.put("cheat_strat", "Test different cheating strategies.");
 		experiments.put("sanction_count", "Test different sanction levels.");
+		experiments.put("severity_scale", "Test different severity scales.");
 
 		OptionGroup exprOptions = new OptionGroup();
 		for (String key : experiments.keySet()) {
@@ -108,6 +109,8 @@ public class SpinWorldCLI extends Presage2CLI {
 			cheat_strat(repeats, seed);
 		else if (args[1].equalsIgnoreCase("sanction_count"))
 			sanction_count(repeats, seed);
+		else if (args[1].equalsIgnoreCase("severity_scale"))
+			severity_scale(repeats, seed);
 	}
 
 	void large_pop(int repeats, int seed) {
@@ -204,6 +207,48 @@ public class SpinWorldCLI extends Presage2CLI {
 
 		stopDatabase();
 	}
+	
+	void severity_scale(int repeats, int seed) {
+		// int rounds = 1002;
+		int rounds = 200;
+
+		for (int i = 0; i < repeats; i++) {
+			for (double ub : new double[] { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 }) {
+				int lbDim = (int) Math.round(ub/0.1);		
+				double[] lowerBounds = new double[lbDim];
+				
+				for(int j = 0; j < (int) Math.round(ub*10); j++) {
+					lowerBounds[j] = j/10.0;
+				}
+				
+				for (double lb : lowerBounds) {
+					PersistentSimulation sim = getDatabase().createSimulation(
+							"SEVERITY_LB_" + lb + "_UB_" + ub, "spinworld.SpinWorldSimulation",
+							"AUTO START", rounds);
+	
+					sim.addParameter("finishTime", Integer.toString(rounds));
+					sim.addParameter("size", Integer.toString(5));
+					sim.addParameter("alpha", Double.toString(0.1));
+					sim.addParameter("beta", Double.toString(0.1));
+					sim.addParameter("gamma", Double.toString(0.1));
+					sim.addParameter("theta", Double.toString(0.1));
+					sim.addParameter("phi", Double.toString(0.1));
+					sim.addParameter("zeta", Double.toString(0.1));
+					sim.addParameter("agents", Integer.toString(20));
+					sim.addParameter("cheat", Double.toString(0.2));
+					sim.addParameter("seed", Integer.toString(seed + i));
+					sim.addParameter("cheatOn", Cheat.PROVISION.name());
+					sim.addParameter("severityLB", Double.toString(lb));
+					sim.addParameter("severityUB", Double.toString(ub));
+	
+					logger.info("Created sim: " + sim.getID() + " - " + sim.getName());
+				}
+			}
+		}
+
+		stopDatabase();
+	}
+
 
 	@Command(name = "summarise", description = "Process raw simulation data to generate evaluation metrics.")
 	public void summarise(String[] args) {

@@ -18,6 +18,9 @@ public class Network {
 	double monitoringLevel = 0.0;
 	double monitoringCost = 0.0;
 	
+	double severityLB = 0.2;
+	double severityUB = 0.8;
+	
 	// Number of warnings a network will give to a particle as punishment
 	int noWarnings = 1;
 	
@@ -36,6 +39,16 @@ public class Network {
 		this.monitoringLevel = monitoringLevel;
 		this.monitoringCost = monitoringCost;
 		this.noWarnings = noWarnings;
+	}
+	
+	public Network(int id, Allocation allocationMethod, double monitoringLevel,
+			double monitoringCost, int noWarnings, double severityLB, double severityUB) {
+		this(id, allocationMethod);
+		this.monitoringLevel = monitoringLevel;
+		this.monitoringCost = monitoringCost;
+		this.noWarnings = noWarnings;
+		this.severityLB = severityLB;
+		this.severityUB = severityUB;
 	}
 	
 	@Override
@@ -66,6 +79,14 @@ public class Network {
 	
 	public int getNoWarnings() {
 		return this.noWarnings;
+	}
+	
+	public double getSeverityLB() {
+		return this.severityLB;
+	}
+	
+	public double getSeverityUB() {
+		return this.severityUB;
 	}
 	
 	public void banParticle(Particle p) {
