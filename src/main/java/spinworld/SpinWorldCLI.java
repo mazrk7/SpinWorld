@@ -50,8 +50,8 @@ public class SpinWorldCLI extends Presage2CLI {
 		// Generate experiment types
 		Map<String, String> experiments = new HashMap<String, String>();
 		experiments.put("large_pop", "Large population.");
-		experiments.put("optimal", "Find the optimal cheat strategy.");
-		experiments.put("cheat", "Test different cheating strategies.");
+		experiments.put("cheat_strat", "Test different cheating strategies.");
+		experiments.put("sanction_count", "Test different sanction levels.");
 
 		OptionGroup exprOptions = new OptionGroup();
 		for (String key : experiments.keySet()) {
@@ -104,10 +104,10 @@ public class SpinWorldCLI extends Presage2CLI {
 
 		if (args[1].equalsIgnoreCase("large_pop"))
 			large_pop(repeats, seed);
-		else if (args[1].equalsIgnoreCase("optimal"))
-			optimal(repeats, seed);
-		else if (args[1].equalsIgnoreCase("cheat"))
-			cheatOnAppropriate(repeats, seed);
+		else if (args[1].equalsIgnoreCase("cheat_strat"))
+			cheat_strat(repeats, seed);
+		else if (args[1].equalsIgnoreCase("sanction_count"))
+			sanction_count(repeats, seed);
 	}
 
 	void large_pop(int repeats, int seed) {
@@ -120,7 +120,7 @@ public class SpinWorldCLI extends Presage2CLI {
 				int pc = (int) Math.round(agents * pProp);
 
 				PersistentSimulation sim = getDatabase().createSimulation(
-						"LARGE_POP_" + String.format("%03d", pc) + "_pro", "spinworld.SpinWorldSimulation",
+						"LARGE_POP_" + String.format("%03d", pc), "spinworld.SpinWorldSimulation",
 						"AUTO START", rounds);
 
 				sim.addParameter("finishTime", Integer.toString(rounds));
@@ -130,8 +130,9 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("gamma", Double.toString(0.1));
 				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
+				sim.addParameter("zeta", Double.toString(0.1));
 				sim.addParameter("agents", Integer.toString(agents - pc));
-				sim.addParameter("cheat", Double.toString(0.02));
+				sim.addParameter("cheat", Double.toString(0.2));
 				sim.addParameter("seed", Integer.toString(seed + i));
 				sim.addParameter("cheatOn", Cheat.PROVISION.name());
 
@@ -142,75 +143,7 @@ public class SpinWorldCLI extends Presage2CLI {
 		stopDatabase();
 	}
 
-	void optimal(int repeats, int seed) {
-		Cheat[] cheatMethods = { Cheat.DEMAND, Cheat.PROVISION, Cheat.APPROPRIATE };
-		// int rounds = 2002;
-		int rounds = 200;
-		
-		// Minority optimal
-		for (int i = 0; i < repeats; i++) {
-			for (Cheat ch : cheatMethods) {
-				double ncStrat = 0.0;
-
-				while (ncStrat <= 1.0) {
-					String stratStr = Double.toString(ncStrat);
-					stratStr = stratStr.substring(0, Math.min(4, stratStr.length()));
-
-					PersistentSimulation sim = getDatabase().createSimulation(
-							"MIN_" + stratStr + "_" + ch.name().substring(0, 3),
-							"spinworld.SpinWorldSimulation", "AUTO START", rounds);
-
-					sim.addParameter("finishTime", Integer.toString(rounds));
-					sim.addParameter("size", Integer.toString(5));
-					sim.addParameter("alpha", Double.toString(0.1));
-					sim.addParameter("beta", Double.toString(0.1));
-					sim.addParameter("gamma", Double.toString(0.1));
-					sim.addParameter("theta", Double.toString(0.1));
-					sim.addParameter("phi", Double.toString(0.1));
-					sim.addParameter("agents", Integer.toString(20));
-					sim.addParameter("cheat", Double.toString(0.02));
-					sim.addParameter("seed", Integer.toString(seed + i));
-					sim.addParameter("cheatOn", ch.name());
-
-					ncStrat += 0.05;
-				}
-			}
-		}
-
-		// Majority optimal
-		for (int i = 0; i < repeats; i++) {
-			for (Cheat ch : cheatMethods) {
-				double cStrat = 0.0;
-
-				while (cStrat <= 1.0) {
-					String stratStr = Double.toString(cStrat);
-					stratStr = stratStr.substring(0, Math.min(4, stratStr.length()));
-
-					PersistentSimulation sim = getDatabase().createSimulation(
-							"MAJ_" + stratStr + "_" + ch.name().substring(0, 3),
-							"spinworld.SpinWorldSimulation", "AUTO START", rounds);
-
-					sim.addParameter("finishTime", Integer.toString(rounds));
-					sim.addParameter("size", Integer.toString(5));
-					sim.addParameter("alpha", Double.toString(0.1));
-					sim.addParameter("beta", Double.toString(0.1));
-					sim.addParameter("gamma", Double.toString(0.1));
-					sim.addParameter("theta", Double.toString(0.1));
-					sim.addParameter("phi", Double.toString(0.1));
-					sim.addParameter("agents", Integer.toString(20));
-					sim.addParameter("cheat", Double.toString(cStrat));
-					sim.addParameter("seed", Integer.toString(seed + i));
-					sim.addParameter("cheatOn", ch.name());
-
-					cStrat += 0.05;
-				}
-			}
-		}
-
-		stopDatabase();
-	}
-
-	void cheatOnAppropriate(int repeats, int seed) {
+	void cheat_strat(int repeats, int seed) {
 		Cheat[] cheatMethods = { Cheat.DEMAND, Cheat.PROVISION, Cheat.APPROPRIATE };
 		// int rounds = 1002;
 		int rounds = 200;
@@ -228,10 +161,42 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("gamma", Double.toString(0.1));
 				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
+				sim.addParameter("zeta", Double.toString(0.1));
 				sim.addParameter("agents", Integer.toString(20));
-				sim.addParameter("cheat", Double.toString(0.02));
+				sim.addParameter("cheat", Double.toString(0.2));
 				sim.addParameter("seed", Integer.toString(seed + i));
 				sim.addParameter("cheatOn", ch.name());
+
+				logger.info("Created sim: " + sim.getID() + " - " + sim.getName());
+			}
+		}
+
+		stopDatabase();
+	}
+	
+	void sanction_count(int repeats, int seed) {
+		// int rounds = 1002;
+		int rounds = 200;
+
+		for (int i = 0; i < repeats; i++) {
+			for (int sc : new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }) {
+				PersistentSimulation sim = getDatabase().createSimulation(
+						"SANCTION_" + sc, "spinworld.SpinWorldSimulation",
+						"AUTO START", rounds);
+
+				sim.addParameter("finishTime", Integer.toString(rounds));
+				sim.addParameter("size", Integer.toString(5));
+				sim.addParameter("alpha", Double.toString(0.1));
+				sim.addParameter("beta", Double.toString(0.1));
+				sim.addParameter("gamma", Double.toString(0.1));
+				sim.addParameter("theta", Double.toString(0.1));
+				sim.addParameter("phi", Double.toString(0.1));
+				sim.addParameter("zeta", Double.toString(0.1));
+				sim.addParameter("agents", Integer.toString(20));
+				sim.addParameter("cheat", Double.toString(0.2));
+				sim.addParameter("seed", Integer.toString(seed + i));
+				sim.addParameter("cheatOn", Cheat.PROVISION.name());
+				sim.addParameter("noWarnings", Integer.toString(sc));
 
 				logger.info("Created sim: " + sim.getID() + " - " + sim.getName());
 			}

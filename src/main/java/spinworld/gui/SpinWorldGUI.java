@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
+import org.tc33.jheatchart.HeatChart;
 
 import uk.ac.imperial.presage2.core.db.DatabaseModule;
 import uk.ac.imperial.presage2.core.db.DatabaseService;
@@ -66,6 +67,17 @@ public class SpinWorldGUI {
 			e.printStackTrace();
 		}
 	}
+	
+	void takeScreenshot(HeatChart chart, String base, int i) {
+		if (t0 == -1)
+			t0 = i;
+
+		try {
+			chart.saveToFile(new File(imagePath + base + "" + String.format("%04d", i - t0) + ".png"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public void init(long simId) {
 		try {
@@ -88,6 +100,9 @@ public class SpinWorldGUI {
 		List<TimeSeriesChart> charts = new ArrayList<TimeSeriesChart>();
 		charts.add(new UtilityChart(sim, windowSize));
 		charts.add(new SatisfactionChart(sim, windowSize));
+		
+		List<HeatMap> maps = new ArrayList<HeatMap>();
+		maps.add(new UtilityCatchMap(sim, windowSize));
 
 		final Frame f = new Frame("SPINWORLD");
 		final Panel p = new Panel(new GridLayout(2, 2));
@@ -109,10 +124,20 @@ public class SpinWorldGUI {
 				chart.redraw(t);
 			}
 			
+			for (HeatMap map : maps) {
+				map.redraw(t);
+			}
+			
 			if (exportMode) {
 				for (TimeSeriesChart chart : charts) {
 					takeScreenshot(chart.getChart(),
 							sim.getName() + "/" + chart.getClass().getSimpleName().substring(0, 3), t);
+				}
+				
+				for (HeatMap map : maps) {
+					takeScreenshot(map.getChart(),
+							sim.getName() + "/" + map.getClass().getSimpleName().substring(0, 3) + map.getClass().getSimpleName().substring(7, 10),
+							t);
 				}
 			} else {
 				try {

@@ -187,6 +187,9 @@ public class ConnectionlessStorage extends SpinWorldStorage {
 					out.append('\t');
 					out.append(Double.toString(getProperty(props, "pCheat", 0.0)));
 					out.append('\n');
+					out.append('\t');
+					out.append(Double.toString(getProperty(props, "catchRate", 0.0)));
+					out.append('\n');
 
 					forRemoval.add(round.getKey());
 				}

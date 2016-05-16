@@ -44,7 +44,7 @@ import spinworld.network.NetworkService;
 public class SpinWorldAgent extends MobileAgent {
 
 	enum NetworkLeaveAlgorithm {
-		INSTANT, THRESHOLD, UTILITY, AGE
+		THRESHOLD, UTILITY, AGE
 	};
 
 	// Monitoring level of created networks
@@ -70,6 +70,8 @@ public class SpinWorldAgent extends MobileAgent {
 	final UtilityFunction ut;
 
 	double pCheat = 0.0;
+	double catchRate = 0.0;
+	double risk = 0.0;
 
 	double alpha = .1;
 	double beta = .1;
@@ -77,7 +79,7 @@ public class SpinWorldAgent extends MobileAgent {
 	double tau = .1;
 
 	int numNetworksCreated = 0;
-	int maxNetworksCreated = 100;
+	int maxNetworksCreated = 50;
 
 	Cheat cheatOn = Cheat.PROVISION;
 
@@ -113,6 +115,8 @@ public class SpinWorldAgent extends MobileAgent {
 	
 	double theta = .1;
 	double phi = .1;
+	double zeta = .1;
+	double tReinforcement = .1;
 				
 	public SpinWorldAgent(UUID id, String name, Location myLocation, int velocity, double radius, 
 			double a, double b, double c, double pCheat, double alpha, double beta, Cheat cheatOn, 
@@ -128,11 +132,9 @@ public class SpinWorldAgent extends MobileAgent {
 		this.rnd = new java.util.Random(rndSeed);
 		
 		this.networkLeave = netLeave;
-		int leaveThreshold = 10;
+		int leaveThreshold = 20;
 
 		switch (netLeave) {
-		case INSTANT:
-			leaveThreshold = 1;
 		case THRESHOLD:
 			this.networkEvaluation = new SatisfiedNetworking(leaveThreshold);
 			break;
@@ -242,8 +244,7 @@ public class SpinWorldAgent extends MobileAgent {
 				calculateScores();
 			}
 
-			if (!(networkLeave == NetworkLeaveAlgorithm.INSTANT) 
-					|| resourcesGame.getRoundNumber() % 20 == 0) {
+			if (resourcesGame.getRoundNumber() % 20 == 0) {
 				networkEvaluation.evaluateNetworks();
 			}
 
@@ -317,10 +318,11 @@ public class SpinWorldAgent extends MobileAgent {
 				defectBenefit = defectBenefit/defectCount;
 				complyBenefit = complyBenefit/complyCount;
 			
-				double risk = ((double) this.resourcesGame.getWarningCount(getID(), this.network))/this.network.getNoWarnings();
-				double catchRate = this.resourcesGame.getObservedCatchRate(getID(), this.network);
-			
-				reinforcementToCheat(defectBenefit, complyBenefit, risk, catchRate);
+				if (defectBenefit > complyBenefit)
+					reinforcementToCheat(defectBenefit - complyBenefit);
+				else
+					this.pCheat = this.pCheat - 0.1 * this.pCheat;
+
 				
 				// Modify strategy depending on the reinforcement of propensity to cheat
 				modifyStrategy();
@@ -359,18 +361,14 @@ public class SpinWorldAgent extends MobileAgent {
 		logger.info("Updated strategy: " + strategyToString(strategy));
 	}
 	
-	private void reinforcementToCheat(double defectBenefit, double complyBenefit, double risk, double catchRate) {
-		if (defectBenefit > complyBenefit) {
-			double benefit = defectBenefit - complyBenefit;
-			double reinforcement = theta * (benefit - ((risk+catchRate)/2.0));
+	private void reinforcementToCheat(double benefit) {
+		this.risk = ((double) this.resourcesGame.getWarningCount(getID(), this.network))/this.network.getNoWarnings();
+		this.catchRate = this.resourcesGame.getObservedCatchRate(getID(), this.network);
+		
+		double reinforcement = theta * benefit - phi * risk - zeta * catchRate;
 			
-			if (reinforcement > 0.0)
-				this.pCheat = this.pCheat + reinforcement * (1 - pCheat);
-		}
-		else {		
-			double benefit = complyBenefit - defectBenefit;
-			this.pCheat = this.pCheat - phi * benefit * this.pCheat;
-		}
+		if (reinforcement >= tReinforcement)
+			this.pCheat = this.pCheat + reinforcement * (1 - pCheat);
 	}
 	
 	// Prints the strategy plan of the agent
@@ -419,7 +417,7 @@ public class SpinWorldAgent extends MobileAgent {
 			Network otherNetwork = this.networkService.getNetwork(p.getId());
 	
 			if (network == null) {
-				if (otherNetwork == null)
+				if (otherNetwork == null && numNetworksCreated < maxNetworksCreated)
 					createNetwork(p);
 				else if (otherNetwork != null)
 					joinNetwork(otherNetwork);
@@ -527,6 +525,7 @@ public class SpinWorldAgent extends MobileAgent {
 			state.setProperty("o", Double.toString(satisfaction));
 			state.setProperty("network", Integer.toString(this.network != null ? this.network.getId() : -1));
 			state.setProperty("pCheat", Double.toString(pCheat));
+			state.setProperty("catchRate", Double.toString(catchRate));
 		}
 
 		if (!networkUtilities.containsKey(this.network)) {
@@ -739,8 +738,8 @@ public class SpinWorldAgent extends MobileAgent {
 			double worstCase = ut.estimateFullDefectUtility(scarcity.getMean());
 
 			t3 = worstCase;
-			// alpha and beta are acceptable inefficiency proportions for t1 and
-			// t2 respectively
+			// alpha and beta are acceptable inefficiency 
+			// proportions for t1 and t2 respectively
 			t2 = bestCase - tolerance2 * (bestCase - worstCase);
 			t1 = bestCase - tolerance1 * (bestCase - worstCase);
 		}
@@ -815,10 +814,12 @@ public class SpinWorldAgent extends MobileAgent {
 				return;
 
 			int expected = (int) (baselifespan + (overallUtility.getMean() - t2) * baselifespan);
+			
 			if (age > expected) {
 				// Death of old age
 				if (network != null)
 					leaveNetwork();
+				
 				dead = true;
 				logger.info("Died at age " + age);
 			}

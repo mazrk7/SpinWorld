@@ -53,27 +53,40 @@ public class SatisfactionChart implements TimeSeriesChart {
 	public void redraw(int finish) {
 		finish = Math.min(finish, sim.getFinishTime() / 2);
 		int start = Math.max(finish - windowSize, 0);
-		int length = Math.min(windowSize, finish - start);
-		double[][] p = new double[2][length];
-		Arrays.fill(p[0], 0);
+		int length = Math.min(windowSize, finish - start);		
+		
+		double[][] c = new double[2][length];
+		double[][] nc = new double[2][length];
+		Arrays.fill(c[0], 0);
+		Arrays.fill(nc[0], 0);
 		
 		for (int i = 0; i < length; i++) {
 			int t = start + i + 1;
-			p[1][i] = t;
-			
-			SummaryStatistics satP = new SummaryStatistics();
+			c[1][i] = t;
+			nc[1][i] = t;
+			SummaryStatistics satC = new SummaryStatistics();
+			SummaryStatistics satNC = new SummaryStatistics();
 			
 			for (PersistentAgent a : sim.getAgents()) {
 				TransientAgentState s = a.getState(t);
+				
 				if (s != null && s.getProperty("o") != null) {
 					double o = Double.parseDouble(s.getProperty("o"));
-					satP.addValue(o);
+					double pCheat = Double.parseDouble(a.getProperty("pCheat"));
+
+					if (pCheat <= 0.5)
+						satC.addValue(o);
+					else
+						satNC.addValue(o);
 				}
 			}
 			
-			p[0][i] = satP.getMean();
+			c[0][i] = satC.getMean();
+			nc[0][i] = satNC.getMean();
 		}
-		data.addSeries("Particle", p);
+		
+		data.addSeries("Compliant", c);
+		data.addSeries("Non compliant", nc);
 
 		chart.getXYPlot().getRangeAxis()
 				.setRange(Math.max(1.0, finish - windowSize + 1), finish);

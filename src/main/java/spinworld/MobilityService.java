@@ -123,8 +123,8 @@ public class MobilityService extends EnvironmentService {
 	public void updateVelocity(final UUID pId, int noLinks) {
 		int updateVelocity = getVelocity(pId) + vConst * noLinks;	
 		
-		if (updateVelocity > size)
-			setVelocity(pId, size);
+		if (updateVelocity >= size)
+			setVelocity(pId, size-1);
 		else
 			setVelocity(pId, updateVelocity);
 	}

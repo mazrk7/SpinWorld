@@ -47,7 +47,12 @@
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
-			<version>1.0.14</version>
+			<version>1.0.19</version>
+		</dependency>
+		<dependency>
+			<groupId>org.tc33</groupId>
+			<artifactId>jheatchart</artifactId>
+			<version>0.6</version>
 		</dependency>
 	</dependencies>
 
