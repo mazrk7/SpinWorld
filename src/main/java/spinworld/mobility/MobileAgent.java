@@ -1,4 +1,4 @@
-package spinworld;
+package spinworld.mobility;
 
 import java.util.Set;
 import java.util.UUID;

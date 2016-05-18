@@ -11,9 +11,9 @@ import org.drools.runtime.StatefulKnowledgeSession;
 
 import com.google.inject.Inject;
 
-import spinworld.MobilityService;
 import spinworld.SpinWorldService;
 import spinworld.facts.Particle;
+import spinworld.mobility.MobilityService;
 import spinworld.network.NetworkService;
 import uk.ac.imperial.presage2.core.Action;
 import uk.ac.imperial.presage2.core.environment.ActionHandler;

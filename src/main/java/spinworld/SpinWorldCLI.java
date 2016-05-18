@@ -389,10 +389,12 @@ public class SpinWorldCLI extends Presage2CLI {
 
 	@Command(name = "graph", description = "Export graphs for simulation.")
 	public void export_graphs(String[] args) throws Exception {
-		if (args.length > 1) {
-			args = new String[] { args[1], Boolean.toString(true) };
-			SpinWorldGUI.main(args);
-		}
+		if (args.length > 2)
+			SpinWorldGUI.main(new String[] { args[1], args[2] });
+		else if (args.length > 1)
+			SpinWorldGUI.main(new String[] { args[1] });
+		else
+			logger.error("Incorrect number of arguments. Graph requires at least 2 arguments.");
 	}
 
 	@SuppressWarnings("static-access")

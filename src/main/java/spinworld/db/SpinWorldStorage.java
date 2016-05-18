@@ -73,6 +73,7 @@ public class SpinWorldStorage extends SqlStorage {
 							+ "`pCheat` double NOT NULL,"
 							+ "`catchRate` double NOT NULL,"
 							+ "`risk` double NOT NULL,"
+							+ "`links` varchar(250) NOT NULL,"
 							+ "PRIMARY KEY (`simID`,`particle`,`round`),"
 							+ "KEY `simID` (`simID`),"
 							+ "KEY `particle` (`particle`),"
@@ -187,8 +188,8 @@ public class SpinWorldStorage extends SqlStorage {
 		try {
 			insertParticle = conn
 					.prepareStatement("REPLACE INTO particleScore "
-							+ "(simID, particle, round, g, q, d, p, r, rP, rTotal, satisfaction, U, network, pCheat, catchRate, risk)  "
-							+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ");
+							+ "(simID, particle, round, g, q, d, p, r, rP, rTotal, satisfaction, U, network, pCheat, catchRate, risk, links)  "
+							+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ");
 		} catch (SQLException e) {
 			logger.warn(e);
 			throw new RuntimeException(e);
@@ -232,6 +233,8 @@ public class SpinWorldStorage extends SqlStorage {
 							getProperty(props, "catchRate", 0.0));
 					insertParticle.setDouble(16,
 							getProperty(props, "risk", 0.0));
+					insertParticle.setString(17, props.get("link"));
+					
 					if (props.containsKey("network"))
 						insertParticle.setInt(13,
 								Integer.parseInt(props.get("network")));

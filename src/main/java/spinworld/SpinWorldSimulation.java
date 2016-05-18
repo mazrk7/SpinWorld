@@ -15,6 +15,7 @@ import spinworld.actions.Generate;
 import spinworld.actions.SpinWorldActionHandler;
 import spinworld.allocators.RandomAllocator;
 import spinworld.facts.Particle;
+import spinworld.mobility.MobilityService;
 import spinworld.network.NetworkService;
 import uk.ac.imperial.presage2.core.environment.EnvironmentServiceProvider;
 import uk.ac.imperial.presage2.core.environment.UnavailableServiceException;

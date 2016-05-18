@@ -137,8 +137,7 @@ rule "Sanction particles"
 			logger.info("Expulsion: " + $p + " from " + $n);
 			$n.banParticle($p);
 		}
-		
-					
+				
 		mFreq = mFreq + $s * (1-mFreq);
 		$n.setMonitoringLevel(mFreq);
 end

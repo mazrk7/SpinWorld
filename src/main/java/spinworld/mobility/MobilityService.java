@@ -1,4 +1,4 @@
-package spinworld;
+package spinworld.mobility;
 
 import java.util.Collection;
 import java.util.HashMap;
