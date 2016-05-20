@@ -5,7 +5,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import spinworld.GraduationLevel;
 import spinworld.network.Network;
@@ -39,10 +41,13 @@ public class Particle {
 		
 	// Size multiplier a.k.a. radius of particle acts as a weighting for resource allocation
 	double radius = 1;
+	
+	Particle toJoin = null;
+	Set<Particle> links = new CopyOnWriteArraySet<Particle>();
 			
 	Map<Network, ArrayList<GraduationLevel>> sanctionHistory = new HashMap<Network, ArrayList<GraduationLevel>>();
 	Map<Network, ArrayList<Boolean>> observedCatchHistory = new HashMap<Network, ArrayList<Boolean>>();
-	
+		
 	public Particle(UUID id) {
 		super();
 		this.id = id;
@@ -145,6 +150,47 @@ public class Particle {
 
 	public double getBeta() {
 		return beta;
+	}
+	
+	public void toJoin(Particle p) {
+		this.toJoin = p;
+	}
+	
+	public Particle getToJoin() {
+		return this.toJoin;
+	}
+	
+	public void addLink(Particle p) {
+		if (!links.contains(p))
+			links.add(p);
+	}
+	
+	public void detachLink(Particle p) {
+		if (links.contains(p))
+			links.remove(p);
+	}
+	
+	public void detachLinks() {
+		if (!links.isEmpty()) {
+			for (Particle p : links) {
+				p.detachLink(this);
+				links.remove(p);
+			}
+		}
+	}
+	
+	public Set<Particle> getLinks() {
+		if (!links.isEmpty())
+			return links;
+		else
+			return null;
+	}
+	
+	public int getNoLinks() {
+		if (!links.isEmpty())
+			return links.size();
+		else
+			return 0;
 	}
 	
 	public ArrayList<GraduationLevel> getSanctionHistory(Network net) {

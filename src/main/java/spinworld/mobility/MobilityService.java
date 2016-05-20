@@ -143,7 +143,7 @@ public class MobilityService extends EnvironmentService {
 			return null;
 	}	
 	
-	private void addCollisions(UUID pId, Set<Particle> collisionCandidates) {		
+	private void addCollision(UUID pId, Set<Particle> collisionCandidates) {		
 		collisions.put(pId, collisionCandidates);
 	}
 	
@@ -164,7 +164,7 @@ public class MobilityService extends EnvironmentService {
 		}
 		
 		if (collisionHappened)
-			addCollisions(pId, collisionCandidates);
+			addCollision(pId, collisionCandidates);
 	}
 	
 	public void printCollisions(Time t) {

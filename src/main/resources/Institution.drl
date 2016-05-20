@@ -127,7 +127,8 @@ rule "Sanction particles"
 		
 		if($s >= upperB || warningCount >= $n.getNoWarnings()) {	
 			$p.updateSanctionHistory($n, GraduationLevel.EXPULSION);
-				
+			$p.detachLinks();	
+			
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.EXPULSION);
 			insert(sanc);
 			logger.info(sanc);	

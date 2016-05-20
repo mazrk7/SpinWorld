@@ -1,6 +1,5 @@
 package spinworld.network;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,9 +36,6 @@ public class NetworkService extends EnvironmentService {
 	Map<UUID, Particle> particles = new HashMap<UUID, Particle>();
 	Map<UUID, MemberOf> members = new HashMap<UUID, MemberOf>();
 	Set<Network> networks = new CopyOnWriteArraySet<Network>();
-	Map<UUID, Particle> reservedParticles = new HashMap<UUID, Particle>();
-	Map<UUID, Network> reservedNetworks = new HashMap<UUID, Network>();
-	Map<UUID, Set<Particle>> links = new HashMap<UUID, Set<Particle>>();
 	
 	private int numNetworks = 0;
 	final protected EnvironmentServiceProvider serviceProvider;
@@ -116,21 +112,10 @@ public class NetworkService extends EnvironmentService {
 	public synchronized Network getNetwork(final UUID pId) {
 		MemberOf m = getMemberOf(pId);
 					
-		if (m != null) {
+		if (m != null)
 			return m.getNetwork();
-		} else if (isReserved(pId)) {
-			Set<Network> nets = getNetworks();
-
-			if (nets.contains(reservedNetworks.get(pId)))
-				return reservedNetworks.get(pId);
-			else 
-				return null;
-		} else if (links.containsKey(pId)) {
-			detachLinks(pId);
+		else
 			return null;
-		} else {
-			return null;
-		}
 	}
 
 	public synchronized Set<Network> getNetworks() {
@@ -154,37 +139,6 @@ public class NetworkService extends EnvironmentService {
 		return Collections.unmodifiableSet(networks);
 	}
 	
-	public boolean isReserved(final UUID pId) {
-		if (reservedNetworks.containsKey(pId) 
-				&& reservedParticles.containsKey(pId))
-			return true;
-		else
-			return false;
-	}
-	
-	public void reserveNetwork(final UUID pId, final UUID pReservedId, final Network net) {
-		if (!reservedNetworks.containsKey(pReservedId)
-				&& !reservedParticles.containsKey(pId)) {
-			reservedNetworks.put(pReservedId, net);
-			reservedParticles.put(pReservedId, getParticle(pId));
-		}
-	}
-	
-	public Particle getReservedParticle(final UUID pId) {
-		if (reservedParticles.containsKey(pId))
-			return reservedParticles.get(pId);
-		else
-			return null;
-	}
-	
-	public void clearReservation(final UUID pId) {
-		if (reservedNetworks.containsKey(pId)
-				&& reservedParticles.containsKey(pId)) {
-			reservedNetworks.remove(pId);
-			reservedParticles.remove(pId);
-		}
-	}
-	
 	public int getNumNetworks(){
 		return getNetworks().size();
 	}
@@ -194,68 +148,40 @@ public class NetworkService extends EnvironmentService {
 		return numNetworks++;
 	}
 	
-	public synchronized Set<Particle> getLinks(final UUID pId) {	
-		if (this.links.containsKey(pId))
-			return this.links.get(pId);
-		else
-			return null;
+	public Particle getToJoin(final UUID pId) {
+		return getParticle(pId).getToJoin();
 	}
 	
-	public int getNoLinks(final UUID pId, final Network net) {
-		if (this.links.containsKey(pId))
-			return this.links.get(pId).size();
-		else
-			return 0;
-	}
-	
-	private void addLink(UUID pId, Particle linkedParticle) {	
-		if (links.containsKey(pId))
-			links.get(pId).add(linkedParticle);
-		else
-			links.put(pId, new HashSet<Particle>(Arrays.asList(linkedParticle)));
-		
-		if (links.containsKey(linkedParticle.getId()))
-			links.get(linkedParticle.getId()).add(getParticle(pId));
-		else
-			links.put(linkedParticle.getId(), new HashSet<Particle>(Arrays.asList(getParticle(pId))));
-	}
-	
-	private void detachLinks(UUID pId) {		
-		if (links.containsKey(pId)) {
-			for (Particle link : links.get(pId)) {
-				links.get(pId).remove(link);
-				
-				if (links.containsKey(link.getId()))
-					links.get(link.getId()).remove(getParticle(pId));
-			}
-		}
+	public int getNoLinks(final UUID pId) {
+		return getParticle(pId).getNoLinks();
 	}
 	
 	// Create membership for the two particles forming a network
 	public void createMembership(final UUID pId, final Particle collision, final Network net) {
 		session.insert(new MemberOf(getParticle(pId), net));	
 		session.insert(new MemberOf(collision, net));
-		addLink(pId, collision);
 	}
 	
 	// Join membership of this particle to a network
-	public void joinMembership(final UUID pId, final Particle collision, final Network net) {
+	public void joinMembership(final UUID pId, final UUID jpId, final Network net) {
+		getParticle(pId).toJoin(getParticle(jpId));
 		session.insert(new MemberOf(getParticle(pId), net));	
-		addLink(pId, collision);
 	}
 	
 	// Retract membership of this particle from a network
 	public void retractMembership(final UUID pId) {
 		if (session.getFactHandle(getMemberOf(pId)) != null)
 			session.retract(session.getFactHandle(getMemberOf(pId)));
-		
-		detachLinks(pId);
 	}
 
 	public boolean isBanned(final UUID pId, final Network net) {
 		return net.isBanned(getParticle(pId));
 	}
 
+	public Set<Particle> getLinks(UUID pId){
+		return getParticle(pId).getLinks();
+	}
+	
 	// Get particles that are not part of a network
 	public Set<UUID> getOrphanParticles(){
 		Set<UUID> op = new HashSet<UUID>();

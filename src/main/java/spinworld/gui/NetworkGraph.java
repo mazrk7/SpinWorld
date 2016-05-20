@@ -50,8 +50,6 @@ public class NetworkGraph extends Container {
 				String netID = s.getProperty("network").toString();
 				
 				if (!links.equals("") && !netID.equals("-1")) {
-					// logger.info(t + "- Links: " + links);
-					// logger.info(t + "- Net: " + netID);
 					List<String> linksArr = Arrays.asList(links.split(","));
 					
 					if (!graph.containsVertex(a.getName()))

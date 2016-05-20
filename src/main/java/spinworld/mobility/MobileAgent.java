@@ -17,6 +17,9 @@ import uk.ac.imperial.presage2.util.participant.AbstractParticipant;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
+import spinworld.RoundType;
+import spinworld.SpinWorldService;
+
 // Mobile agent that moves around the environment until it forms part of a network
 public class MobileAgent extends AbstractParticipant {
 
@@ -27,6 +30,7 @@ public class MobileAgent extends AbstractParticipant {
 
 	// Variable to store the mobility service
 	MobilityService mobilityService;
+	SpinWorldService resourcesGame;
 	
 	// Injection is the process of setting dependencies into an object
 	@Inject
@@ -60,6 +64,7 @@ public class MobileAgent extends AbstractParticipant {
 		// Get the MobilityService
 		try {
 			this.mobilityService = getEnvironmentService(MobilityService.class);
+			this.resourcesGame = getEnvironmentService(SpinWorldService.class);
 		} catch (UnavailableServiceException e) {
 			logger.warn(e);
 		}
@@ -73,7 +78,7 @@ public class MobileAgent extends AbstractParticipant {
 	 
 		logger.info("My location is: " + this.myLocation + " and my velocity is " + this.velocity);
 	 	
-		if (velocity != 0) {
+		if (velocity != 0 && resourcesGame.getRound() == RoundType.DEMAND) {
 			Move m = new Move(velocity*(Random.randomInt(3) - 1), velocity*(Random.randomInt(3) - 1));
 			submitMove(m);
 		}
