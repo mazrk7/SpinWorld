@@ -143,6 +143,7 @@ public class SpinWorldGUI {
 		
 		List<TimeSeriesChart> charts = new ArrayList<TimeSeriesChart>();
 		charts.add(new UtilityChart(sim, windowSize));
+		charts.add(new PCheatChart(sim, windowSize));
 		charts.add(new SatisfactionChart(sim, windowSize));
 		
 		List<HeatMap> maps = new ArrayList<HeatMap>();
@@ -158,7 +159,6 @@ public class SpinWorldGUI {
         NetworkGraph ng = new NetworkGraph(sim);
         							
         FRLayout<String, String> layout = new FRLayout<String, String>(ng.getGraph());
-        layout.setSize(new Dimension(1080, 600));
         
 		vv = new VisualizationViewer<String, String>(layout, new Dimension(1280, 720));
 		vv.setBackground(Color.WHITE);

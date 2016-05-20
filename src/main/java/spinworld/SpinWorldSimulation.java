@@ -99,8 +99,6 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	public double theta;
 	@Parameter(name = "phi")
 	public double phi;
-	@Parameter(name = "zeta")
-	public double zeta;
 	
 	// Rnd seed
 	@Parameter(name = "seed")

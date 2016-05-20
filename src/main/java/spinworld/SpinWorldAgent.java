@@ -126,8 +126,6 @@ public class SpinWorldAgent extends MobileAgent {
 	
 	double theta = .1;
 	double phi = .1;
-	double zeta = .1;
-	double tReinforcement = .1;
 				
 	public SpinWorldAgent(UUID id, String name, Location myLocation, int velocity, double radius, 
 			double a, double b, double c, double pCheat, double alpha, double beta, Cheat cheatOn, 
@@ -143,7 +141,7 @@ public class SpinWorldAgent extends MobileAgent {
 		this.rnd = new java.util.Random(rndSeed);
 		
 		this.networkLeave = netLeave;
-		int leaveThreshold = 20;
+		int leaveThreshold = 100;
 
 		switch (netLeave) {
 		case THRESHOLD:
@@ -226,17 +224,6 @@ public class SpinWorldAgent extends MobileAgent {
 		
 		this.network = this.networkService.getNetwork(getID());
 		this.collisions = this.mobilityService.getCollisions(getID());
-		
-		if (this.networkService.getToJoin(getID()) != null) {
-			Particle reserved = this.networkService.getToJoin(getID());
-			
-	    	try {
-				environment.act(new JoinNetwork(this.networkService.getNetwork(reserved.getId())), 
-						getID(), authkey);
-			} catch (ActionHandlingException e) {
-				logger.warn("Failed to join network", e);
-			}
-		}
 
 		if (this.collisions != null) {					
 			for (Particle p : collisions) {
@@ -334,14 +321,14 @@ public class SpinWorldAgent extends MobileAgent {
 				if (defectBenefit > complyBenefit)
 					reinforcementToCheat(defectBenefit - complyBenefit);
 				else
-					this.pCheat = this.pCheat - 0.1 * this.pCheat;
+					this.pCheat = this.pCheat - phi * this.pCheat;
 
 				
 				// Modify strategy depending on the reinforcement of propensity to cheat
 				modifyStrategy();
 			}
 			
-			// Reset the strategy pointer for another 20 rounds
+			// Reset the strategy pointer for another 7 rounds
 			this.strategyPtr = 0;
 			this.rollingUtility.clear();
 		}
@@ -357,6 +344,9 @@ public class SpinWorldAgent extends MobileAgent {
 	}
 
 	private void modifyStrategy() {
+		defectCount = 0;
+		complyCount = 0;
+		
 		// Probabilistic cheating updated with reinforcement factor
 		for (int i = 0; i < strategyLength; i++) {
 			if (rnd.nextDouble() < this.pCheat) {
@@ -375,13 +365,18 @@ public class SpinWorldAgent extends MobileAgent {
 	}
 	
 	private void reinforcementToCheat(double benefit) {
-		this.risk = this.resourcesGame.getRiskRate(getID(), this.network);
+		this.risk = this.resourcesGame.getObservedRiskRate(getID(), this.network);
 		this.catchRate = this.resourcesGame.getObservedCatchRate(getID(), this.network);
 		
-		double reinforcement = theta * benefit - phi * risk - zeta * catchRate;
+		double norm_benefit = benefit/(benefit + risk + catchRate);
+		double norm_risk = risk/(benefit + risk + catchRate);
+		double norm_catchRate = catchRate/(benefit + risk + catchRate);
+		double reinforcement = theta * (norm_benefit - norm_risk - norm_catchRate);
 			
-		if (reinforcement >= tReinforcement)
+		if (reinforcement > 0.0)
 			this.pCheat = this.pCheat + reinforcement * (1 - pCheat);
+		else
+			this.pCheat = this.pCheat + reinforcement * pCheat;
 	}
 	
 	// Prints the strategy plan of the agent
@@ -436,8 +431,10 @@ public class SpinWorldAgent extends MobileAgent {
 					joinNetwork(p, otherNetwork);
 			}
 			else if (network != null) {
-				if (otherNetwork == null)
+				if (otherNetwork == null) {
+					logger.info("Reserved particle " + p.getName() + " joined network: " + network.toString());
 					this.networkService.joinMembership(p.getId(), getID(), network);
+				}
 				else if (otherNetwork != null && !network.equals(otherNetwork))
 					assessNetwork(p, otherNetwork);
 			}

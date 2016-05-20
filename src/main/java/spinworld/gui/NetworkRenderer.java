@@ -33,7 +33,7 @@ public class NetworkRenderer {
 	public Transformer<String, Font> getVertexFont() {
 	    Transformer<String, Font> vertexFont = new Transformer<String, Font>() {
 	    	public Font transform(String i) {
-	    		return new Font("Verdana", Font.BOLD, 12);
+	    		return new Font("Verdana", Font.BOLD, 10);
 	    	}
 	    };
 	    
@@ -53,9 +53,9 @@ public class NetworkRenderer {
 	}
 	
 	public Transformer<String, Stroke> getEdgeStrokeTransformer() {
-		float dash[] = {15.0f};
+		float dash[] = {10.0f};
 	    final Stroke edgeStroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
-	    		BasicStroke.JOIN_MITER, 15.0f, dash, 0.0f);
+	    		BasicStroke.JOIN_MITER, 19.0f, dash, 0.0f);
 	    
 	    Transformer<String, Stroke> edgeStrokeTransformer = new Transformer<String, Stroke>() {
 		    public Stroke transform(String s) {

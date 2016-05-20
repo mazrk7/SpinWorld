@@ -1,6 +1,8 @@
 package spinworld.network;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import spinworld.facts.Allocation;
@@ -26,6 +28,7 @@ public class Network {
 	
 	// List of particles that are banned from the network
 	Set<Particle> bannedParticles = new HashSet<Particle>();
+	Map<Particle, Integer> warnHistory = new HashMap<Particle, Integer>();
 	
 	public Network(int id, Allocation allocationMethod) {
 		super();
@@ -79,6 +82,20 @@ public class Network {
 	
 	public int getNoWarnings() {
 		return this.noWarnings;
+	}
+	
+	public void warn(Particle p) {
+		if (warnHistory.containsKey(p))
+			warnHistory.put(p, warnHistory.get(p) + 1);
+		else
+			warnHistory.put(p, 1);
+	}
+	
+	public int getWarningCount(Particle p) {
+		if (warnHistory.containsKey(p))
+			return warnHistory.get(p);
+		else
+			return 0;
 	}
 	
 	public double getSeverityLB() {

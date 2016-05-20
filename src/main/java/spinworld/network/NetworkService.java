@@ -148,10 +148,6 @@ public class NetworkService extends EnvironmentService {
 		return numNetworks++;
 	}
 	
-	public Particle getToJoin(final UUID pId) {
-		return getParticle(pId).getToJoin();
-	}
-	
 	public int getNoLinks(final UUID pId) {
 		return getParticle(pId).getNoLinks();
 	}

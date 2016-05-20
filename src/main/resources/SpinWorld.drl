@@ -247,9 +247,7 @@ rule "Join network"
 	then
 		$p.addLink($p.getToJoin());
 		$p.getToJoin().addLink($p);
-		
-		$p.toJoin(null);
-		
+				
 		insert(new Processed($j));
 		logger.info("Joined network: " + $p + ", " + $n);
 end

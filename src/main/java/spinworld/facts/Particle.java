@@ -45,7 +45,7 @@ public class Particle {
 	Particle toJoin = null;
 	Set<Particle> links = new CopyOnWriteArraySet<Particle>();
 			
-	Map<Network, ArrayList<GraduationLevel>> sanctionHistory = new HashMap<Network, ArrayList<GraduationLevel>>();
+	Map<Network, ArrayList<GraduationLevel>> observedSanctionHistory = new HashMap<Network, ArrayList<GraduationLevel>>();
 	Map<Network, ArrayList<Boolean>> observedCatchHistory = new HashMap<Network, ArrayList<Boolean>>();
 		
 	public Particle(UUID id) {
@@ -193,34 +193,24 @@ public class Particle {
 			return 0;
 	}
 	
-	public ArrayList<GraduationLevel> getSanctionHistory(Network net) {
-		if (sanctionHistory.containsKey(net)) 
-			return sanctionHistory.get(net);
+	public void updateObservedSanctionHistory(Network net, GraduationLevel sanction) {
+		if (observedSanctionHistory.containsKey(net)) 
+			observedSanctionHistory.get(net).add(sanction);
 		else
-			return null;
+			observedSanctionHistory.put(net, new ArrayList<GraduationLevel>(Arrays.asList(sanction)));
 	}
 	
-	public void updateSanctionHistory(Network net, GraduationLevel sanction) {
-		if (sanctionHistory.containsKey(net)) 
-			sanctionHistory.get(net).add(sanction);
-		else
-			sanctionHistory.put(net, new ArrayList<GraduationLevel>(Arrays.asList(sanction)));
-	}
-	
-	public int getWarningCount(Network net) {
-		int warningCount = 0;
+	public double getObservedRiskRate(Network net) {	
+		double riskRate = 0.0;
 		
-		if (sanctionHistory.containsKey(net))
-			warningCount = Collections.frequency(sanctionHistory.get(net), GraduationLevel.WARNING);
+		if (observedSanctionHistory.containsKey(net)) {
+			int sanctionCount = Collections.frequency(observedSanctionHistory.get(net), GraduationLevel.WARNING)
+					+ Collections.frequency(observedSanctionHistory.get(net), GraduationLevel.EXPULSION);	
+			
+			riskRate = ((double) sanctionCount)/observedSanctionHistory.get(net).size();
+		}
 		
-		return warningCount;		
-	}
-	
-	public ArrayList<Boolean> getObservedCatchHistory(Network net) {
-		if (observedCatchHistory.containsKey(net)) 
-			return observedCatchHistory.get(net);
-		else
-			return null;
+		return riskRate;
 	}
 	
 	public void updateObservedCatchHistory(Network net, Boolean cheat) {
@@ -239,10 +229,6 @@ public class Particle {
 		}
 		
 		return catchRate;
-	}
-	
-	public double getRiskRate(Network net) {	
-		return ((double) getWarningCount(net))/net.getNoWarnings();
 	}
 		
 	@Override

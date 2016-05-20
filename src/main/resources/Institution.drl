@@ -104,29 +104,25 @@ rule "Sanction particles"
 		Round($t : number, type == RoundType.APPROPRIATE)
 		Violation($p : particle, $n : network, time == $t, $s : severity)
 		$m : MemberOf(network == $n, particle == $p)
-	then		
-		int warningCount = $p.getWarningCount($n);
-		double mFreq = $n.getMonitoringLevel();
-		double lowerB = $n.getSeverityLB();
-		double upperB = $n.getSeverityUB();
-		
-		if($s < lowerB) {	
-			$p.updateSanctionHistory($n, GraduationLevel.NO_SANCTION);
+	then				
+		if($s < $n.getSeverityLB()) {	
+			$p.updateObservedSanctionHistory($n, GraduationLevel.NO_SANCTION);
 				
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.NO_SANCTION);
 			insert(sanc);
 			logger.info(sanc);
 		}
-		else if($s >= lowerB && $s < upperB) {
-			$p.updateSanctionHistory($n, GraduationLevel.WARNING);
-		
+		else if($s >= $n.getSeverityLB() && $s < $n.getSeverityUB()) {
+			$p.updateObservedSanctionHistory($n, GraduationLevel.WARNING);
+			$n.warn($p);
+			
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.WARNING);
 			insert(sanc);
 			logger.info(sanc);	
 		}
 		
-		if($s >= upperB || warningCount >= $n.getNoWarnings()) {	
-			$p.updateSanctionHistory($n, GraduationLevel.EXPULSION);
+		if($s >= $n.getSeverityUB() || $n.getWarningCount($p) >= $n.getNoWarnings()) {	
+			$p.updateObservedSanctionHistory($n, GraduationLevel.EXPULSION);
 			$p.detachLinks();	
 			
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.EXPULSION);
@@ -138,7 +134,8 @@ rule "Sanction particles"
 			logger.info("Expulsion: " + $p + " from " + $n);
 			$n.banParticle($p);
 		}
-				
+			
+		double mFreq = $n.getMonitoringLevel();
 		mFreq = mFreq + $s * (1-mFreq);
 		$n.setMonitoringLevel(mFreq);
 end
@@ -165,7 +162,9 @@ rule "Observation of network sanctioning"
 		$m : MemberOf(network == $n, $p : particle)
 	then		
 		if (!$pSanc.equals($p)) {
-			$p.updateObservedCatchHistory($n, Boolean.TRUE);		
+			$p.updateObservedCatchHistory($n, Boolean.TRUE);	
+			$p.updateObservedSanctionHistory($n, $l);
+				
 			Observation obsv = new Observation($p, $pSanc, $n, $t);
 			insert(obsv);
 			logger.info(obsv);

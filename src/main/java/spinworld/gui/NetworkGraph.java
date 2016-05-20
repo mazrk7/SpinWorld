@@ -40,11 +40,36 @@ public class NetworkGraph extends Container {
 		for (String e : toRemoveE) {
 		  graph.removeEdge(e);
 		}
-			
+
 		for (PersistentAgent a : sim.getAgents()) {
-			TransientAgentState s = a.getState(t);
+			TransientAgentState aState = a.getState(t);
 			
-			if (s != null && s.getProperty("links") != null
+			if (aState != null && aState.getProperty("network") != null) {
+				String aNet = aState.getProperty("network");
+				if (!graph.containsVertex(a.getName()))
+					graph.addVertex(a.getName());
+
+				if (!aNet.equals("-1")) {
+					for (PersistentAgent b : sim.getAgents()) {
+						if (!a.equals(b)) {
+							TransientAgentState bState = b.getState(t);
+							
+							if (bState != null && bState.getProperty("network") != null
+									&& bState.getProperty("network").equals(aNet)) {
+								if (!graph.containsVertex(b.getName()))
+									graph.addVertex(b.getName());
+								
+								String edge = a.getName() + "_N" + aNet + "_" + b.getName();
+								if (!graph.containsEdge(edge))
+									graph.addEdge(edge, a.getName(), b.getName());
+							}
+						}
+					}
+				}
+			}
+		}
+			
+			/* if (s != null && s.getProperty("links") != null
 					&& s.getProperty("network") != null) {
 				String links = s.getProperty("links");
 				String netID = s.getProperty("network").toString();
@@ -64,7 +89,7 @@ public class NetworkGraph extends Container {
 					}
 				}
 			}				
-		}
+		}*/
 	}
 
 }
