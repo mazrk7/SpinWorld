@@ -123,7 +123,7 @@ rule "Sanction particles"
 		
 		if($s >= $n.getSeverityUB() || $n.getWarningCount($p) >= $n.getNoWarnings()) {	
 			$p.updateObservedSanctionHistory($n, GraduationLevel.EXPULSION);
-			$p.detachLinks();	
+			// $p.detachLinks();	
 			
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.EXPULSION);
 			insert(sanc);

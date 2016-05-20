@@ -21,7 +21,6 @@ import uk.ac.imperial.presage2.core.environment.EnvironmentServiceProvider;
 import uk.ac.imperial.presage2.core.environment.UnavailableServiceException;
 import uk.ac.imperial.presage2.core.event.EventBus;
 import uk.ac.imperial.presage2.core.event.EventListener;
-import uk.ac.imperial.presage2.core.participant.Participant;
 import uk.ac.imperial.presage2.core.plugin.PluginModule;
 import uk.ac.imperial.presage2.core.simulator.EndOfTimeCycle;
 import uk.ac.imperial.presage2.core.simulator.InjectedSimulation;
@@ -262,12 +261,12 @@ public class SpinWorldSimulation extends InjectedSimulation {
 		mobilityService.clearCollisions();
 		networkService.printNetworks(e.getTime());
 		
-		if (resourcesGame.getRound() == RoundType.DEMAND) {
+		/* if (resourcesGame.getRound() == RoundType.DEMAND) {
 			for (Participant part : scenario.getParticipants()) {
 				SpinWorldAgent ag = (SpinWorldAgent) part;
 				ag.updateNetworkLinks();
 			}
-		}
+		} */
 	}
 	
 }

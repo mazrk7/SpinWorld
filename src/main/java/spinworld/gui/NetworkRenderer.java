@@ -5,6 +5,7 @@ import java.awt.Font;
 import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.geom.Ellipse2D;
 import java.awt.BasicStroke;
 
 import org.apache.commons.collections15.Transformer;
@@ -19,18 +20,18 @@ public class NetworkRenderer {
 		this.sim = sim;
 	}
 	
-	public Transformer<String, Paint> getVertexPaint() {
+	public Transformer<String, Paint> getVertexPaintTransformer() {
 	    // Setup up a new vertex to paint transformer
 	    Transformer<String, Paint> vertexPaint = new Transformer<String, Paint>() {
 	    	public Paint transform(String i) {
-	    		return Color.GREEN;
+	    		return Color.RED;
 	    	}
 	    };
 	    
 	    return vertexPaint;
 	}
 	
-	public Transformer<String, Font> getVertexFont() {
+	public Transformer<String, Font> getVertexFontTransformer() {
 	    Transformer<String, Font> vertexFont = new Transformer<String, Font>() {
 	    	public Font transform(String i) {
 	    		return new Font("Verdana", Font.BOLD, 10);
@@ -44,18 +45,27 @@ public class NetworkRenderer {
 	    Transformer<String, Shape> vertexLabelTransformer = new Transformer<String, Shape>() {
 	    	public Shape transform(String i) {
 			    double width = i.length() * 10.0;
-			    Shape circle = new java.awt.geom.Ellipse2D.Double(-(width/2), -12.5, width, 25);
-	    		return circle;
+			    return new Ellipse2D.Double(-(width/2), -12.5, width, 25);
 	    	}
 	    };
 	    
 	    return vertexLabelTransformer;
 	}
 	
+	public Transformer<String, Paint> getEdgePaintTransformer() {
+	    // Setup up a new vertex to paint transformer
+	    Transformer<String, Paint> edgePaint = new Transformer<String, Paint>() {
+	    	public Paint transform(String i) {
+	    		return Color.GREEN;
+	    	}
+	    };
+	    
+	    return edgePaint;
+	}
+	
 	public Transformer<String, Stroke> getEdgeStrokeTransformer() {
-		float dash[] = {10.0f};
-	    final Stroke edgeStroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
-	    		BasicStroke.JOIN_MITER, 19.0f, dash, 0.0f);
+	    final Stroke edgeStroke = new BasicStroke(2.0f, BasicStroke.CAP_BUTT,
+	    		BasicStroke.JOIN_MITER, 10.0f);
 	    
 	    Transformer<String, Stroke> edgeStrokeTransformer = new Transformer<String, Stroke>() {
 		    public Stroke transform(String s) {
@@ -66,7 +76,7 @@ public class NetworkRenderer {
 	    return edgeStrokeTransformer;
 	} 
 	
-	public Transformer<String, Font> getEdgeFont() {
+	public Transformer<String, Font> getEdgeFontTransformer() {
 	    Transformer<String, Font> edgeFont = new Transformer<String, Font>() {
 	    	public Font transform(String i) {
 	    		return new Font("Verdana", Font.ITALIC, 10);

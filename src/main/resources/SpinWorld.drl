@@ -230,8 +230,8 @@ rule "Create network"
 		$a : CreateNetwork($n : network, $p : particle)
 		not Processed($a ;)
 	then
-		$p.addLink($a.getCollidedParticle());
-		$a.getCollidedParticle().addLink($p);
+		// $p.addLink($a.getCollidedParticle());
+		// $a.getCollidedParticle().addLink($p);
 		
 		insert(new Processed($a));
 		logger.info("Created " + $a.getNetwork() + " with alloc " 
@@ -245,8 +245,8 @@ rule "Join network"
 		$j : JoinNetwork($n : network, $p : particle)
 		not Processed($j ;)
 	then
-		$p.addLink($p.getToJoin());
-		$p.getToJoin().addLink($p);
+		// $p.addLink($p.getToJoin());
+		// $p.getToJoin().addLink($p);
 				
 		insert(new Processed($j));
 		logger.info("Joined network: " + $p + ", " + $n);
@@ -258,7 +258,7 @@ rule "Leave network"
 		$a : LeaveNetwork($n : network, $p : particle)
 		not Processed($a ;)
 	then	
-		$p.detachLinks();	
+		// $p.detachLinks();	
 		
 		insert(new Processed($a));
 		insert(new LeftNetwork($n));

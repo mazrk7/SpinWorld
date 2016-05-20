@@ -43,6 +43,7 @@ public class SpinWorldGUI {
 	PersistentSimulation sim;
 	int t = 5;
 	int windowSize = 50;
+	int mapWindowSize = 5;
 	int t0 = -1;
 
 	boolean exportMode = false;
@@ -94,16 +95,17 @@ public class SpinWorldGUI {
 			    new VisualizationImageServer<String, String>(vv.getGraphLayout(),
 			        vv.getGraphLayout().getSize());
 
-		vis.setBackground(Color.WHITE);
+		vis.setBackground(Color.LIGHT_GRAY);
 		
         NetworkRenderer nr = new NetworkRenderer(sim);
 
-        vis.getRenderContext().setVertexFillPaintTransformer(nr.getVertexPaint());
+        vis.getRenderContext().setVertexFillPaintTransformer(nr.getVertexPaintTransformer());
         vis.getRenderContext().setVertexShapeTransformer(nr.getVertexLabelTransformer());
-        vis.getRenderContext().setVertexFontTransformer(nr.getVertexFont());
+        vis.getRenderContext().setVertexFontTransformer(nr.getVertexFontTransformer());
         vis.getRenderContext().setVertexLabelTransformer(new ToStringLabeller<String>());
+	    vis.getRenderContext().setEdgeDrawPaintTransformer(nr.getEdgePaintTransformer());
         vis.getRenderContext().setEdgeStrokeTransformer(nr.getEdgeStrokeTransformer());
-        vis.getRenderContext().setEdgeFontTransformer(nr.getEdgeFont());
+        vis.getRenderContext().setEdgeFontTransformer(nr.getEdgeFontTransformer());
         vis.getRenderContext().setEdgeLabelTransformer(new ToStringLabeller<String>());
         vis.getRenderer().getVertexLabelRenderer().setPosition(Position.CNTR);
 		
@@ -147,8 +149,8 @@ public class SpinWorldGUI {
 		charts.add(new SatisfactionChart(sim, windowSize));
 		
 		List<HeatMap> maps = new ArrayList<HeatMap>();
-		maps.add(new UtilityCatchMap(sim, windowSize));
-		maps.add(new UtilityRiskMap(sim, windowSize));
+		maps.add(new UtilityCatchMap(sim, mapWindowSize));
+		maps.add(new UtilityRiskMap(sim, mapWindowSize));
 
 		final Frame f = new Frame("SpinWorld Time Series Plots");
 		final Panel p = new Panel(new GridLayout(2, 2));
@@ -159,19 +161,23 @@ public class SpinWorldGUI {
         NetworkGraph ng = new NetworkGraph(sim);
         							
         FRLayout<String, String> layout = new FRLayout<String, String>(ng.getGraph());
-        
-		vv = new VisualizationViewer<String, String>(layout, new Dimension(1280, 720));
-		vv.setBackground(Color.WHITE);
+        layout.setRepulsionMultiplier(7);
+        layout.setAttractionMultiplier(0.10);
+        Dimension preferredGraphSize = new Dimension(1280, 720);
+
+		vv = new VisualizationViewer<String, String>(layout, preferredGraphSize);
+		vv.setBackground(Color.LIGHT_GRAY);
 	    vv.setGraphMouse(new DefaultModalGraphMouse<String, String>());
 	    
         NetworkRenderer nr = new NetworkRenderer(sim);
 
-	    vv.getRenderContext().setVertexFillPaintTransformer(nr.getVertexPaint());
+	    vv.getRenderContext().setVertexFillPaintTransformer(nr.getVertexPaintTransformer());
 	    vv.getRenderContext().setVertexShapeTransformer(nr.getVertexLabelTransformer());
-	    vv.getRenderContext().setVertexFontTransformer(nr.getVertexFont());
+	    vv.getRenderContext().setVertexFontTransformer(nr.getVertexFontTransformer());
 	    vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller<String>());
+	    vv.getRenderContext().setEdgeFillPaintTransformer(nr.getEdgePaintTransformer());
 	    vv.getRenderContext().setEdgeStrokeTransformer(nr.getEdgeStrokeTransformer());
-	    vv.getRenderContext().setEdgeFontTransformer(nr.getEdgeFont());
+	    vv.getRenderContext().setEdgeFontTransformer(nr.getEdgeFontTransformer());
 	    vv.getRenderContext().setEdgeLabelTransformer(new ToStringLabeller<String>());
 	    vv.getRenderer().getVertexLabelRenderer().setPosition(Position.CNTR);
 	    
@@ -193,7 +199,7 @@ public class SpinWorldGUI {
 		
 		for (int i = 1; i <= t; i++) {
 			ng.updateGraph(i);
-	        vv.setGraphLayout(new FRLayout<String, String>(ng.getGraph()));
+	        vv.setGraphLayout(layout);
 	        
 			if (exportMode)		
 				saveGraph(sim.getName() + "/" + "Net", i);
@@ -211,7 +217,7 @@ public class SpinWorldGUI {
 			}
 									
 			ng.updateGraph(t);
-	        vv.setGraphLayout(new FRLayout<String, String>(ng.getGraph()));
+	        vv.setGraphLayout(layout);
 			
 			if (exportMode) {		
 				if (t0 == -1)

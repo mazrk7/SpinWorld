@@ -148,8 +148,15 @@ public class NetworkService extends EnvironmentService {
 		return numNetworks++;
 	}
 	
-	public int getNoLinks(final UUID pId) {
+	/* public int getNoLinks(final UUID pId) {
 		return getParticle(pId).getNoLinks();
+	} */
+	
+	public int getNoLinks(final UUID pId, final Network net) {
+		if (!getMembersOfNet(net).isEmpty())
+			return getMembersOfNet(net).size();
+		else
+			return 0;
 	}
 	
 	// Create membership for the two particles forming a network
@@ -160,7 +167,7 @@ public class NetworkService extends EnvironmentService {
 	
 	// Join membership of this particle to a network
 	public void joinMembership(final UUID pId, final UUID jpId, final Network net) {
-		getParticle(pId).toJoin(getParticle(jpId));
+		// getParticle(pId).toJoin(getParticle(jpId));
 		session.insert(new MemberOf(getParticle(pId), net));	
 	}
 	
@@ -174,9 +181,9 @@ public class NetworkService extends EnvironmentService {
 		return net.isBanned(getParticle(pId));
 	}
 
-	public Set<Particle> getLinks(UUID pId){
+	/* public Set<Particle> getLinks(UUID pId){
 		return getParticle(pId).getLinks();
-	}
+	} */
 	
 	// Get particles that are not part of a network
 	public Set<UUID> getOrphanParticles(){

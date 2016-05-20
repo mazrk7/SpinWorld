@@ -2,8 +2,6 @@ package spinworld.gui;
 
 import java.awt.Container;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import uk.ac.imperial.presage2.core.db.persistent.PersistentAgent;
@@ -67,18 +65,17 @@ public class NetworkGraph extends Container {
 					}
 				}
 			}
-		}
 			
 			/* if (s != null && s.getProperty("links") != null
 					&& s.getProperty("network") != null) {
 				String links = s.getProperty("links");
 				String netID = s.getProperty("network").toString();
 				
+				if (!graph.containsVertex(a.getName()))
+					graph.addVertex(a.getName());
+				
 				if (!links.equals("") && !netID.equals("-1")) {
 					List<String> linksArr = Arrays.asList(links.split(","));
-					
-					if (!graph.containsVertex(a.getName()))
-						graph.addVertex(a.getName());
 					
 			        for (String link : linksArr) {
 						if (!graph.containsVertex(link))
@@ -88,8 +85,8 @@ public class NetworkGraph extends Container {
 							graph.addEdge(a.getName() + "_N" + netID + "_" + link, a.getName(), link);	
 					}
 				}
-			}				
-		}*/
+			} */	
+		}
 	}
 
 }

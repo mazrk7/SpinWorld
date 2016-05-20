@@ -152,7 +152,7 @@ public class Particle {
 		return beta;
 	}
 	
-	public void toJoin(Particle p) {
+	/* public void toJoin(Particle p) {
 		this.toJoin = p;
 	}
 	
@@ -184,14 +184,14 @@ public class Particle {
 			return links;
 		else
 			return null;
-	}
+	} 
 	
 	public int getNoLinks() {
 		if (!links.isEmpty())
 			return links.size();
 		else
 			return 0;
-	}
+	} */
 	
 	public void updateObservedSanctionHistory(Network net, GraduationLevel sanction) {
 		if (observedSanctionHistory.containsKey(net)) 

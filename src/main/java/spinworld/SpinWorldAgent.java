@@ -88,9 +88,6 @@ public class SpinWorldAgent extends MobileAgent {
 	double satisfaction = 0.5;
 	double tau = .1;
 
-	int numNetworksCreated = 0;
-	int maxNetworksCreated = 50;
-
 	Cheat cheatOn = Cheat.PROVISION;
 
 	Network network = null;
@@ -230,7 +227,7 @@ public class SpinWorldAgent extends MobileAgent {
 				formNetworks(p);
 			}
 			
-			this.mobilityService.updateVelocity(getID(), this.networkService.getNoLinks(getID()));
+			this.mobilityService.updateVelocity(getID(), this.networkService.getNoLinks(getID(), this.network));
 		}
 		
 		if (!dead && permCreateNetwork && this.network == null && resourcesGame.getRoundNumber() > 1
@@ -368,10 +365,10 @@ public class SpinWorldAgent extends MobileAgent {
 		this.risk = this.resourcesGame.getObservedRiskRate(getID(), this.network);
 		this.catchRate = this.resourcesGame.getObservedCatchRate(getID(), this.network);
 		
-		double norm_benefit = benefit/(benefit + risk + catchRate);
-		double norm_risk = risk/(benefit + risk + catchRate);
-		double norm_catchRate = catchRate/(benefit + risk + catchRate);
-		double reinforcement = theta * (norm_benefit - norm_risk - norm_catchRate);
+		double normBenefit = benefit/(benefit + risk + catchRate);
+		double normRisk = risk/(benefit + risk + catchRate);
+		double normCatchRate = catchRate/(benefit + risk + catchRate);
+		double reinforcement = theta * (normBenefit - normRisk - normCatchRate);
 			
 		if (reinforcement > 0.0)
 			this.pCheat = this.pCheat + reinforcement * (1 - pCheat);
@@ -425,7 +422,7 @@ public class SpinWorldAgent extends MobileAgent {
 			Network otherNetwork = this.networkService.getNetwork(p.getId());
 	
 			if (network == null) {
-				if (otherNetwork == null && numNetworksCreated < maxNetworksCreated)
+				if (otherNetwork == null)
 					createNetwork(p);
 				else if (otherNetwork != null)
 					joinNetwork(p, otherNetwork);
@@ -447,13 +444,10 @@ public class SpinWorldAgent extends MobileAgent {
 			Network net = new Network(this.networkService.getNextNumNetwork(), method, 
 				this.monitoringLevel, this.monitoringCost, this.noWarnings, this.severityLB, this.severityUB);
 			this.network = net;
-
 			
 			this.networkService.createMembership(getID(), p, net);
 			this.resourcesGame.session.insert(net);
-			environment.act(new CreateNetwork(net, p), getID(), authkey);
-						
-			numNetworksCreated++;
+			environment.act(new CreateNetwork(net, p), getID(), authkey);		
 		} catch (ActionHandlingException e) {
 			logger.warn("Failed to create network", e);
 		}
@@ -497,6 +491,8 @@ public class SpinWorldAgent extends MobileAgent {
 	protected void calculateScores() {
 		double r = resourcesGame.getAllocated(getID());
 		double rP = resourcesGame.getAppropriated(getID());
+		this.risk = this.resourcesGame.getObservedRiskRate(getID(), this.network);
+		this.catchRate = this.resourcesGame.getObservedCatchRate(getID(), this.network);
 		
 		if (g == 0 && q == 0)
 			return;
@@ -874,7 +870,7 @@ public class SpinWorldAgent extends MobileAgent {
 		boolean isSubsetMember(Network n);
 	}
 	
-	public void updateNetworkLinks() {
+	/* public void updateNetworkLinks() {
 		Set<Particle> pLinks = this.networkService.getLinks(getID());
 		
 		String links = null;	
@@ -892,6 +888,6 @@ public class SpinWorldAgent extends MobileAgent {
 		
 		TransientAgentState state = this.persist.getState(resourcesGame.getRoundNumber() - 1);
 		state.setProperty("links", links != null ? links.toString() : "");
-	}
+	} */
 
 }
