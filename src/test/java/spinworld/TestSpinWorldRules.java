@@ -168,7 +168,7 @@ public class TestSpinWorldRules {
 		}
 
 		SimulatedWorld addNetwork(Allocation all) {
-			Network n = new Network(networks.size(), all);
+			Network n = new Network(networks.size(), "L", all);
 			networks.add(n);
 			session.insert(n);
 			return this;
@@ -176,7 +176,7 @@ public class TestSpinWorldRules {
 
 		SimulatedWorld addPlayer(String name, double alpha, double beta, int network,
 				int velocity, Location loc) {
-			Particle p = new Particle(Random.randomUUID(), name, alpha, beta, velocity, loc);
+			Particle p = new Particle(Random.randomUUID(), name, "C", alpha, beta, velocity, loc);
 			particles.add(p);
 			session.insert(p);
 			

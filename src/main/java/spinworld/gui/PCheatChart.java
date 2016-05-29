@@ -24,18 +24,20 @@ public class PCheatChart implements TimeSeriesChart {
 	final PersistentSimulation sim;
 	final int windowSize;
 
+	final Long simId;
 	final DefaultCategoryDataset data;
 	final JFreeChart chart;
 	final ChartPanel panel;
 	Map<String, DescriptiveStatistics> pCheats = new HashMap<String, DescriptiveStatistics>();
 
-	PCheatChart(PersistentSimulation sim, int windowSize) {
+	PCheatChart(Long simId, PersistentSimulation sim, int windowSize) {
 		super();
+		this.simId = simId;
 		this.sim = sim;
 		this.windowSize = windowSize;
 
 		data = new DefaultCategoryDataset();
-		chart = ChartFactory.createBarChart("Average Propensity to Cheat over last 50 rounds", "", "", data,
+		chart = ChartFactory.createBarChart("Propensity to Cheat", "", "", data,
 				PlotOrientation.VERTICAL, false, false, false);
 		panel = new ChartPanel(chart);
 
@@ -53,6 +55,16 @@ public class PCheatChart implements TimeSeriesChart {
 	@Override
 	public JFreeChart getChart() {
 		return chart;
+	}
+	
+	@Override
+	public void hideLegend(boolean hide) {
+		this.chart.getLegend().setVisible(!hide);
+	}
+
+	@Override
+	public Long getSimId() {
+		return this.simId;
 	}
 
 	@Override

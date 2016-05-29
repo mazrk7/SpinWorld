@@ -13,6 +13,8 @@ public class Network {
 	// Unique network ID
 	final int id;
 	
+	String type = "L";
+	
 	// Allocation method for a network
 	Allocation allocationMethod;
 	
@@ -24,29 +26,30 @@ public class Network {
 	double severityUB = 0.8;
 	
 	// Number of warnings a network will give to a particle as punishment
-	int noWarnings = 1;
+	int noWarnings = 3;
 	
 	// List of particles that are banned from the network
 	Set<Particle> bannedParticles = new HashSet<Particle>();
 	Map<Particle, Integer> warnHistory = new HashMap<Particle, Integer>();
 	
-	public Network(int id, Allocation allocationMethod) {
+	public Network(int id, String type, Allocation allocationMethod) {
 		super();
 		this.id = id;
+		this.type = type;
 		this.allocationMethod = allocationMethod;
 	}
 	
-	public Network(int id, Allocation allocationMethod, double monitoringLevel,
-			double monitoringCost, int noWarnings) {
-		this(id, allocationMethod);
+	public Network(int id, String type, Allocation allocationMethod, 
+			double monitoringLevel, double monitoringCost, int noWarnings) {
+		this(id, type, allocationMethod);
 		this.monitoringLevel = monitoringLevel;
 		this.monitoringCost = monitoringCost;
 		this.noWarnings = noWarnings;
 	}
 	
-	public Network(int id, Allocation allocationMethod, double monitoringLevel,
+	public Network(int id, String type, Allocation allocationMethod, double monitoringLevel,
 			double monitoringCost, int noWarnings, double severityLB, double severityUB) {
-		this(id, allocationMethod);
+		this(id, type, allocationMethod);
 		this.monitoringLevel = monitoringLevel;
 		this.monitoringCost = monitoringCost;
 		this.noWarnings = noWarnings;
@@ -56,11 +59,15 @@ public class Network {
 	
 	@Override
 	public String toString() {
-		return "Network " + id + "";
+		return "Network [" + id + ", type=" + type + "]";
 	}
 
 	public int getId() {
 		return id;
+	}
+	
+	public String getType() {
+		return type;
 	}
 	
 	public Allocation getAllocationMethod() {
@@ -108,6 +115,13 @@ public class Network {
 	
 	public void banParticle(Particle p) {
 		bannedParticles.add(p);
+	}
+	
+	public int getNoBannedParticles() {
+		if (!bannedParticles.isEmpty())
+			return bannedParticles.size();
+		else
+			return 0;
 	}
 	
 	public boolean isBanned(Particle p) {

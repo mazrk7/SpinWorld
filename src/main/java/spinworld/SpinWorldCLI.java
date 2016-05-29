@@ -21,10 +21,10 @@ import org.apache.log4j.Logger;
 
 import spinworld.db.ConnectionlessStorage;
 import spinworld.db.Queries;
+import spinworld.db.SpinWorldStorage;
 import spinworld.gui.SpinWorldGUI;
 import uk.ac.imperial.presage2.core.cli.Presage2CLI;
 import uk.ac.imperial.presage2.core.db.DatabaseService;
-import uk.ac.imperial.presage2.core.db.StorageService;
 import uk.ac.imperial.presage2.core.db.persistent.PersistentAgent;
 import uk.ac.imperial.presage2.core.db.persistent.PersistentSimulation;
 import uk.ac.imperial.presage2.core.db.persistent.TransientAgentState;
@@ -53,6 +53,7 @@ public class SpinWorldCLI extends Presage2CLI {
 		experiments.put("cheat_strat", "Test different cheating strategies.");
 		experiments.put("sanction_count", "Test different sanction levels.");
 		experiments.put("severity_scale", "Test different severity scales.");
+		experiments.put("monitoring_cost", "Test different network monitoring costs.");
 
 		OptionGroup exprOptions = new OptionGroup();
 		for (String key : experiments.keySet()) {
@@ -111,6 +112,8 @@ public class SpinWorldCLI extends Presage2CLI {
 			sanction_count(repeats, seed);
 		else if (args[1].equalsIgnoreCase("severity_scale"))
 			severity_scale(repeats, seed);
+		else if (args[1].equalsIgnoreCase("monitoring_cost"))
+			monitoring_cost(repeats, seed);
 	}
 
 	void large_pop(int repeats, int seed) {
@@ -119,24 +122,33 @@ public class SpinWorldCLI extends Presage2CLI {
 		int agents = 100;
 
 		for (int i = 0; i < repeats; i++) {
-			for (double pProp : new double[] { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 }) {
-				int pc = (int) Math.round(agents * pProp);
+			for (double ncProp : new double[] { .0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1.0 }) {
+				int nc = (int) Math.round(agents * ncProp);
 
 				PersistentSimulation sim = getDatabase().createSimulation(
-						"LARGE_POP_" + String.format("%03d", pc), "spinworld.SpinWorldSimulation",
+						"LARGE_POP_" + String.format("%03d", nc) + "_PRO", "spinworld.SpinWorldSimulation",
 						"AUTO START", rounds);
 
 				sim.addParameter("finishTime", Integer.toString(rounds));
-				sim.addParameter("size", Integer.toString(5));
+				sim.addParameter("size", Integer.toString(10));
 				sim.addParameter("alpha", Double.toString(0.1));
 				sim.addParameter("beta", Double.toString(0.1));
 				sim.addParameter("gamma", Double.toString(0.1));
 				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
-				sim.addParameter("agents", Integer.toString(agents - pc));
-				sim.addParameter("cheat", Double.toString(0.2));
+				sim.addParameter("cAgents", Integer.toString(agents - nc));
+				sim.addParameter("cPCheat", Double.toString(0.2));
+				sim.addParameter("ncAgents", Integer.toString(nc));
+				sim.addParameter("ncPCheat", Double.toString(0.5));
 				sim.addParameter("seed", Integer.toString(seed + i));
 				sim.addParameter("cheatOn", Cheat.PROVISION.name());
+				sim.addParameter("noWarnings", Integer.toString(3));
+				sim.addParameter("severityLB", Double.toString(0.2));
+				sim.addParameter("severityUB", Double.toString(0.8));
+				sim.addParameter("monitoringCost", Double.toString(0.3));
+				sim.addParameter("sMonitoringLevel", Double.toString(0.7));
+				sim.addParameter("lMonitoringLevel", Double.toString(0.2));
+				sim.addParameter("strictNets", Double.toString(0.2));
 
 				logger.info("Created sim: " + sim.getID() + " - " + sim.getName());
 			}
@@ -157,17 +169,26 @@ public class SpinWorldCLI extends Presage2CLI {
 						rounds);
 
 				sim.addParameter("finishTime", Integer.toString(rounds));
-				sim.addParameter("size", Integer.toString(5));
+				sim.addParameter("size", Integer.toString(10));
 				sim.addParameter("alpha", Double.toString(0.1));
 				sim.addParameter("beta", Double.toString(0.1));
 				sim.addParameter("gamma", Double.toString(0.1));
 				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
-				sim.addParameter("agents", Integer.toString(20));
-				sim.addParameter("cheat", Double.toString(0.2));
+				sim.addParameter("cAgents", Integer.toString(20));
+				sim.addParameter("cPCheat", Double.toString(0.2));
+				sim.addParameter("ncAgents", Integer.toString(10));
+				sim.addParameter("ncPCheat", Double.toString(0.5));
 				sim.addParameter("seed", Integer.toString(seed + i));
 				sim.addParameter("cheatOn", ch.name());
-
+				sim.addParameter("noWarnings", Integer.toString(3));
+				sim.addParameter("severityLB", Double.toString(0.2));
+				sim.addParameter("severityUB", Double.toString(0.8));
+				sim.addParameter("monitoringCost", Double.toString(0.3));
+				sim.addParameter("sMonitoringLevel", Double.toString(0.7));
+				sim.addParameter("lMonitoringLevel", Double.toString(0.2));
+				sim.addParameter("strictNets", Double.toString(0.2));
+				
 				logger.info("Created sim: " + sim.getID() + " - " + sim.getName());
 			}
 		}
@@ -180,24 +201,32 @@ public class SpinWorldCLI extends Presage2CLI {
 		int rounds = 200;
 
 		for (int i = 0; i < repeats; i++) {
-			for (int sc : new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }) {
+			for (int sc : new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }) {
 				PersistentSimulation sim = getDatabase().createSimulation(
 						"SANCTION_" + sc, "spinworld.SpinWorldSimulation",
 						"AUTO START", rounds);
 
 				sim.addParameter("finishTime", Integer.toString(rounds));
-				sim.addParameter("size", Integer.toString(5));
+				sim.addParameter("size", Integer.toString(10));
 				sim.addParameter("alpha", Double.toString(0.1));
 				sim.addParameter("beta", Double.toString(0.1));
 				sim.addParameter("gamma", Double.toString(0.1));
 				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
-				sim.addParameter("agents", Integer.toString(20));
-				sim.addParameter("cheat", Double.toString(0.2));
+				sim.addParameter("cAgents", Integer.toString(20));
+				sim.addParameter("cPCheat", Double.toString(0.2));
+				sim.addParameter("ncAgents", Integer.toString(10));
+				sim.addParameter("ncPCheat", Double.toString(0.5));
 				sim.addParameter("seed", Integer.toString(seed + i));
 				sim.addParameter("cheatOn", Cheat.PROVISION.name());
 				sim.addParameter("noWarnings", Integer.toString(sc));
-
+				sim.addParameter("severityLB", Double.toString(0.2));
+				sim.addParameter("severityUB", Double.toString(0.8));
+				sim.addParameter("monitoringCost", Double.toString(0.3));
+				sim.addParameter("sMonitoringLevel", Double.toString(0.7));
+				sim.addParameter("lMonitoringLevel", Double.toString(0.2));
+				sim.addParameter("strictNets", Double.toString(0.2));
+				
 				logger.info("Created sim: " + sim.getID() + " - " + sim.getName());
 			}
 		}
@@ -210,7 +239,7 @@ public class SpinWorldCLI extends Presage2CLI {
 		int rounds = 200;
 
 		for (int i = 0; i < repeats; i++) {
-			for (double ub : new double[] { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 }) {
+			for (double ub : new double[] { .1, .2, .3, .4, .5, .6, .7, .8, .9, 1.0 }) {
 				int lbDim = (int) Math.round(ub/0.1);		
 				double[] lowerBounds = new double[lbDim];
 				
@@ -224,19 +253,26 @@ public class SpinWorldCLI extends Presage2CLI {
 							"AUTO START", rounds);
 	
 					sim.addParameter("finishTime", Integer.toString(rounds));
-					sim.addParameter("size", Integer.toString(5));
+					sim.addParameter("size", Integer.toString(10));
 					sim.addParameter("alpha", Double.toString(0.1));
 					sim.addParameter("beta", Double.toString(0.1));
 					sim.addParameter("gamma", Double.toString(0.1));
 					sim.addParameter("theta", Double.toString(0.1));
 					sim.addParameter("phi", Double.toString(0.1));
-					sim.addParameter("agents", Integer.toString(20));
-					sim.addParameter("cheat", Double.toString(0.2));
+					sim.addParameter("cAgents", Integer.toString(20));
+					sim.addParameter("cPCheat", Double.toString(0.2));
+					sim.addParameter("ncAgents", Integer.toString(10));
+					sim.addParameter("ncPCheat", Double.toString(0.5));
 					sim.addParameter("seed", Integer.toString(seed + i));
 					sim.addParameter("cheatOn", Cheat.PROVISION.name());
+					sim.addParameter("noWarnings", Integer.toString(3));
 					sim.addParameter("severityLB", Double.toString(lb));
 					sim.addParameter("severityUB", Double.toString(ub));
-	
+					sim.addParameter("monitoringCost", Double.toString(0.3));
+					sim.addParameter("sMonitoringLevel", Double.toString(0.7));
+					sim.addParameter("lMonitoringLevel", Double.toString(0.2));
+					sim.addParameter("strictNets", Double.toString(0.2));
+					
 					logger.info("Created sim: " + sim.getID() + " - " + sim.getName());
 				}
 			}
@@ -244,7 +280,44 @@ public class SpinWorldCLI extends Presage2CLI {
 
 		stopDatabase();
 	}
+	
+	void monitoring_cost(int repeats, int seed) {
+		// int rounds = 1002;
+		int rounds = 200;
 
+		for (int i = 0; i < repeats; i++) {
+			for (double mc : new double[] { .0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1.0 }) {
+				PersistentSimulation sim = getDatabase().createSimulation(
+						"MONITORING_" + mc, "spinworld.SpinWorldSimulation",
+						"AUTO START", rounds);
+
+				sim.addParameter("finishTime", Integer.toString(rounds));
+				sim.addParameter("size", Integer.toString(10));
+				sim.addParameter("alpha", Double.toString(0.1));
+				sim.addParameter("beta", Double.toString(0.1));
+				sim.addParameter("gamma", Double.toString(0.1));
+				sim.addParameter("theta", Double.toString(0.1));
+				sim.addParameter("phi", Double.toString(0.1));
+				sim.addParameter("cAgents", Integer.toString(20));
+				sim.addParameter("cPCheat", Double.toString(0.2));
+				sim.addParameter("ncAgents", Integer.toString(10));
+				sim.addParameter("ncPCheat", Double.toString(0.5));
+				sim.addParameter("seed", Integer.toString(seed + i));
+				sim.addParameter("cheatOn", Cheat.PROVISION.name());
+				sim.addParameter("noWarnings", Integer.toString(3));
+				sim.addParameter("severityLB", Double.toString(0.2));
+				sim.addParameter("severityUB", Double.toString(0.8));
+				sim.addParameter("monitoringCost", Double.toString(mc));
+				sim.addParameter("sMonitoringLevel", Double.toString(0.7));
+				sim.addParameter("lMonitoringLevel", Double.toString(0.2));
+				sim.addParameter("strictNets", Double.toString(0.2));
+				
+				logger.info("Created sim: " + sim.getID() + " - " + sim.getName());
+			}
+		}
+
+		stopDatabase();
+	}
 
 	@Command(name = "summarise", description = "Process raw simulation data to generate evaluation metrics.")
 	public void summarise(String[] args) {
@@ -309,28 +382,37 @@ public class SpinWorldCLI extends Presage2CLI {
 					int network = networks.getInt(1);
 					logger.debug("Network " + network);
 
-					// Calculate particles remaining
-					int rem = 0;
+					// Calculate c and nc remaining
+					int crem = 0;
+					int ncrem = 0;
 
 					remaining.setLong(1, id);
-					remaining.setInt(2, cutoff);
-					remaining.setInt(3, network);
+					remaining.setString(2, "c%");
+					remaining.setInt(3, cutoff);
+					remaining.setInt(4, network);
 					ResultSet rs = remaining.executeQuery();
-
 					if (rs.next()) {
-						rem = rs.getInt(1);
+						crem = rs.getInt(1);
+					}
+
+					remaining.setString(2, "nc%");
+					rs = remaining.executeQuery();
+					if (rs.next()) {
+						ncrem = rs.getInt(1);
 					}
 
 					// Insert summary
 					insertSummary.setLong(1, id);
 					insertSummary.setString(2, name);
 					insertSummary.setInt(3, network);
-					insertSummary.setDouble(4, networks.getDouble(1));
-					insertSummary.setDouble(5, networks.getDouble(2));
-					insertSummary.setDouble(6, networks.getDouble(3));
-					insertSummary.setInt(7, rem);
+					insertSummary.setDouble(4, networks.getDouble(2));
+					insertSummary.setDouble(5, networks.getDouble(3));
+					insertSummary.setDouble(6, networks.getDouble(4));
+					insertSummary.setDouble(7, networks.getDouble(5));
+					insertSummary.setDouble(8, networks.getDouble(6));
+					insertSummary.setInt(9, crem);
+					insertSummary.setInt(10, ncrem);
 					insertSummary.execute();
-
 				}
 
 				// COMMIT TRANSACTION
@@ -355,7 +437,7 @@ public class SpinWorldCLI extends Presage2CLI {
 			System.err.println("Please specify a simulation ID.");
 		}
 
-		StorageService storage = getDatabase();
+		SpinWorldStorage storage = (SpinWorldStorage) getDatabase();
 		PersistentSimulation sim = storage.getSimulationById(simulationID);
 
 		logger.info("Check for missing round data");
@@ -385,18 +467,12 @@ public class SpinWorldCLI extends Presage2CLI {
 
 	@Command(name = "graph", description = "Export graphs for simulation.")
 	public void export_graphs(String[] args) throws Exception {
-		if (args.length > 2)
-			SpinWorldGUI.main(new String[] { args[1], args[2] });
-		else if (args.length > 1)
-			SpinWorldGUI.main(new String[] { args[1] });
-		else
-			logger.error("Incorrect number of arguments. Graph requires at least 2 arguments.");
+		SpinWorldGUI.main(args);
 	}
 
 	@SuppressWarnings("static-access")
 	@Command(name = "run_hpc", description = "Run sim in hpc mode (reduced db connections).")
 	public void run_connectionless(String[] args) throws Exception {
-
 		int threads = 4;
 		int retries = 3;
 

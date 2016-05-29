@@ -56,73 +56,79 @@ public class SpinWorldStorage extends SqlStorage {
 			createTables = conn.createStatement();
 			
 			createTables
-					.execute("CREATE TABLE IF NOT EXISTS `particleScore` ("
-							+ "`simID` bigint(20) NOT NULL,"
-							+ "`particle` varchar(10) NOT NULL,"
-							+ "`round` int(11) NOT NULL,"
-							+ "`g` double NOT NULL,"
-							+ "`q` double NOT NULL,"
-							+ "`d` double NOT NULL,"
-							+ "`p` double NOT NULL,"
-							+ "`r` double NOT NULL,"
-							+ "`rP` double NOT NULL,"
-							+ "`rTotal` double NOT NULL,"
-							+ "`satisfaction` double NOT NULL,"
-							+ "`U` double NOT NULL,"
-							+ "`network` int(11) NOT NULL,"
-							+ "`pCheat` double NOT NULL,"
-							+ "`catchRate` double NOT NULL,"
-							+ "`risk` double NOT NULL,"
-							+ "`links` varchar(250) NOT NULL,"
-							+ "PRIMARY KEY (`simID`,`particle`,`round`),"
-							+ "KEY `simID` (`simID`),"
-							+ "KEY `particle` (`particle`),"
-							+ "KEY `round` (`round`),"
-							+ "KEY `network` (`network`),"
-							+ "FOREIGN KEY (`simID`) REFERENCES `simulations` (`ID`) ON DELETE CASCADE"
-							+ ")");
-
-			createTables
-					.execute("CREATE TABLE IF NOT EXISTS `aggregatedParticleScore` ("
-							+ "`simID` bigint(20) NOT NULL,"
-							+ "`particle` varchar(10) NOT NULL,"
-							+ "`network` int(11) NOT NULL,"
-							+ "`USum` double NOT NULL,"
-							+ "PRIMARY KEY (`simID`, `particle`,`network`),"
-							+ "KEY `simID` (`simID`),"
-							+ "KEY `particle` (`particle`),"
-							+ "KEY `network` (`network`),"
-							+ "KEY `simID-network` (`simID`, `network`),"
-							+ "FOREIGN KEY (`simID`) REFERENCES `simulations` (`ID`) ON DELETE CASCADE );");
-
-			createTables
-					.execute("CREATE TABLE IF NOT EXISTS `simulationSummary` ("
-							+ "`ID` bigint(20) NOT NULL,"
-							+ "`Name` varchar(255) NOT NULL,"
-							+ "`network` int(11) NOT NULL,"
-							+ "`ut.` double NOT NULL,"
-							+ "`stddev ut.` double NOT NULL,"
-							+ "`total ut.` double NOT NULL,"
-							+ "`rem.` int NOT NULL,"
-							+ "PRIMARY KEY (`ID`, `network`),"
-							+ "KEY `Name` (`Name`),"
-							+ "FOREIGN KEY (`ID`) REFERENCES `simulations` (`ID`) ON DELETE CASCADE );");
-			
-			createTables.execute("CREATE TABLE IF NOT EXISTS `particles` ("
-					+ "`simID` bigint(20) NOT NULL,"
-					+ "`name` varchar(10) NOT NULL,"
-					+ "`pCheat` double NOT NULL,"
-					+ "`cheatOn` char(1) NOT NULL,"
-					+ "PRIMARY KEY (`simID`,`name`))");
+					.execute("CREATE TABLE IF NOT EXISTS \"particleScore\" ("
+							+ "\"simId\" bigint NOT NULL,"
+							+ "\"particle\" varchar(10) NOT NULL,"
+							+ "\"round\" int NOT NULL,"
+							+ "\"g\" float NOT NULL,"
+							+ "\"q\" float NOT NULL,"
+							+ "\"d\" float NOT NULL,"
+							+ "\"p\" float NOT NULL,"
+							+ "\"r\" float NOT NULL,"
+							+ "\"rP\" float NOT NULL,"
+							+ "\"rTotal\" float NOT NULL,"
+							+ "\"satisfaction\" float NOT NULL,"
+							+ "\"U\" float NOT NULL,"
+							+ "\"network\" int NOT NULL,"
+							+ "\"pCheat\" float NOT NULL,"
+							+ "\"catchRate\" float NOT NULL,"
+							+ "\"risk\" float NOT NULL,"
+							+ "PRIMARY KEY (\"simId\", \"particle\", \"round\"),"
+							+ "FOREIGN KEY (\"simId\") REFERENCES \"simulations\" (\"id\") ON DELETE CASCADE"
+							+ ");");
 			
 			createTables
-					.execute("CREATE TABLE IF NOT EXISTS `networks` ("
-							+ "`simID` bigint(20) NOT NULL,"
-							+ "`network` int(11) NOT NULL,"
-							+ "`method` varchar(255) NOT NULL,"
-							+ "`created` int(11) NOT NULL,"
-							+ "PRIMARY KEY (`simID`, `network`),"
-							+ "FOREIGN KEY (`simID`) REFERENCES `simulations` (`ID`) ON DELETE CASCADE );");
+					.execute("CREATE TABLE IF NOT EXISTS \"networkScore\" ("
+							+ "\"simId\" bigint NOT NULL,"
+							+ "\"network\" int NOT NULL,"
+							+ "\"round\" int NOT NULL,"
+							+ "\"type\" char(1) NOT NULL,"
+							+ "\"monitoringLevel\" float NOT NULL,"
+							+ "\"banCount\" int NOT NULL,"
+							+ "PRIMARY KEY (\"simId\", \"network\", \"round\"),"
+							+ "FOREIGN KEY (\"simId\") REFERENCES \"simulations\" (\"id\") ON DELETE CASCADE"
+							+ ");");
+
+			createTables
+					.execute("CREATE TABLE IF NOT EXISTS \"aggregatedParticleScore\" ("
+							+ "\"simId\" bigint NOT NULL,"
+							+ "\"particle\" varchar(10) NOT NULL,"
+							+ "\"network\" int NOT NULL,"
+							+ "\"USum\" float NOT NULL,"
+							+ "PRIMARY KEY (\"simId\", \"particle\",\"network\"),"
+							+ "FOREIGN KEY (\"simId\") REFERENCES \"simulations\" (\"id\") ON DELETE CASCADE );");
+		
+			createTables
+					.execute("CREATE TABLE IF NOT EXISTS \"simulationSummary\" ("
+							+ "\"simId\" bigint NOT NULL,"
+							+ "\"name\" varchar(255) NOT NULL,"
+							+ "\"network\" int NOT NULL,"
+							+ "\"ut. C\" float NOT NULL,"
+							+ "\"stddev ut. C\" float NOT NULL,"
+							+ "\"ut. NC\" float NOT NULL,"
+							+ "\"stddev ut. NC\" float NOT NULL,"
+							+ "\"total ut.\" float NOT NULL,"
+							+ "\"rem. C\" int NOT NULL,"
+							+ "\"rem. NC\" int NOT NULL,"
+							+ "PRIMARY KEY (\"simId\", \"network\"),"
+							+ "FOREIGN KEY (\"simId\") REFERENCES \"simulations\" (\"id\") ON DELETE CASCADE );");
+			
+			createTables
+					.execute("CREATE TABLE IF NOT EXISTS \"particles\" ("
+							+ "\"simId\" bigint NOT NULL,"
+							+ "\"name\" varchar(10) NOT NULL,"
+							+ "\"pCheat\" float NOT NULL,"
+							+ "\"cheatOn\" char(1) NOT NULL,"
+							+ "PRIMARY KEY (\"simId\",\"name\"));");
+			
+			createTables
+					.execute("CREATE TABLE IF NOT EXISTS \"networks\" ("
+							+ "\"simId\" bigint NOT NULL,"
+							+ "\"network\" int NOT NULL,"
+							+ "\"method\" varchar(255) NOT NULL,"
+							+ "\"created\" int NOT NULL,"
+							+ "PRIMARY KEY (\"simId\", \"network\"),"
+							+ "FOREIGN KEY (\"simId\") REFERENCES \"simulations\" (\"id\") ON DELETE CASCADE );");
 		} catch (SQLException e) {
 			logger.warn("", e);
 			throw new RuntimeException(e);
@@ -141,13 +147,26 @@ public class SpinWorldStorage extends SqlStorage {
 	@Override
 	protected synchronized void updateTransientEnvironment() {
 		PreparedStatement insertNetwork = null;
+		PreparedStatement insertNetworkSummary = null;
+		PreparedStatement deleteNetworkSummary = null;
 
 		/* Insert network information */
 		try {
 			insertNetwork = conn
-					.prepareStatement("INSERT IGNORE INTO networks "
-							+ "(simID, network, method, created) "
-							+ "VALUES (?, ?, ?, ?) ");
+					.prepareStatement("INSERT INTO \"networks\" "
+							+ "(\"simId\", \"network\", \"method\", \"created\") "
+							+ "VALUES (?, ?, ?, ?) "
+							+ "ON CONFLICT (\"simId\", \"network\")"
+							+ "DO NOTHING");
+			
+			deleteNetworkSummary = conn.
+					prepareStatement("DELETE FROM \"networkScore\" WHERE \"simId\" = ?"
+							+ "AND \"network\" = ? AND \"round\" = ?");
+			
+			insertNetworkSummary = conn
+					.prepareStatement("INSERT INTO \"networkScore\" "
+							+ "(\"simId\", \"network\", \"round\", \"type\", \"monitoringLevel\", \"banCount\")  "
+							+ "VALUES (?, ?, ?, ?, ?, ?) ");
 		} catch (SQLException e) {
 			logger.warn(e);
 			throw new RuntimeException(e);
@@ -161,9 +180,25 @@ public class SpinWorldStorage extends SqlStorage {
 				insertNetwork.setInt(4, this.world.getRoundNumber());
 
 				insertNetwork.addBatch();
+
+				deleteNetworkSummary.setLong(1, this.simId);
+				deleteNetworkSummary.setInt(2, n.getId());
+				deleteNetworkSummary.setInt(3, this.world.getRoundNumber());
+				deleteNetworkSummary.addBatch();
+
+				insertNetworkSummary.setLong(1, this.simId);
+				insertNetworkSummary.setInt(2, n.getId());
+				insertNetworkSummary.setInt(3, this.world.getRoundNumber());
+				insertNetworkSummary.setString(4, n.getType());
+				insertNetworkSummary.setDouble(5, n.getMonitoringLevel());
+				insertNetworkSummary.setInt(6, n.getNoBannedParticles());
+				
+				insertNetworkSummary.addBatch();
 			}
 
 			batchQueryQ.put(insertNetwork);
+			batchQueryQ.put(deleteNetworkSummary);
+			batchQueryQ.put(insertNetworkSummary);
 		} catch (SQLException e) {
 			logger.warn(e);
 			throw new RuntimeException(e);
@@ -184,12 +219,18 @@ public class SpinWorldStorage extends SqlStorage {
 	@Override
 	protected synchronized void updateTransientAgents() {
 		PreparedStatement insertParticle = null;
-		
+		PreparedStatement deleteParticle = null;
+
 		try {
+			deleteParticle = conn.
+					prepareStatement("DELETE FROM \"particleScore\" WHERE \"simId\" = ?"
+							+ "AND \"particle\" = ? AND \"round\" = ?");
+			
 			insertParticle = conn
-					.prepareStatement("REPLACE INTO particleScore "
-							+ "(simID, particle, round, g, q, d, p, r, rP, rTotal, satisfaction, U, network, pCheat, catchRate, risk, links)  "
-							+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ");
+					.prepareStatement("INSERT INTO \"particleScore\" "
+							+ "(\"simId\", \"particle\", \"round\", \"g\", \"q\", \"d\", \"p\", \"r\", \"rP\", "
+							+ "\"rTotal\", \"satisfaction\", \"U\", \"network\", \"pCheat\", \"catchRate\", \"risk\")  "
+							+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ");
 		} catch (SQLException e) {
 			logger.warn(e);
 			throw new RuntimeException(e);
@@ -213,6 +254,11 @@ public class SpinWorldStorage extends SqlStorage {
 					if (!props.containsKey("g"))
 						continue;
 
+					deleteParticle.setLong(1, this.simId);
+					deleteParticle.setString(2, a.getName());
+					deleteParticle.setInt(3, round.getKey() - 1);
+					deleteParticle.addBatch();
+
 					insertParticle.setLong(1, a.simId);
 					insertParticle.setString(2, a.getName());
 					insertParticle.setInt(3, round.getKey() - 1);
@@ -233,7 +279,6 @@ public class SpinWorldStorage extends SqlStorage {
 							getProperty(props, "catchRate", 0.0));
 					insertParticle.setDouble(16,
 							getProperty(props, "risk", 0.0));
-					insertParticle.setString(17, props.get("link"));
 					
 					if (props.containsKey("network"))
 						insertParticle.setInt(13,
@@ -251,6 +296,7 @@ public class SpinWorldStorage extends SqlStorage {
 				}
 			}
 			
+			batchQueryQ.put(deleteParticle);
 			batchQueryQ.put(insertParticle);
 			agentTransientQ.clear();
 			agentTransientQ.addAll(notfullyProcessed);
@@ -268,8 +314,8 @@ public class SpinWorldStorage extends SqlStorage {
 		PreparedStatement insertParticle = null;
 		
 		try {
-			insertParticle = conn.prepareStatement("INSERT INTO particles "
-					+ "(simID, name, pCheat, cheatOn)  "
+			insertParticle = conn.prepareStatement("INSERT INTO \"particles\" "
+					+ "(\"simId\", \"name\", \"pCheat\", \"cheatOn\")  "
 					+ "VALUES (?, ?, ?, ?) ");
 		} catch (SQLException e) {
 			logger.warn(e);

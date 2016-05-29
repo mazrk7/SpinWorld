@@ -60,12 +60,18 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	public int size;
 
 	// Number of agents contained within environment
-	@Parameter(name = "agents", optional = true)
-	public int agents = 1;
-	
+	@Parameter(name = "cAgents")
+	public int cAgents;	
 	// Propensity for an agent to cheat
-	@Parameter(name = "cheat", optional = true)
-	public double cheat;
+	@Parameter(name = "cPCheat", optional = true)
+	public double cPCheat;
+	
+	// Number of agents contained within environment
+	@Parameter(name = "ncAgents")
+	public int ncAgents;	
+	// Propensity for an agent to cheat
+	@Parameter(name = "ncPCheat", optional = true)
+	public double ncPCheat;
 	
 	// Radius of an agent
 	@Parameter(name = "radius", optional = true)
@@ -121,8 +127,14 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	@Parameter(name = "resetSatisfaction", optional = true)
 	public boolean resetSatisfaction = false;
 	
-	@Parameter(name = "monitoringLevel", optional = true)
-	public double monitoringLevel = 1.0;
+	// Monitoring level of strict or lenient networks
+	@Parameter(name = "sMonitoringLevel", optional = true)
+	public double sMonitoringLevel = 0.7;
+	@Parameter(name = "lMonitoringLevel", optional = true)
+	public double lMonitoringLevel = 0.2;
+	@Parameter(name = "strictNets", optional = true)
+	public double strictNets = 0.2;
+	
 	@Parameter(name = "monitoringCost", optional = true)
 	public double monitoringCost = 0.0;
 	@Parameter(name = "noWarnings", optional = true)
@@ -203,10 +215,16 @@ public class SpinWorldSimulation extends InjectedSimulation {
 		session.setGlobal("storage", this.storage);
 		session.setGlobal("rnd", new java.util.Random(rnd.nextLong()));
 		
-		for (int n = 0; n < agents; n++) {
-			createParticle("p" + n,  
+		for (int n = 0; n < cAgents; n++) {
+			createParticle("c" + n, "C",
 					new Location(Random.randomInt(size), Random.randomInt(size)),
-					initVelocity, radius, cheat, getCheatOn(), scenario);
+					initVelocity, radius, cPCheat, getCheatOn(), scenario);
+		}
+		
+		for (int n = 0; n < ncAgents; n++) {
+			createParticle("nc" + n, "NC",
+					new Location(Random.randomInt(size), Random.randomInt(size)),
+					initVelocity, radius, ncPCheat, getCheatOn(), scenario);
 		}
 		
 		// Generate resources needed
@@ -228,7 +246,7 @@ public class SpinWorldSimulation extends InjectedSimulation {
 		return c;
 	}
 	
-	protected SpinWorldAgent createParticle(String name, Location loc, int velocity, 
+	protected SpinWorldAgent createParticle(String name, String type, Location loc, int velocity, 
 			int radius, double pCheat, Cheat cheatOn, Scenario scenario) {
 		UUID pid = UUID.randomUUID();
 		
@@ -237,7 +255,7 @@ public class SpinWorldSimulation extends InjectedSimulation {
 				resetSatisfaction, rnd.nextLong(), t1, t2, theta, phi);
 		scenario.addParticipant(ag);
 		
-		Particle p = new Particle(pid, name, alpha, beta, radius, velocity, loc);		
+		Particle p = new Particle(pid, name, type, alpha, beta, radius, velocity, loc);		
 		particles.add(p);
 		
 		session.insert(p);
@@ -260,13 +278,6 @@ public class SpinWorldSimulation extends InjectedSimulation {
 		mobilityService.printCollisions(e.getTime());
 		mobilityService.clearCollisions();
 		networkService.printNetworks(e.getTime());
-		
-		/* if (resourcesGame.getRound() == RoundType.DEMAND) {
-			for (Participant part : scenario.getParticipants()) {
-				SpinWorldAgent ag = (SpinWorldAgent) part;
-				ag.updateNetworkLinks();
-			}
-		} */
 	}
 	
 }

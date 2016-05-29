@@ -148,10 +148,6 @@ public class NetworkService extends EnvironmentService {
 		return numNetworks++;
 	}
 	
-	/* public int getNoLinks(final UUID pId) {
-		return getParticle(pId).getNoLinks();
-	} */
-	
 	public int getNoLinks(final UUID pId, final Network net) {
 		if (!getMembersOfNet(net).isEmpty())
 			return getMembersOfNet(net).size();
@@ -180,10 +176,6 @@ public class NetworkService extends EnvironmentService {
 	public boolean isBanned(final UUID pId, final Network net) {
 		return net.isBanned(getParticle(pId));
 	}
-
-	/* public Set<Particle> getLinks(UUID pId){
-		return getParticle(pId).getLinks();
-	} */
 	
 	// Get particles that are not part of a network
 	public Set<UUID> getOrphanParticles(){

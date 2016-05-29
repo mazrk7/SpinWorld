@@ -1,9 +1,12 @@
-CREATE OR REPLACE VIEW aggregatedSimulations AS 
+CREATE OR REPLACE VIEW "aggregatedSimulations" AS 
 	SELECT "name" AS strategy,
 	network,
-	AVG("ut.") AS "ut.",
-	STDDEV("ut.") AS "stddev ut.",
-	AVG("rem.") AS "rem.",
+	AVG("ut. C") AS "ut. C",
+	STDDEV("ut. C") AS "stddev ut. C",
+	AVG("ut. NC") AS "ut. NC",
+	STDDEV("ut. NC") AS "stddev ut. NC",
+	AVG("rem. C") AS "rem. C",
+	AVG("rem. NC") AS "rem. NC",
 	COUNT("simId") AS repeats
-	FROM simulationsummary
+	FROM "simulationSummary"
 	GROUP BY "name", network

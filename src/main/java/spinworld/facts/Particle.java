@@ -19,7 +19,8 @@ public class Particle {
 	UUID id;
 	final String name;
 	Location loc;
-	
+	String type = "C";
+
 	int velocity = 1;
 	
 	// Resources generated
@@ -54,26 +55,27 @@ public class Particle {
 		this.name = "n/a";
 	}
 	
-	public Particle(UUID id, String name, double alpha, 
-			double beta, int velocity, Location loc) {
+	public Particle(UUID id, String name, String type,
+			double alpha, double beta, int velocity, Location loc) {
 		super();
 		this.id = id;
 		this.name = name;
+		this.type = type;
 		this.alpha = alpha;
 		this.beta = beta;
 		this.velocity = velocity;
 		this.loc = loc;
 	}
 
-	public Particle(UUID id, String name, double alpha, double beta, 
+	public Particle(UUID id, String name, String type, double alpha, double beta, 
 			double radius, int velocity, Location loc) {
-		this(id, name, alpha, beta, velocity, loc);
+		this(id, name, type, alpha, beta, velocity, loc);
 		this.radius = radius;
 	}
 
 	@Override
 	public String toString() {
-		return "Particle [" + name + ", velocity=" + velocity +", g=" + g + ", q=" + q + "]";
+		return "Particle [" + name + ", type=" + type + ", velocity=" + velocity + ", g=" + g + ", q=" + q + "]";
 	}
 
 	public UUID getId() {
@@ -151,47 +153,6 @@ public class Particle {
 	public double getBeta() {
 		return beta;
 	}
-	
-	/* public void toJoin(Particle p) {
-		this.toJoin = p;
-	}
-	
-	public Particle getToJoin() {
-		return this.toJoin;
-	}
-	
-	public void addLink(Particle p) {
-		if (!links.contains(p))
-			links.add(p);
-	}
-	
-	public void detachLink(Particle p) {
-		if (links.contains(p))
-			links.remove(p);
-	}
-	
-	public void detachLinks() {
-		if (!links.isEmpty()) {
-			for (Particle p : links) {
-				p.detachLink(this);
-				links.remove(p);
-			}
-		}
-	}
-	
-	public Set<Particle> getLinks() {
-		if (!links.isEmpty())
-			return links;
-		else
-			return null;
-	} 
-	
-	public int getNoLinks() {
-		if (!links.isEmpty())
-			return links.size();
-		else
-			return 0;
-	} */
 	
 	public void updateObservedSanctionHistory(Network net, GraduationLevel sanction) {
 		if (observedSanctionHistory.containsKey(net)) 

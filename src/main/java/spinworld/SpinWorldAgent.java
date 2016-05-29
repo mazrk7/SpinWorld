@@ -49,10 +49,19 @@ public class SpinWorldAgent extends MobileAgent {
 		THRESHOLD, UTILITY, AGE
 	};
 
-	// Monitoring level of created networks
+	// Monitoring level of strict networks
 	@Inject
-	@Named("params.monitoringLevel")
-	private double monitoringLevel;
+	@Named("params.sMonitoringLevel")
+	private double sMonitoringLevel;
+	
+	// Monitoring level of lenient networks
+	@Inject
+	@Named("params.lMonitoringLevel")
+	private double lMonitoringLevel;
+	
+	@Inject
+	@Named("params.strictNets")
+	private double strictNets;
 
 	// Monitoring cost of created networks
 	@Inject
@@ -441,13 +450,19 @@ public class SpinWorldAgent extends MobileAgent {
 	protected void createNetwork(Particle p) {
 		try {	
 			Allocation method = Allocation.RANDOM;
-			Network net = new Network(this.networkService.getNextNumNetwork(), method, 
-				this.monitoringLevel, this.monitoringCost, this.noWarnings, this.severityLB, this.severityUB);
-			this.network = net;
+			if (rnd.nextDouble() < this.strictNets) {
+				Network net = new Network(this.networkService.getNextNumNetwork(), "S", method, 
+						this.sMonitoringLevel, this.monitoringCost, this.noWarnings, this.severityLB, this.severityUB);
+				this.network = net;
+			} else {
+				Network net = new Network(this.networkService.getNextNumNetwork(), "L", method, 
+						this.lMonitoringLevel, this.monitoringCost, this.noWarnings, this.severityLB, this.severityUB);
+				this.network = net;
+			}
 			
-			this.networkService.createMembership(getID(), p, net);
-			this.resourcesGame.session.insert(net);
-			environment.act(new CreateNetwork(net, p), getID(), authkey);		
+			this.networkService.createMembership(getID(), p, this.network);
+			this.resourcesGame.session.insert(this.network);
+			environment.act(new CreateNetwork(this.network, p), getID(), authkey);		
 		} catch (ActionHandlingException e) {
 			logger.warn("Failed to create network", e);
 		}
@@ -869,25 +884,5 @@ public class SpinWorldAgent extends MobileAgent {
 	interface NetworkFilter {
 		boolean isSubsetMember(Network n);
 	}
-	
-	/* public void updateNetworkLinks() {
-		Set<Particle> pLinks = this.networkService.getLinks(getID());
-		
-		String links = null;	
-		if (pLinks != null) {
-			StringBuilder strBuilder = new StringBuilder();
-			for (Particle link : pLinks) {
-			    if (strBuilder.length() > 0) 
-			    	strBuilder.append(',');
-			    
-			    strBuilder.append(link.getName());
-			}
-			
-			links = strBuilder.toString();
-		}
-		
-		TransientAgentState state = this.persist.getState(resourcesGame.getRoundNumber() - 1);
-		state.setProperty("links", links != null ? links.toString() : "");
-	} */
 
 }

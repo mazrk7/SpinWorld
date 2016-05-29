@@ -1,10 +1,13 @@
-CREATE TABLE IF NOT EXISTS simulationsummary (
+CREATE TABLE IF NOT EXISTS "simulationSummary" (
 	"simId" bigint NOT NULL REFERENCES simulations,
 	name varchar(255) NOT NULL,
 	network int NOT NULL,
-	"ut." float,
-	"stddev ut." float,
+	"ut. C" float,
+	"stddev ut. C" float,
+	"ut. NC" float,
+	"stddev ut. NC" float,
 	"total ut." float,
-	"rem." int,
+	"rem. C" int,
+	"rem. NC" int,
 	PRIMARY KEY ("simId", network)
 )

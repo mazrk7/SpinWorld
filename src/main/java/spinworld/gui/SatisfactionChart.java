@@ -19,12 +19,14 @@ public class SatisfactionChart implements TimeSeriesChart {
 	final PersistentSimulation sim;
 	final int windowSize;
 
+	final Long simId;
 	final DefaultXYDataset data;
 	final JFreeChart chart;
 	final ChartPanel panel;
 
-	SatisfactionChart(PersistentSimulation sim, int windowSize) {
+	SatisfactionChart(Long simId, PersistentSimulation sim, int windowSize) {
 		super();
+		this.simId = simId;
 		this.sim = sim;
 		this.windowSize = windowSize;
 
@@ -48,6 +50,16 @@ public class SatisfactionChart implements TimeSeriesChart {
 	public JFreeChart getChart() {
 		return chart;
 	}
+	
+	@Override
+	public void hideLegend(boolean hide) {
+		this.chart.getLegend().setVisible(!hide);
+	}
+
+	@Override
+	public Long getSimId() {
+		return this.simId;
+	}
 
 	@Override
 	public void redraw(int finish) {
@@ -68,13 +80,13 @@ public class SatisfactionChart implements TimeSeriesChart {
 			SummaryStatistics satNC = new SummaryStatistics();
 			
 			for (PersistentAgent a : sim.getAgents()) {
+				boolean compliant = a.getName().startsWith("c");
 				TransientAgentState s = a.getState(t);
 				
 				if (s != null && s.getProperty("o") != null) {
 					double o = Double.parseDouble(s.getProperty("o"));
-					double pCheat = Double.parseDouble(a.getProperty("pCheat"));
-
-					if (pCheat <= 0.5)
+					
+					if (compliant)
 						satC.addValue(o);
 					else
 						satNC.addValue(o);

@@ -1,8 +1,8 @@
-DELETE FROM aggregatedParticleScore WHERE "simId" = ?;
-INSERT INTO aggregatedParticleScore
+DELETE FROM "aggregatedParticleScore" WHERE "simId" = ?;
+INSERT INTO "aggregatedParticleScore"
 	SELECT a."simId", a."name", 
 	CAST(t.state->'network' AS int) AS network, 
-	SUM(CAST(t.state->'U' AS float)) AS usum 
+	SUM(CAST(t.state->'U' AS float)) AS "USum" 
 	FROM agents AS a 
 	LEFT JOIN  agenttransient AS t 
 		ON a."simId" = t."simId" 

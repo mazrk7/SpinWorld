@@ -104,26 +104,10 @@ rule "Sanction particles"
 		Round($t : number, type == RoundType.APPROPRIATE)
 		Violation($p : particle, $n : network, time == $t, $s : severity)
 		$m : MemberOf(network == $n, particle == $p)
-	then				
-		if($s < $n.getSeverityLB()) {	
-			$p.updateObservedSanctionHistory($n, GraduationLevel.NO_SANCTION);
-				
-			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.NO_SANCTION);
-			insert(sanc);
-			logger.info(sanc);
-		}
-		else if($s >= $n.getSeverityLB() && $s < $n.getSeverityUB()) {
-			$p.updateObservedSanctionHistory($n, GraduationLevel.WARNING);
-			$n.warn($p);
-			
-			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.WARNING);
-			insert(sanc);
-			logger.info(sanc);	
-		}
-		
-		if($s >= $n.getSeverityUB() || $n.getWarningCount($p) >= $n.getNoWarnings()) {	
+	then	
+		if($s >= $n.getSeverityUB() || ($n.getWarningCount($p) >= $n.getNoWarnings()
+				&& $s >= $n.getSeverityLB() && $s < $n.getSeverityUB())) {	
 			$p.updateObservedSanctionHistory($n, GraduationLevel.EXPULSION);
-			// $p.detachLinks();	
 			
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.EXPULSION);
 			insert(sanc);
@@ -133,7 +117,20 @@ rule "Sanction particles"
 			insert(new LeftNetwork($n));
 			logger.info("Expulsion: " + $p + " from " + $n);
 			$n.banParticle($p);
-		}
+		} else if($s >= $n.getSeverityLB() && $s < $n.getSeverityUB()) {
+			$p.updateObservedSanctionHistory($n, GraduationLevel.WARNING);
+			$n.warn($p);
+			
+			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.WARNING);
+			insert(sanc);
+			logger.info(sanc);	
+		} else if($s < $n.getSeverityLB()) {	
+			$p.updateObservedSanctionHistory($n, GraduationLevel.NO_SANCTION);
+				
+			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.NO_SANCTION);
+			insert(sanc);
+			logger.info(sanc);
+		} 
 			
 		double mFreq = $n.getMonitoringLevel();
 		mFreq = mFreq + $s * (1-mFreq);

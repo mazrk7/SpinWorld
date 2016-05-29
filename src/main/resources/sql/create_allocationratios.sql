@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW allocationRatios AS 
+CREATE OR REPLACE VIEW "allocationRatios" AS 
 	SELECT t."simId",
 	a.name,
 	t."time",
