@@ -127,14 +127,9 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	@Parameter(name = "resetSatisfaction", optional = true)
 	public boolean resetSatisfaction = false;
 	
-	// Monitoring level of strict or lenient networks
-	@Parameter(name = "sMonitoringLevel", optional = true)
-	public double sMonitoringLevel = 0.7;
-	@Parameter(name = "lMonitoringLevel", optional = true)
-	public double lMonitoringLevel = 0.2;
-	@Parameter(name = "strictNets", optional = true)
-	public double strictNets = 0.2;
-	
+	// Monitoring level of networks
+	@Parameter(name = "monitoringLevel", optional = true)
+	public double monitoringLevel = 0.7;	
 	@Parameter(name = "monitoringCost", optional = true)
 	public double monitoringCost = 0.0;
 	@Parameter(name = "noWarnings", optional = true)

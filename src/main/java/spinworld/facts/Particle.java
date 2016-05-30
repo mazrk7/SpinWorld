@@ -1,16 +1,12 @@
 package spinworld.facts;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import spinworld.GraduationLevel;
-import spinworld.network.Network;
 import uk.ac.imperial.presage2.util.location.Location;
 
 // Mobile particle in a linear square environment
@@ -46,8 +42,8 @@ public class Particle {
 	Particle toJoin = null;
 	Set<Particle> links = new CopyOnWriteArraySet<Particle>();
 			
-	Map<Network, ArrayList<GraduationLevel>> observedSanctionHistory = new HashMap<Network, ArrayList<GraduationLevel>>();
-	Map<Network, ArrayList<Boolean>> observedCatchHistory = new HashMap<Network, ArrayList<Boolean>>();
+	ArrayList<GraduationLevel> observedSanctionHistory = new ArrayList<GraduationLevel>();
+	ArrayList<Boolean> observedCatchHistory = new ArrayList<Boolean>();
 		
 	public Particle(UUID id) {
 		super();
@@ -154,42 +150,34 @@ public class Particle {
 		return beta;
 	}
 	
-	public void updateObservedSanctionHistory(Network net, GraduationLevel sanction) {
-		if (observedSanctionHistory.containsKey(net)) 
-			observedSanctionHistory.get(net).add(sanction);
-		else
-			observedSanctionHistory.put(net, new ArrayList<GraduationLevel>(Arrays.asList(sanction)));
+	public void updateObservedSanctionHistory(GraduationLevel sanction) {
+		observedSanctionHistory.add(sanction);
 	}
 	
-	public double getObservedRiskRate(Network net) {	
-		double riskRate = 0.0;
-		
-		if (observedSanctionHistory.containsKey(net)) {
-			int sanctionCount = Collections.frequency(observedSanctionHistory.get(net), GraduationLevel.WARNING)
-					+ Collections.frequency(observedSanctionHistory.get(net), GraduationLevel.EXPULSION);	
+	public double getObservedRiskRate() {	
+		if (!observedSanctionHistory.isEmpty()) {
+			int sanctionCount = Collections.frequency(observedSanctionHistory, GraduationLevel.WARNING)
+				+ (Collections.frequency(observedSanctionHistory, GraduationLevel.EXPULSION) * 2);
+			double risk = ((double) sanctionCount)/observedSanctionHistory.size();
 			
-			riskRate = ((double) sanctionCount)/observedSanctionHistory.get(net).size();
-		}
-		
-		return riskRate;
+			return risk;
+		} else
+			return 0;	
 	}
 	
-	public void updateObservedCatchHistory(Network net, Boolean cheat) {
-		if (observedCatchHistory.containsKey(net)) 
-			observedCatchHistory.get(net).add(cheat);
+	public void updateObservedCatchHistory(Boolean caught) {
+			observedCatchHistory.add(caught);
+	}
+	
+	public double getObservedCatchRate() {
+		if (!observedCatchHistory.isEmpty()) {
+			int catchCount = Collections.frequency(observedCatchHistory, true);			
+			double catchRate = ((double) catchCount)/observedCatchHistory.size();
+			
+			return catchRate;
+		}
 		else
-			observedCatchHistory.put(net, new ArrayList<Boolean>(Arrays.asList(cheat)));
-	}
-	
-	public double getObservedCatchRate(Network net) {
-		double catchRate = 0.0;
-		
-		if (observedCatchHistory.containsKey(net)) {
-			int catchCount = Collections.frequency(observedCatchHistory.get(net), true);			
-			catchRate = ((double) catchCount)/observedCatchHistory.get(net).size();
-		}
-		
-		return catchRate;
+			return 0;
 	}
 		
 	@Override

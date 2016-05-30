@@ -10,17 +10,9 @@ import java.awt.BasicStroke;
 
 import org.apache.commons.collections15.Transformer;
 
-import uk.ac.imperial.presage2.core.db.persistent.PersistentSimulation;
-
-public class NetworkRenderer {
-
-	final PersistentSimulation sim;
+public abstract class NetworkRenderer {
 	
-	public NetworkRenderer(PersistentSimulation sim) {
-		this.sim = sim;
-	}
-	
-	public Transformer<String, Paint> getVertexPaintTransformer() {
+	public static Transformer<String, Paint> getVertexPaintTransformer() {
 	    // Setup up a new vertex to paint transformer
 	    Transformer<String, Paint> vertexPaint = new Transformer<String, Paint>() {
 	    	public Paint transform(String i) {
@@ -31,7 +23,7 @@ public class NetworkRenderer {
 	    return vertexPaint;
 	}
 	
-	public Transformer<String, Font> getVertexFontTransformer() {
+	public static Transformer<String, Font> getVertexFontTransformer() {
 	    Transformer<String, Font> vertexFont = new Transformer<String, Font>() {
 	    	public Font transform(String i) {
 	    		return new Font("Verdana", Font.BOLD, 10);
@@ -41,7 +33,7 @@ public class NetworkRenderer {
 	    return vertexFont;
 	}
 	
-	public Transformer<String, Shape> getVertexLabelTransformer() {
+	public static Transformer<String, Shape> getVertexLabelTransformer() {
 	    Transformer<String, Shape> vertexLabelTransformer = new Transformer<String, Shape>() {
 	    	public Shape transform(String i) {
 			    double width = i.length() * 10.0;
@@ -52,7 +44,7 @@ public class NetworkRenderer {
 	    return vertexLabelTransformer;
 	}
 	
-	public Transformer<String, Paint> getEdgePaintTransformer() {
+	public static Transformer<String, Paint> getEdgePaintTransformer() {
 	    // Setup up a new vertex to paint transformer
 	    Transformer<String, Paint> edgePaint = new Transformer<String, Paint>() {
 	    	public Paint transform(String i) {
@@ -63,7 +55,7 @@ public class NetworkRenderer {
 	    return edgePaint;
 	}
 	
-	public Transformer<String, Stroke> getEdgeStrokeTransformer() {
+	public static Transformer<String, Stroke> getEdgeStrokeTransformer() {
 	    final Stroke edgeStroke = new BasicStroke(2.0f, BasicStroke.CAP_BUTT,
 	    		BasicStroke.JOIN_MITER, 10.0f);
 	    
@@ -76,7 +68,7 @@ public class NetworkRenderer {
 	    return edgeStrokeTransformer;
 	} 
 	
-	public Transformer<String, Font> getEdgeFontTransformer() {
+	public static Transformer<String, Font> getEdgeFontTransformer() {
 	    Transformer<String, Font> edgeFont = new Transformer<String, Font>() {
 	    	public Font transform(String i) {
 	    		return new Font("Verdana", Font.ITALIC, 10);

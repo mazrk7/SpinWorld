@@ -132,7 +132,7 @@ public class UtilityHeatMap implements HeatMapChart {
 			DescriptiveStatistics rr = riskRates.get(key);
 			
 			int crIndex = (int) Math.floor(cr.getMean() * 100);		
-			int rrIndex = (int) Math.floor(rr.getMean() * 100);	
+			int rrIndex = (int) Math.floor(rr.getMean() * 50);	
 
 			data[rrIndex][crIndex] = ut.getSum();
 		}

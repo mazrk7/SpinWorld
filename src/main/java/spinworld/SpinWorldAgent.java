@@ -49,19 +49,10 @@ public class SpinWorldAgent extends MobileAgent {
 		THRESHOLD, UTILITY, AGE
 	};
 
-	// Monitoring level of strict networks
+	// Monitoring level of networks
 	@Inject
-	@Named("params.sMonitoringLevel")
-	private double sMonitoringLevel;
-	
-	// Monitoring level of lenient networks
-	@Inject
-	@Named("params.lMonitoringLevel")
-	private double lMonitoringLevel;
-	
-	@Inject
-	@Named("params.strictNets")
-	private double strictNets;
+	@Named("params.monitoringLevel")
+	private double monitoringLevel;
 
 	// Monitoring cost of created networks
 	@Inject
@@ -118,17 +109,8 @@ public class SpinWorldAgent extends MobileAgent {
 	boolean permCreateNetwork = false;
 	boolean dead = false;
 	boolean compliantRound = true;
-	
-	// Sort of like weekly evaluation for strategy
-	final int strategyLength = 7;
-	boolean[] strategy;
-	int strategyPtr = 0;
 
 	double prevUtility = 0;
-	double[] benefits;
-
-	int complyCount = 0;
-	int defectCount = 0;
 	
 	double theta = .1;
 	double phi = .1;
@@ -147,7 +129,7 @@ public class SpinWorldAgent extends MobileAgent {
 		this.rnd = new java.util.Random(rndSeed);
 		
 		this.networkLeave = netLeave;
-		int leaveThreshold = 100;
+		int leaveThreshold = 3;
 
 		switch (netLeave) {
 		case THRESHOLD:
@@ -162,30 +144,6 @@ public class SpinWorldAgent extends MobileAgent {
 		
 		this.theta = theta;
 		this.phi = phi;
-		
-		// Generate strategy
-		this.strategy = new boolean[strategyLength];
-		
-		// Probabilistic cheating depending on agent likelihood to cheat
-		// Defect the round if deciding to cheat
-		// Else comply with the round
-		for (int i = 0; i < strategyLength; i++) {
-			if (rnd.nextDouble() < this.pCheat) {
-				this.strategy[i] = false;
-				defectCount++;
-			} else {
-				this.strategy[i] = true;
-				complyCount++;
-			}
-		}
-		
-		this.benefits = new double[strategyLength-1];
-		this.rollingUtility = new DescriptiveStatistics(strategyLength);
-		
-		// Propensity to cheat updated according to number of rounds defected
-		this.pCheat = ((double) defectCount) / strategyLength;
-		
-		logger.info("Initial strategy: " + strategyToString(strategy));
 	}
 
 	@Override
@@ -297,103 +255,42 @@ public class SpinWorldAgent extends MobileAgent {
 	}
 
 	protected boolean chooseStrategy() {
-		// Choose strategies for each round
-		boolean strat = this.strategy[strategyPtr++];
-				
-		// If 7 rounds have passed
-		if (strategyPtr >= strategyLength) {	
-			double currentUtility = this.rollingUtility.getMean();
-			this.benefits[strategyPtr-2] = currentUtility - prevUtility;
-					
-			// Update previous round's utility
-			this.prevUtility = currentUtility;
-			
-			if (defectCount == 0 || complyCount == 0)
-				logger.info("Cannot modify strategy, already pure.");
-			else {
-				double defectBenefit = 0.0;
-				double complyBenefit = 0.0; 
-			
-				for (int i = 0; i < strategyLength-1; i++) {				
-					if (this.strategy[i+1])
-						complyBenefit += this.benefits[i];
-					else	
-						defectBenefit += this.benefits[i];
-				}
-			
-				defectBenefit = defectBenefit/defectCount;
-				complyBenefit = complyBenefit/complyCount;
-			
-				if (defectBenefit > complyBenefit)
-					reinforcementToCheat(defectBenefit - complyBenefit);
-				else
-					this.pCheat = this.pCheat - phi * this.pCheat;
-
-				
-				// Modify strategy depending on the reinforcement of propensity to cheat
-				modifyStrategy();
-			}
-			
-			// Reset the strategy pointer for another 7 rounds
-			this.strategyPtr = 0;
-			this.rollingUtility.clear();
-		}
-		else {
-			double currentUtility = this.rollingUtility.getMean();
-			this.benefits[strategyPtr-1] = currentUtility - prevUtility;
-					
-			// Update previous round's utility
-			this.prevUtility = currentUtility;
-		}
+		// Choose strategies for each round				
+		double currentUtility = this.rollingUtility.getMean();					
 		
-		return strat;
-	}
-
-	private void modifyStrategy() {
-		defectCount = 0;
-		complyCount = 0;
+		double benefit = currentUtility - prevUtility;
+			
+		// If you benefited from being compliant or lost out due to non-compliance, be more compliant
+		// Else, try your chance against the reinforcement algorithm
+		if ((benefit > 0 && this.compliantRound) || (benefit < 0 && !this.compliantRound))
+			this.pCheat = this.pCheat - phi * this.pCheat;
+		else if (benefit < 0 && this.compliantRound)
+			reinforcementToCheat(theta);
+		else
+			reinforcementToCheat(benefit);
+			
+		// Update previous round's utility
+		this.prevUtility = currentUtility;
 		
-		// Probabilistic cheating updated with reinforcement factor
-		for (int i = 0; i < strategyLength; i++) {
-			if (rnd.nextDouble() < this.pCheat) {
-				this.strategy[i] = false;
-				defectCount++;
-			} else {
-				this.strategy[i] = true;
-				complyCount++;
-			}
-		}
-		
-		// Re-compute the agent's propensity to cheat
-		this.pCheat = ((double) defectCount) / strategyLength;
-		
-		logger.info("Updated strategy: " + strategyToString(strategy));
+		return (rnd.nextDouble() >= pCheat);
 	}
 	
 	private void reinforcementToCheat(double benefit) {
 		this.risk = this.resourcesGame.getObservedRiskRate(getID(), this.network);
 		this.catchRate = this.resourcesGame.getObservedCatchRate(getID(), this.network);
 		
-		double normBenefit = benefit/(benefit + risk + catchRate);
-		double normRisk = risk/(benefit + risk + catchRate);
-		double normCatchRate = catchRate/(benefit + risk + catchRate);
-		double reinforcement = theta * (normBenefit - normRisk - normCatchRate);
-			
+		double reinforcement = 0.0;
+		if ((benefit + risk + catchRate) != 0) {
+			double normBenefit = benefit/(benefit + risk + catchRate);
+			double normRisk = risk/(benefit + risk + catchRate);
+			double normCatchRate = catchRate/(benefit + risk + catchRate);
+			reinforcement = theta * (normBenefit - normRisk - normCatchRate);
+		}
+		
 		if (reinforcement > 0.0)
 			this.pCheat = this.pCheat + reinforcement * (1 - pCheat);
 		else
 			this.pCheat = this.pCheat + reinforcement * pCheat;
-	}
-	
-	// Prints the strategy plan of the agent
-	private static String strategyToString(boolean[] strategy) {
-		StringBuilder s = new StringBuilder();
-		
-		for (int i = 0; i < strategy.length; i++) {
-			s.append(strategy[i] ? 'C' : 'D');
-		}
-		
-		return s.toString();
 	}
 
 	// Demand amount d, act upon environment
@@ -450,19 +347,13 @@ public class SpinWorldAgent extends MobileAgent {
 	protected void createNetwork(Particle p) {
 		try {	
 			Allocation method = Allocation.RANDOM;
-			if (rnd.nextDouble() < this.strictNets) {
-				Network net = new Network(this.networkService.getNextNumNetwork(), "S", method, 
-						this.sMonitoringLevel, this.monitoringCost, this.noWarnings, this.severityLB, this.severityUB);
-				this.network = net;
-			} else {
-				Network net = new Network(this.networkService.getNextNumNetwork(), "L", method, 
-						this.lMonitoringLevel, this.monitoringCost, this.noWarnings, this.severityLB, this.severityUB);
-				this.network = net;
-			}
+			Network net = new Network(this.networkService.getNextNumNetwork(), "S", method, 
+					this.monitoringLevel, this.monitoringCost, this.noWarnings, this.severityLB, this.severityUB);
+			this.network = net;
 			
-			this.networkService.createMembership(getID(), p, this.network);
-			this.resourcesGame.session.insert(this.network);
-			environment.act(new CreateNetwork(this.network, p), getID(), authkey);		
+			this.networkService.createMembership(getID(), p, net);
+			this.resourcesGame.session.insert(net);
+			environment.act(new CreateNetwork(net, p), getID(), authkey);		
 		} catch (ActionHandlingException e) {
 			logger.warn("Failed to create network", e);
 		}

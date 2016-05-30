@@ -12,6 +12,7 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 
@@ -19,7 +20,7 @@ import uk.ac.imperial.presage2.core.db.persistent.PersistentAgent;
 import uk.ac.imperial.presage2.core.db.persistent.PersistentSimulation;
 import uk.ac.imperial.presage2.core.db.persistent.TransientAgentState;
 
-public class AllocationChart implements TimeSeriesChart {
+public class BarChart implements Chart {
 
 	final PersistentSimulation sim;
 	final int windowSize;
@@ -28,21 +29,26 @@ public class AllocationChart implements TimeSeriesChart {
 	final DefaultCategoryDataset data;
 	final JFreeChart chart;
 	final ChartPanel panel;
-	Map<String, DescriptiveStatistics> agentAllocations = new HashMap<String, DescriptiveStatistics>();
-
-	AllocationChart(Long simId, PersistentSimulation sim, int windowSize) {
+	Map<String, DescriptiveStatistics> agentData = new HashMap<String, DescriptiveStatistics>();
+	final String property;
+	final String shortName;
+	
+	BarChart(Long simId, PersistentSimulation sim, int windowSize, String title, 
+			String property, String shortName, double lb, double ub) {
 		super();
 		this.simId = simId;
 		this.sim = sim;
 		this.windowSize = windowSize;
+		this.property = property;
+		this.shortName = shortName;
 
 		data = new DefaultCategoryDataset();
-		chart = ChartFactory.createBarChart("Average Allocation over last 50 rounds", "", "", data,
+		chart = ChartFactory.createBarChart(title, "", "", data,
 				PlotOrientation.VERTICAL, false, false, false);
 		panel = new ChartPanel(chart);
 
 		chart.getCategoryPlot().setBackgroundPaint(Color.WHITE);
-		chart.getCategoryPlot().getRangeAxis().setRange(0, 1);
+		chart.getCategoryPlot().getRangeAxis().setRange(lb, ub);
 		BarRenderer renderer = (BarRenderer) chart.getCategoryPlot().getRenderer();
 		renderer.setItemMargin(-.5);
 	}
@@ -61,10 +67,20 @@ public class AllocationChart implements TimeSeriesChart {
 	public void hideLegend(boolean hide) {
 		this.chart.getLegend().setVisible(!hide);
 	}
+	
+	@Override
+	public XYPlot getXYPlot() {
+		return chart.getXYPlot();
+	}
 
 	@Override
 	public Long getSimId() {
 		return this.simId;
+	}
+	
+	@Override
+	public String getShortName() {
+		return this.shortName;
 	}
 
 	@Override
@@ -73,40 +89,40 @@ public class AllocationChart implements TimeSeriesChart {
 		int start = Math.max(finish - windowSize, 0);
 		int length = Math.min(windowSize, finish - start);
 
-		if (agentAllocations.size() == 0) {
+		if (agentData.size() == 0) {
 			for (PersistentAgent a : sim.getAgents()) {
-				DescriptiveStatistics alloc = new DescriptiveStatistics(windowSize);
-				agentAllocations.put(a.getName(), alloc);
+				DescriptiveStatistics props = new DescriptiveStatistics(windowSize);
+				agentData.put(a.getName(), props);
 				for (int i = 0; i < length; i++) {
 					int t = start + i + 1;
 					TransientAgentState s = a.getState(t);
 
-					if (s != null && s.getProperty("r") != null) {
-						double all = Double.parseDouble(s.getProperty("r"));
-						alloc.addValue(all);
+					if (s != null && s.getProperty(this.property) != null) {
+						double p = Double.parseDouble(s.getProperty(this.property));
+						props.addValue(p);
 					}
 				}
 			}
 		} else {
 			for (PersistentAgent a : sim.getAgents()) {
-				if (!agentAllocations.containsKey(a.getName())) {
-					agentAllocations.put(a.getName(), new DescriptiveStatistics(windowSize));
+				if (!agentData.containsKey(a.getName())) {
+					agentData.put(a.getName(), new DescriptiveStatistics(windowSize));
 				}
 
 				TransientAgentState s = a.getState(finish);
-				if (s != null && s.getProperty("r") != null) {
-					double all = Double.parseDouble(s.getProperty("r"));
-					agentAllocations.get(a.getName()).addValue(all);
+				if (s != null && s.getProperty(this.property) != null) {
+					double p = Double.parseDouble(s.getProperty(this.property));
+					agentData.get(a.getName()).addValue(p);
 				} else {
-					agentAllocations.put(a.getName(), new DescriptiveStatistics(new double[] { 0 }));
+					agentData.put(a.getName(), new DescriptiveStatistics(new double[] { 0 }));
 				}
 			}
 		}
 
-		List<String> agents = new ArrayList<String>(agentAllocations.keySet());
+		List<String> agents = new ArrayList<String>(agentData.keySet());
 		Collections.sort(agents);
 		for (String key : agents) {
-			DescriptiveStatistics e = agentAllocations.get(key);
+			DescriptiveStatistics e = agentData.get(key);
 			data.addValue(e.getMean(), key.substring(0, 1), key);
 		}
 	}

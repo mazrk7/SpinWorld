@@ -107,7 +107,7 @@ rule "Sanction particles"
 	then	
 		if($s >= $n.getSeverityUB() || ($n.getWarningCount($p) >= $n.getNoWarnings()
 				&& $s >= $n.getSeverityLB() && $s < $n.getSeverityUB())) {	
-			$p.updateObservedSanctionHistory($n, GraduationLevel.EXPULSION);
+			$p.updateObservedSanctionHistory(GraduationLevel.EXPULSION);
 			
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.EXPULSION);
 			insert(sanc);
@@ -118,14 +118,14 @@ rule "Sanction particles"
 			logger.info("Expulsion: " + $p + " from " + $n);
 			$n.banParticle($p);
 		} else if($s >= $n.getSeverityLB() && $s < $n.getSeverityUB()) {
-			$p.updateObservedSanctionHistory($n, GraduationLevel.WARNING);
+			$p.updateObservedSanctionHistory(GraduationLevel.WARNING);
 			$n.warn($p);
 			
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.WARNING);
 			insert(sanc);
 			logger.info(sanc);	
 		} else if($s < $n.getSeverityLB()) {	
-			$p.updateObservedSanctionHistory($n, GraduationLevel.NO_SANCTION);
+			$p.updateObservedSanctionHistory(GraduationLevel.NO_SANCTION);
 				
 			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.NO_SANCTION);
 			insert(sanc);
@@ -159,8 +159,8 @@ rule "Observation of network sanctioning"
 		$m : MemberOf(network == $n, $p : particle)
 	then		
 		if (!$pSanc.equals($p)) {
-			$p.updateObservedCatchHistory($n, Boolean.TRUE);	
-			$p.updateObservedSanctionHistory($n, $l);
+			$p.updateObservedCatchHistory(Boolean.TRUE);	
+			$p.updateObservedSanctionHistory($l);
 				
 			Observation obsv = new Observation($p, $pSanc, $n, $t);
 			insert(obsv);
@@ -194,7 +194,7 @@ rule "Could not detect cheat on provision"
 		Generate(t == $t, $g : g, $q : q, particle == $p)
 		Provision(particle == $p, t == $t, quantity < $g)
 	then
-		$p.updateObservedCatchHistory($n, Boolean.FALSE);	
+		$p.updateObservedCatchHistory(Boolean.FALSE);	
 end
 
 rule "Detect cheat on demand"
@@ -223,7 +223,7 @@ rule "Could not detect cheat on demand"
 		Generate(t == $t, $g : g, $q : q, particle == $p)
 		Demand(particle == $p, t == $t, quantity > $q)
 	then
-		$p.updateObservedCatchHistory($n, Boolean.FALSE);
+		$p.updateObservedCatchHistory(Boolean.FALSE);
 end
 
 rule "Detect cheat on appropriate"
@@ -254,7 +254,7 @@ rule "Could not detect cheat on appropriate"
 		Allocate($r : quantity, particle == $p, t == $t)
 		Appropriate($rP : quantity, particle == $p, t == $t, quantity > $r)	
 	then
-		$p.updateObservedCatchHistory($n, Boolean.FALSE);		
+		$p.updateObservedCatchHistory(Boolean.FALSE);		
 end
 
 rule "Prune monitored"
