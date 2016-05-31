@@ -22,6 +22,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import org.apache.log4j.Logger;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -30,6 +31,7 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.xy.DefaultXYDataset;
 import org.jfree.ui.RectangleEdge;
 
 import uk.ac.imperial.presage2.core.db.DatabaseModule;
@@ -198,23 +200,28 @@ public class SpinWorldGUI {
 					System.exit(60);
 			}
 			
-			BarChart allocChart = new BarChart(simId, sim, windowSize, "Average Allocation over last 50 rounds", "r", "Alloc", 0.0, 1.0);
-			BarChart rTotalChart = new BarChart(simId, sim, windowSize, "Average Total Resources over last 50 rounds", "RTotal", "Total", 0.0, 1.0);
-			BarChart pCheatChart = new BarChart(simId, sim, windowSize, "Average Propensity to Cheat over last 50 rounds", "pCheat", "PchBar", 0.0, 1.0);
+			BarChart allocChart = new BarChart(sim, windowSize, "Average Allocation over last 50 rounds", "Alloc", "r", "AllBar", 0.0, 1.0);
+			BarChart pCheatChart = new BarChart(sim, windowSize, "Average Propensity to Cheat over last 50 rounds", "PCheat", "pCheat", "PchBar", 0.0, 1.0);
 			
 			double utiMax = 
 					((Double.parseDouble(sim.getParameters().get("a")) + Double.parseDouble(sim.getParameters().get("b"))) >= Double.parseDouble(sim.getParameters().get("c")))
 						? Double.parseDouble(sim.getParameters().get("a")) + Double.parseDouble(sim.getParameters().get("b")) : Double.parseDouble(sim.getParameters().get("c"));
-			BarChart utilityChart = new BarChart(simId, sim, windowSize, "Average Utility over last 50 rounds", "U", "Uti", 0.0, utiMax);
+			BarChart utilityChart = new BarChart(sim, windowSize, "Average Utility over last 50 rounds", "Ut.", "U", "UtiBar", 0.0, utiMax);
 			
-			TimeSeriesChart riskTimeChart = new TimeSeriesChart(simId, sim, windowSize, "Agent Perceived Risk", "risk", "RisTime", 0.0, 2.0);
-			TimeSeriesChart catchTimeChart = new TimeSeriesChart(simId, sim, windowSize, "Agent Perceived Catch Rate", "catchRate", "CatTime", 0.0, 1.0);
-			TimeSeriesChart pCheatTimeChart = new TimeSeriesChart(simId, sim, windowSize, "Agent Propensity to Cheat", "pCheat", "PchTime", 0.0, 1.0);
-			TimeSeriesChart satTimeChart = new TimeSeriesChart(simId, sim, windowSize, "Agent Satisfaction", "o", "Sat", 0.0, 1.0);
+			TimeSeriesChart riskTimeChart = new TimeSeriesChart(sim, windowSize, 
+					"Agent Perceived Risk over 50 round window", "Risk", "risk", "RiskTime", 0.0, 2.0);
+			TimeSeriesChart catchTimeChart = new TimeSeriesChart(sim, windowSize, 
+					"Agent Perceived Catch Rate over 50 round window", "Catch Rate", "catchRate", "CatchTime", 0.0, 1.0);
+			TimeSeriesChart pCheatTimeChart = new TimeSeriesChart(sim, windowSize, 
+					"Agent Propensity to Cheat over 50 round window", "PCheat", "pCheat", "PchTime", 0.0, 1.0);
+			TimeSeriesChart satTimeChart = new TimeSeriesChart(sim, windowSize, 
+					"Agent Satisfaction over 50 round window", "Sat.", "o", "SatTime", 0.0, 1.0);
 	
+			DistributionChart utDistrChart = new DistributionChart(sim, windowSize, "UtiDistr");
+			
 			List<Chart> charts = new ArrayList<Chart>();
 			charts.add(allocChart);
-			charts.add(rTotalChart);
+			charts.add(utDistrChart);
 			charts.add(pCheatChart);
 			charts.add(utilityChart);
 			charts.add(catchTimeChart);
@@ -229,10 +236,11 @@ public class SpinWorldGUI {
 	        NetworkGraph ng = new NetworkGraph(sim);
 	        							
 	        FRLayout<String, String> layout = new FRLayout<String, String>(ng.getGraph());
-	        layout.setRepulsionMultiplier(10);
-	        layout.setAttractionMultiplier(0.10);
-	
-	    	VisualizationViewer<String, String> vv = new VisualizationViewer<String, String>(layout, new Dimension(1280, 720));
+	        layout.setAttractionMultiplier(0.25);
+	        layout.setAttractionMultiplier(0.25);
+	        layout.setRepulsionMultiplier(5);
+	        
+	    	VisualizationViewer<String, String> vv = new VisualizationViewer<String, String>(layout, new Dimension(1080, 720));
 			vv.setBackground(Color.LIGHT_GRAY);
 		    vv.setGraphMouse(new DefaultModalGraphMouse<String, String>());
 		    
@@ -263,7 +271,7 @@ public class SpinWorldGUI {
 			}
 						
 			for (int i = 1; i <= t; i++) {
-				ng.updateGraph(i);
+				ng.updateGraph(i, layout);
 		        vv.setGraphLayout(layout);
 		        
 				if (exportMode)		
@@ -277,7 +285,7 @@ public class SpinWorldGUI {
 					chart.redraw(t);
 				}
 										
-				ng.updateGraph(t);
+				ng.updateGraph(t, layout);
 		        vv.setGraphLayout(layout);
 				
 				if (exportMode) {		
@@ -302,7 +310,7 @@ public class SpinWorldGUI {
 			t = 5;
 			t0 = -1;
 							
-			logger.info("Done building charts for sim " + simId + ".");			
+			logger.info("Done building charts for sim " + simId + ".");		
 		}
 	}
 	
@@ -343,34 +351,46 @@ public class SpinWorldGUI {
 	        // Set the range axis to display integers only...
 	        utiPlot.getRangeAxis().setStandardTickUnits(NumberAxis.createIntegerTickUnits());
 	        utiPlot.getRangeAxis().setAutoRange(true);
-			
-			DefaultCategoryDataset satData = new DefaultCategoryDataset();
-			JFreeChart sumSatChart = ChartFactory.createBarChart(
-		                "Total Satisfaction for Experiment: " + methodComp, // Chart title
-		                "Method", // Domain axis label
-		                "Sum of Satisfaction (x 1,000)", // Range axis label
-		                satData, // Dataset
-		                PlotOrientation.VERTICAL,
-		                true, // Include legend
-		                false, // Tooltips
-		                false // URLs
-	                );
-			
-	        // Get a reference to the plot for further customisation...
-	        CategoryPlot satPlot = sumSatChart.getCategoryPlot();
 	        
-	        satPlot.setBackgroundPaint(Color.WHITE);
-	        satPlot.getDomainAxis().setCategoryLabelPositions(CategoryLabelPositions.UP_90);
-	        sumSatChart.getLegend().setPosition(RectangleEdge.RIGHT);
+			DefaultXYDataset satTimeData = new DefaultXYDataset();
+			JFreeChart satTimeChart = ChartFactory.createXYLineChart("Avg Agent Satisfaction for Experiment: " + methodComp,
+					"Satisfaction Scale", "Timestep", satTimeData, PlotOrientation.HORIZONTAL, true, false, false);
 
-	        // Set the range axis to display integers only...
-	        satPlot.getRangeAxis().setStandardTickUnits(NumberAxis.createIntegerTickUnits());
-	        satPlot.getRangeAxis().setAutoRange(true);
+			satTimeChart.getXYPlot().setBackgroundPaint(Color.WHITE);
+			satTimeChart.getXYPlot().getDomainAxis().setRange(0, 1);
+			satTimeChart.getXYPlot().setWeight(3);
+			satTimeChart.getXYPlot().getRangeAxis().setAutoRange(true);
+	        
+			DefaultXYDataset pChTimeData = new DefaultXYDataset();
+			JFreeChart pChTimeChart = ChartFactory.createXYLineChart("Avg Agent Propensity to Cheat for Experiment: " + methodComp, 
+					"PCheat Scale", "Timestep", pChTimeData, PlotOrientation.HORIZONTAL, true, false, false);
+
+			pChTimeChart.getXYPlot().setBackgroundPaint(Color.WHITE);
+			pChTimeChart.getXYPlot().getDomainAxis().setRange(0.0, 1.0);
+			pChTimeChart.getXYPlot().setWeight(3);
+			pChTimeChart.getXYPlot().getRangeAxis().setAutoRange(true);
+			
+			DefaultXYDataset riskTimeData = new DefaultXYDataset();
+			JFreeChart riskTimeChart = ChartFactory.createXYLineChart("Avg Agent Perceived Risk for Experiment: " + methodComp, 
+					"Risk Scale", "Timestep", riskTimeData, PlotOrientation.HORIZONTAL, true, false, false);
+
+			riskTimeChart.getXYPlot().setBackgroundPaint(Color.WHITE);
+			riskTimeChart.getXYPlot().getDomainAxis().setRange(0.0, 2.0);
+			riskTimeChart.getXYPlot().setWeight(3);
+			riskTimeChart.getXYPlot().getRangeAxis().setAutoRange(true);
+			
+			DefaultXYDataset catchTimeData = new DefaultXYDataset();
+			JFreeChart catchTimeChart = ChartFactory.createXYLineChart("Avg Agent Perceived Catch Rate for Experiment: " + methodComp, 
+					"Catch Rate Scale", "Timestep", catchTimeData, PlotOrientation.HORIZONTAL, true, false, false);
+
+			catchTimeChart.getXYPlot().setBackgroundPaint(Color.WHITE);
+			catchTimeChart.getXYPlot().getDomainAxis().setRange(0.0, 1.0);
+			catchTimeChart.getXYPlot().setWeight(3);
+			catchTimeChart.getXYPlot().getRangeAxis().setAutoRange(true);
 	        
 			String[] keys = new String[] { "c", "nc", "all" };
 			Map<String, Map<String, Double>> mapUSums = new HashMap<String, Map<String, Double>>();
-			Map<String, Map<String, Double>> mapSatSums = new HashMap<String, Map<String, Double>>();
-
+			
 			for (Long simId : simIds) {
 				t = 0;
 				sim = sto.getSimulationById(simId);
@@ -378,61 +398,126 @@ public class SpinWorldGUI {
 				methods.add(sim.getName());
 				
 				Map<String, Double> uSums = new HashMap<String, Double>();
-				Map<String, Double> satSums = new HashMap<String, Double>();
 				for (String k : keys) {
 					uSums.put(k, 0.0);
-					satSums.put(k, 0.0);
 				}
+
+				int length = (int)(sim.getFinishTime()/2);
+				
+				double[][] satMean = new double[2][length];
+				double[][] pchMean = new double[2][length];
+				double[][] riskMean = new double[2][length];
+				double[][] catchMean = new double[2][length];
+				Arrays.fill(satMean[0], 0);
+				Arrays.fill(pchMean[0], 0);
+				Arrays.fill(riskMean[0], 0);
+				Arrays.fill(catchMean[0], 0);
 				
 				logger.debug("Processing simulation " + sim.getID());
-				while (t < sim.getFinishTime() / 2) {
+				while (t < length) {
 					t++;
+
+					satMean[1][t-1] = t;
+					SummaryStatistics satC = new SummaryStatistics();
+					SummaryStatistics satNC = new SummaryStatistics();
 					
+					pchMean[1][t-1] = t;
+					SummaryStatistics pchC = new SummaryStatistics();
+					SummaryStatistics pchNC = new SummaryStatistics();
+					
+					riskMean[1][t-1] = t;
+					SummaryStatistics riskC = new SummaryStatistics();
+					SummaryStatistics riskNC = new SummaryStatistics();
+					
+					catchMean[1][t-1] = t;
+					SummaryStatistics catchC = new SummaryStatistics();
+					SummaryStatistics catchNC = new SummaryStatistics();
+									
 					Set<PersistentAgent> pAgents = sim.getAgents();
 					for (PersistentAgent a : pAgents) {
 						final String name = a.getName();
 						boolean compliant = name.startsWith("c");
 						TransientAgentState s = a.getState(t);
 						
-						if (s != null && s.getProperty("U") != null) {
-							double u = Double.parseDouble(s.getProperty("U"));
-
-							if (compliant)
-								uSums.put("c", uSums.get("c") + (u - uSums.get("c")));
-							else
-								uSums.put("nc", uSums.get("nc") + (u - uSums.get("nc")));
+						if (s != null) {
+							
+							if (s.getProperty("U") != null) {
+								double u = Double.parseDouble(s.getProperty("U"));
+	
+								if (compliant)
+									uSums.put("c", uSums.get("c") + (u - uSums.get("c")));
+								else
+									uSums.put("nc", uSums.get("nc") + (u - uSums.get("nc")));
+							}
+							
+							if (s.getProperty("o") != null) {
+								double o = Double.parseDouble(s.getProperty("o"));
+	
+								if (compliant)
+									satC.addValue(o);
+								else 								
+									satNC.addValue(o);
+							}
+							
+							if (s.getProperty("pCheat") != null) {
+								double pc = Double.parseDouble(s.getProperty("pCheat"));
+	
+								if (compliant)
+									pchC.addValue(pc);
+								else 								
+									pchNC.addValue(pc);
+							}
+							
+							if (s.getProperty("risk") != null) {
+								double r = Double.parseDouble(s.getProperty("risk"));
+	
+								if (compliant)
+									riskC.addValue(r);
+								else 								
+									riskNC.addValue(r);
+							}
+							
+							if (s.getProperty("catchRate") != null) {
+								double cr = Double.parseDouble(s.getProperty("catchRate"));
+	
+								if (compliant)
+									catchC.addValue(cr);
+								else 								
+									catchNC.addValue(cr);
+							}
 						}
 						
-						if (s != null && s.getProperty("o") != null) {
-							double o = Double.parseDouble(s.getProperty("o"));
-
-							if (compliant)
-								satSums.put("c", satSums.get("c") + (o - satSums.get("c")));
-							else
-								satSums.put("nc", satSums.get("nc") + (o - satSums.get("nc")));
-						}
+						satMean[0][t-1] = (satC.getMean() + satNC.getMean())/2;
+						pchMean[0][t-1] = (pchC.getMean() + pchNC.getMean())/2;
+						riskMean[0][t-1] = (riskC.getMean() + riskNC.getMean())/2;
+						catchMean[0][t-1] = (catchC.getMean() + catchNC.getMean())/2;
 					}
-					
+										
 					pAgents = null;
 					
 					uSums.put("all", uSums.get("c") + uSums.get("nc"));
-					satSums.put("all", satSums.get("c") + satSums.get("nc"));
+					
+					satTimeData.addSeries(sim.getName(), satMean);
+					pChTimeData.addSeries(sim.getName(), pchMean);
+					riskTimeData.addSeries(sim.getName(), riskMean);
+					catchTimeData.addSeries(sim.getName(), catchMean);
 				}
 				
 				mapUSums.put(sim.getName(), uSums);	
-				mapSatSums.put(sim.getName(), satSums);	
 			}
 			
 			for (String k : keys) {
 				for (String method : methods) {
 					utiData.addValue(mapUSums.get(method).get(k) * 1000, k, method);
-					satData.addValue(mapSatSums.get(method).get(k) * 1000, k, method);
 				}
 			}	
 			
 			if (exportMode) {
 				ChartUtils.saveChart(sumUtiChart, imagePath, "COMPARISON/" + "UTI_" + this.methodComp);
-				ChartUtils.saveChart(sumSatChart, imagePath, "COMPARISON/" + "SAT_" + this.methodComp);
+				ChartUtils.saveChart(satTimeChart, imagePath, "COMPARISON/" + "SAT_TIME_" + this.methodComp);
+				ChartUtils.saveChart(pChTimeChart, imagePath, "COMPARISON/" + "PCHEAT_TIME_" + this.methodComp);
+				ChartUtils.saveChart(riskTimeChart, imagePath, "COMPARISON/" + "RISK_TIME_" + this.methodComp);
+				ChartUtils.saveChart(catchTimeChart, imagePath, "COMPARISON/" + "CATCH_TIME_" + this.methodComp);
 			}
 
 			logger.info("Done building charts for " + this.methodComp + " methods.");	

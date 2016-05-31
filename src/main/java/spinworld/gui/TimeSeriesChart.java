@@ -8,7 +8,6 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.xy.DefaultXYDataset;
 
 import uk.ac.imperial.presage2.core.db.persistent.PersistentAgent;
@@ -20,25 +19,23 @@ public class TimeSeriesChart implements Chart {
 	final PersistentSimulation sim;
 	final int windowSize;
 
-	final Long simId;
 	final DefaultXYDataset data;
 	final JFreeChart chart;
 	final ChartPanel panel;
 	final String property;
 	final String shortName;
 
-	TimeSeriesChart(Long simId, PersistentSimulation sim, int windowSize, String title, 
-			String property, String shortName, double lb, double ub) {
+	TimeSeriesChart(PersistentSimulation sim, int windowSize, String title, 
+			String yAxis, String property, String shortName, double lb, double ub) {
 		super();
-		this.simId = simId;
 		this.sim = sim;
 		this.windowSize = windowSize;
 		this.property = property;
 		this.shortName = shortName;
 		
 		data = new DefaultXYDataset();
-		chart = ChartFactory.createXYLineChart(title, "",
-				"timestep", data, PlotOrientation.HORIZONTAL, true, false, false);
+		chart = ChartFactory.createXYLineChart(title, yAxis,
+				"Timestep", data, PlotOrientation.HORIZONTAL, true, false, false);
 		panel = new ChartPanel(chart);
 
 		chart.getXYPlot().setBackgroundPaint(Color.WHITE);
@@ -57,24 +54,8 @@ public class TimeSeriesChart implements Chart {
 	}
 	
 	@Override
-	public void hideLegend(boolean hide) {
-		this.chart.getLegend().setVisible(!hide);
-	}
-
-	@Override
-	public Long getSimId() {
-		return this.simId;
-	}
-	
-	@Override
 	public String getShortName() {
 		return this.shortName;
-	}
-
-
-	@Override
-	public XYPlot getXYPlot() {
-		return chart.getXYPlot();
 	}
 	
 	@Override

@@ -168,7 +168,7 @@ public class TestSpinWorldRules {
 		}
 
 		SimulatedWorld addNetwork(Allocation all) {
-			Network n = new Network(networks.size(), "L", all);
+			Network n = new Network(networks.size(), all);
 			networks.add(n);
 			session.insert(n);
 			return this;

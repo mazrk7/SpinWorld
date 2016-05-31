@@ -56,7 +56,7 @@ public abstract class NetworkRenderer {
 	}
 	
 	public static Transformer<String, Stroke> getEdgeStrokeTransformer() {
-	    final Stroke edgeStroke = new BasicStroke(2.0f, BasicStroke.CAP_BUTT,
+	    final Stroke edgeStroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
 	    		BasicStroke.JOIN_MITER, 10.0f);
 	    
 	    Transformer<String, Stroke> edgeStrokeTransformer = new Transformer<String, Stroke>() {

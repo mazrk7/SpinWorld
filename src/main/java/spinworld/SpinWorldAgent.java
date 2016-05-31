@@ -187,15 +187,6 @@ public class SpinWorldAgent extends MobileAgent {
 		super.execute();
 		
 		this.network = this.networkService.getNetwork(getID());
-		this.collisions = this.mobilityService.getCollisions(getID());
-
-		if (this.collisions != null) {					
-			for (Particle p : collisions) {
-				formNetworks(p);
-			}
-			
-			this.mobilityService.updateVelocity(getID(), this.networkService.getNoLinks(getID(), this.network));
-		}
 		
 		if (!dead && permCreateNetwork && this.network == null && resourcesGame.getRoundNumber() > 1
 				&& resourcesGame.getRound() == RoundType.DEMAND) {
@@ -203,6 +194,16 @@ public class SpinWorldAgent extends MobileAgent {
 		}
 
 		if (resourcesGame.getRound() == RoundType.DEMAND) {
+			this.collisions = this.mobilityService.getCollisions(getID());
+
+			if (this.collisions != null) {					
+				for (Particle p : collisions) {
+					formNetworks(p);
+				}
+				
+				this.mobilityService.updateVelocity(getID(), this.networkService.getNoLinks(getID(), this.network));
+			}
+			
 			if (resourcesGame.getRoundNumber() > 1) {
 				// Determine utility gained from last round
 				calculateScores();
@@ -280,7 +281,7 @@ public class SpinWorldAgent extends MobileAgent {
 		this.catchRate = this.resourcesGame.getObservedCatchRate(getID(), this.network);
 		
 		double reinforcement = 0.0;
-		if ((benefit + risk + catchRate) != 0) {
+		if (benefit != 0.0 && risk != 0.0 && catchRate != 0) {
 			double normBenefit = benefit/(benefit + risk + catchRate);
 			double normRisk = risk/(benefit + risk + catchRate);
 			double normCatchRate = catchRate/(benefit + risk + catchRate);
@@ -347,7 +348,7 @@ public class SpinWorldAgent extends MobileAgent {
 	protected void createNetwork(Particle p) {
 		try {	
 			Allocation method = Allocation.RANDOM;
-			Network net = new Network(this.networkService.getNextNumNetwork(), "S", method, 
+			Network net = new Network(this.networkService.getNextNumNetwork(), method, 
 					this.monitoringLevel, this.monitoringCost, this.noWarnings, this.severityLB, this.severityUB);
 			this.network = net;
 			

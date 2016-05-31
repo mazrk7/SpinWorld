@@ -12,7 +12,6 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 
@@ -25,7 +24,6 @@ public class BarChart implements Chart {
 	final PersistentSimulation sim;
 	final int windowSize;
 
-	final Long simId;
 	final DefaultCategoryDataset data;
 	final JFreeChart chart;
 	final ChartPanel panel;
@@ -33,17 +31,16 @@ public class BarChart implements Chart {
 	final String property;
 	final String shortName;
 	
-	BarChart(Long simId, PersistentSimulation sim, int windowSize, String title, 
-			String property, String shortName, double lb, double ub) {
+	BarChart(PersistentSimulation sim, int windowSize, String title, 
+			String yAxis, String property, String shortName, double lb, double ub) {
 		super();
-		this.simId = simId;
 		this.sim = sim;
 		this.windowSize = windowSize;
 		this.property = property;
 		this.shortName = shortName;
 
 		data = new DefaultCategoryDataset();
-		chart = ChartFactory.createBarChart(title, "", "", data,
+		chart = ChartFactory.createBarChart(title, yAxis, "Particles", data,
 				PlotOrientation.VERTICAL, false, false, false);
 		panel = new ChartPanel(chart);
 
@@ -61,21 +58,6 @@ public class BarChart implements Chart {
 	@Override
 	public JFreeChart getChart() {
 		return chart;
-	}
-	
-	@Override
-	public void hideLegend(boolean hide) {
-		this.chart.getLegend().setVisible(!hide);
-	}
-	
-	@Override
-	public XYPlot getXYPlot() {
-		return chart.getXYPlot();
-	}
-
-	@Override
-	public Long getSimId() {
-		return this.simId;
 	}
 	
 	@Override

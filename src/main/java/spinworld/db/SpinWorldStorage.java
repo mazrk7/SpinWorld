@@ -82,7 +82,6 @@ public class SpinWorldStorage extends SqlStorage {
 							+ "\"simId\" bigint NOT NULL,"
 							+ "\"network\" int NOT NULL,"
 							+ "\"round\" int NOT NULL,"
-							+ "\"type\" char(1) NOT NULL,"
 							+ "\"monitoringLevel\" float NOT NULL,"
 							+ "\"banCount\" int NOT NULL,"
 							+ "PRIMARY KEY (\"simId\", \"network\", \"round\"),"
@@ -165,7 +164,7 @@ public class SpinWorldStorage extends SqlStorage {
 			
 			insertNetworkSummary = conn
 					.prepareStatement("INSERT INTO \"networkScore\" "
-							+ "(\"simId\", \"network\", \"round\", \"type\", \"monitoringLevel\", \"banCount\")  "
+							+ "(\"simId\", \"network\", \"round\", \"monitoringLevel\", \"banCount\")  "
 							+ "VALUES (?, ?, ?, ?, ?, ?) ");
 		} catch (SQLException e) {
 			logger.warn(e);
@@ -189,9 +188,8 @@ public class SpinWorldStorage extends SqlStorage {
 				insertNetworkSummary.setLong(1, this.simId);
 				insertNetworkSummary.setInt(2, n.getId());
 				insertNetworkSummary.setInt(3, this.world.getRoundNumber());
-				insertNetworkSummary.setString(4, n.getType());
-				insertNetworkSummary.setDouble(5, n.getMonitoringLevel());
-				insertNetworkSummary.setInt(6, n.getNoBannedParticles());
+				insertNetworkSummary.setDouble(4, n.getMonitoringLevel());
+				insertNetworkSummary.setInt(5, n.getNoBannedParticles());
 				
 				insertNetworkSummary.addBatch();
 			}

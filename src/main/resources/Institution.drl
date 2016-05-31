@@ -71,13 +71,13 @@ rule "Monitor particles"
 		$poolMembers : List(size > 0) from accumulate(MemberOf(network == $n, $p : particle), collectList($p))
 	then
 		int toMonitor = (int) Math.ceil($poolMembers.size() * $n.getMonitoringLevel());
-		logger.info("Monitoring " + toMonitor + " particles.");
+		logger.info($n.toString() + ": Attempting to monitor " + toMonitor + " particles.");
 		
 		List members = new ArrayList($poolMembers);
 		Collections.shuffle(members);
 		Iterator it = members.iterator();
 		double resources = $pool.getQuantity();
-		
+			
 		while(resources > $n.getMonitoringCost() && toMonitor-- > 0 && it.hasNext()) {
 			Particle p = (Particle) it.next();
 			Monitored m = new Monitored(p, $n, $t);
