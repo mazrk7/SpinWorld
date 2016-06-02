@@ -126,7 +126,7 @@ public class SpinWorldCLI extends Presage2CLI {
 				int nc = (int) Math.round(agents * ncProp);
 
 				PersistentSimulation sim = getDatabase().createSimulation(
-						"LARGE_POP_" + String.format("%03d", nc) + "_NCPROP", "spinworld.SpinWorldSimulation",
+						"LARGE_POP_" + String.format("%03d", nc) + "_NC", "spinworld.SpinWorldSimulation",
 						"AUTO START", rounds);
 
 				sim.addParameter("finishTime", Integer.toString(rounds));
@@ -139,9 +139,9 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("b", Double.toString(1));
 				sim.addParameter("c", Double.toString(3));
 				sim.addParameter("cAgents", Integer.toString(agents - nc));
-				sim.addParameter("cPCheat", Double.toString(0.05));
+				sim.addParameter("cPCheat", Double.toString(0.02));
 				sim.addParameter("ncAgents", Integer.toString(nc));
-				sim.addParameter("ncPCheat", Double.toString(0.5));
+				sim.addParameter("ncPCheat", Double.toString(0.25));
 				sim.addParameter("seed", Integer.toString(seed + i));
 				sim.addParameter("cheatOn", Cheat.PROVISION.name());
 				sim.addParameter("noWarnings", Integer.toString(5));
@@ -178,9 +178,9 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("b", Double.toString(1));
 				sim.addParameter("c", Double.toString(3));
 				sim.addParameter("cAgents", Integer.toString(20));
-				sim.addParameter("cPCheat", Double.toString(0.05));
+				sim.addParameter("cPCheat", Double.toString(0.02));
 				sim.addParameter("ncAgents", Integer.toString(10));
-				sim.addParameter("ncPCheat", Double.toString(0.5));
+				sim.addParameter("ncPCheat", Double.toString(0.25));
 				sim.addParameter("seed", Integer.toString(seed + i));
 				sim.addParameter("cheatOn", ch.name());
 				sim.addParameter("noWarnings", Integer.toString(5));
@@ -216,9 +216,9 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("b", Double.toString(1));
 				sim.addParameter("c", Double.toString(3));
 				sim.addParameter("cAgents", Integer.toString(20));
-				sim.addParameter("cPCheat", Double.toString(0.05));
+				sim.addParameter("cPCheat", Double.toString(0.02));
 				sim.addParameter("ncAgents", Integer.toString(10));
-				sim.addParameter("ncPCheat", Double.toString(0.5));
+				sim.addParameter("ncPCheat", Double.toString(0.25));
 				sim.addParameter("seed", Integer.toString(seed + i));
 				sim.addParameter("cheatOn", Cheat.PROVISION.name());
 				sim.addParameter("noWarnings", Integer.toString(sc));
@@ -245,8 +245,8 @@ public class SpinWorldCLI extends Presage2CLI {
 						break;
 					
 					PersistentSimulation sim = getDatabase().createSimulation(
-							"SEVERITY_SCALE_" + String.format("%03d", (lb*100)) + "_" 
-									+ String.format("%03d", (ub*100)), "spinworld.SpinWorldSimulation",
+							"SEVERITY_" + String.format("%03d", Math.round((lb*100))) + "_" 
+									+ String.format("%03d", Math.round((ub*100))), "spinworld.SpinWorldSimulation",
 							"AUTO START", rounds);
 	
 					sim.addParameter("finishTime", Integer.toString(rounds));
@@ -259,9 +259,9 @@ public class SpinWorldCLI extends Presage2CLI {
 					sim.addParameter("b", Double.toString(1));
 					sim.addParameter("c", Double.toString(3));
 					sim.addParameter("cAgents", Integer.toString(20));
-					sim.addParameter("cPCheat", Double.toString(0.05));
+					sim.addParameter("cPCheat", Double.toString(0.02));
 					sim.addParameter("ncAgents", Integer.toString(10));
-					sim.addParameter("ncPCheat", Double.toString(0.5));
+					sim.addParameter("ncPCheat", Double.toString(0.25));
 					sim.addParameter("seed", Integer.toString(seed + i));
 					sim.addParameter("cheatOn", Cheat.PROVISION.name());
 					sim.addParameter("noWarnings", Integer.toString(5));
@@ -285,7 +285,7 @@ public class SpinWorldCLI extends Presage2CLI {
 		for (int i = 0; i < repeats; i++) {
 			for (double mc : new double[] { .0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1.0 }) {
 				PersistentSimulation sim = getDatabase().createSimulation(
-						"MONITORING_COST_" + String.format("%03d", (mc*100)) + "_PROP", "spinworld.SpinWorldSimulation",
+						"MONITORING_COST_" + String.format("%03d", (Math.round(mc*100))), "spinworld.SpinWorldSimulation",
 						"AUTO START", rounds);
 
 				sim.addParameter("finishTime", Integer.toString(rounds));
@@ -298,9 +298,9 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("b", Double.toString(1));
 				sim.addParameter("c", Double.toString(3));
 				sim.addParameter("cAgents", Integer.toString(20));
-				sim.addParameter("cPCheat", Double.toString(0.05));
+				sim.addParameter("cPCheat", Double.toString(0.02));
 				sim.addParameter("ncAgents", Integer.toString(10));
-				sim.addParameter("ncPCheat", Double.toString(0.5));
+				sim.addParameter("ncPCheat", Double.toString(0.25));
 				sim.addParameter("seed", Integer.toString(seed + i));
 				sim.addParameter("cheatOn", Cheat.PROVISION.name());
 				sim.addParameter("noWarnings", Integer.toString(5));

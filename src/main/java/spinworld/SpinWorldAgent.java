@@ -758,9 +758,9 @@ public class SpinWorldAgent extends MobileAgent {
 			double rTotal = rP + (g - p);
 			
 			if (rTotal >= q)
-				return a + b * ((rTotal/q) - 1);
+				return a * q + b * (rTotal - q);
 			else
-				return c * (rTotal/q);
+				return a * rTotal - c * (q - rTotal);
 		}
 
 		public double estimateFullComplyUtility(double scarcity) {

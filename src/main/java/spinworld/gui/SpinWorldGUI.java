@@ -333,7 +333,7 @@ public class SpinWorldGUI {
 			JFreeChart sumUtiChart = ChartFactory.createBarChart(
 		                "Total Utility for Experiment: " + methodComp, // Chart title
 		                "Method", // Domain axis label
-		                "Sum of Utility (x 1,000)", // Range axis label
+		                "Sum of Utility", // Range axis label
 		                utiData, // Dataset
 		                PlotOrientation.VERTICAL,
 		                true, // Include legend
@@ -445,9 +445,9 @@ public class SpinWorldGUI {
 								double u = Double.parseDouble(s.getProperty("U"));
 	
 								if (compliant)
-									uSums.put("c", uSums.get("c") + (u - uSums.get("c")));
+									uSums.put("c", uSums.get("c") + u);
 								else
-									uSums.put("nc", uSums.get("nc") + (u - uSums.get("nc")));
+									uSums.put("nc", uSums.get("nc") + u);
 							}
 							
 							if (s.getProperty("o") != null) {
@@ -508,7 +508,7 @@ public class SpinWorldGUI {
 			
 			for (String k : keys) {
 				for (String method : methods) {
-					utiData.addValue(mapUSums.get(method).get(k) * 1000, k, method);
+					utiData.addValue(mapUSums.get(method).get(k), k, method);
 				}
 			}	
 			
