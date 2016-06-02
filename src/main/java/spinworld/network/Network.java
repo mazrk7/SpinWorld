@@ -91,6 +91,13 @@ public class Network {
 			warnHistory.put(p, 1);
 	}
 	
+	public void removeWarning(Particle p) {
+		if (warnHistory.containsKey(p))
+			warnHistory.put(p, warnHistory.get(p) - 1);
+		else
+			warnHistory.remove(p);
+	}
+	
 	public int getWarningCount(Particle p) {
 		if (warnHistory.containsKey(p))
 			return warnHistory.get(p);

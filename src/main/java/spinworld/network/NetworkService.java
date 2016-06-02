@@ -163,7 +163,6 @@ public class NetworkService extends EnvironmentService {
 	
 	// Join membership of this particle to a network
 	public void joinMembership(final UUID pId, final UUID jpId, final Network net) {
-		// getParticle(pId).toJoin(getParticle(jpId));
 		session.insert(new MemberOf(getParticle(pId), net));	
 	}
 	

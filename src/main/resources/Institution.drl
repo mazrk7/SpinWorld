@@ -14,6 +14,8 @@ import spinworld.Globals
 import spinworld.GraduationLevel
 import spinworld.LeftNetwork
 
+import uk.ac.imperial.presage2.core.util.random.Random
+
 global org.apache.log4j.Logger logger
 global java.util.Random rnd
 
@@ -33,20 +35,21 @@ declare Monitored
 	time : int	@key
 end
 
-declare Sanction
+declare Sanctioned
 	@role(event)
 	particle : Particle	@key
 	network : spinworld.network.Network	@key
 	time : int	@key
 	level : GraduationLevel
+	appealed : Boolean
 end
 
-declare Observation
+declare Appealed
 	@role(event)
 	particle : Particle	@key
-	observed : Particle	@key
 	network : spinworld.network.Network	@key
 	time : int	@key
+	outcome : String
 end
 
 declare TaskComplete
@@ -60,7 +63,7 @@ query compliantRound(Network n, Particle p, int $t)
 end
 
 rule "Monitor particles"
-	salience 5 // After provision
+	salience 9 // After provision
 	no-loop
 	when
 		Round($t : number, type == RoundType.DEMAND)
@@ -71,7 +74,7 @@ rule "Monitor particles"
 		$poolMembers : List(size > 0) from accumulate(MemberOf(network == $n, $p : particle), collectList($p))
 	then
 		int toMonitor = (int) Math.ceil($poolMembers.size() * $n.getMonitoringLevel());
-		logger.info($n.toString() + ": Attempting to monitor " + toMonitor + " particles.");
+		logger.info($n.toString() + " attempting to monitor " + toMonitor + " particles.");
 		
 		List members = new ArrayList($poolMembers);
 		Collections.shuffle(members);
@@ -98,99 +101,188 @@ rule "Monitor particles"
 		insert(new TaskComplete("monitoring", $t));
 end
 
-rule "Sanction particles"
-	salience 2 // After monitoring & detection of cheating
-	when 
-		Round($t : number, type == RoundType.APPROPRIATE)
-		Violation($p : particle, $n : network, time == $t, $s : severity)
-		$m : MemberOf(network == $n, particle == $p)
-	then	
-		if($s >= $n.getSeverityUB() || ($n.getWarningCount($p) >= $n.getNoWarnings()
-				&& $s >= $n.getSeverityLB() && $s < $n.getSeverityUB())) {	
-			$p.updateObservedSanctionHistory(GraduationLevel.EXPULSION);
-			
-			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.EXPULSION);
-			insert(sanc);
-			logger.info(sanc);	
-			
-			retract($m);
-			insert(new LeftNetwork($n));
-			logger.info("Expulsion: " + $p + " from " + $n);
-			$n.banParticle($p);
-		} else if($s >= $n.getSeverityLB() && $s < $n.getSeverityUB()) {
-			$p.updateObservedSanctionHistory(GraduationLevel.WARNING);
-			$n.warn($p);
-			
-			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.WARNING);
-			insert(sanc);
-			logger.info(sanc);	
-		} else if($s < $n.getSeverityLB()) {	
-			$p.updateObservedSanctionHistory(GraduationLevel.NO_SANCTION);
-				
-			Sanction sanc = new Sanction($p, $n, $t, GraduationLevel.NO_SANCTION);
-			insert(sanc);
-			logger.info(sanc);
-		} 
-			
-		double mFreq = $n.getMonitoringLevel();
-		mFreq = mFreq + $s * (1-mFreq);
-		$n.setMonitoringLevel(mFreq);
-end
-
 rule "Reduce monitoring frequency"
-	salience 5
+	salience 1
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		$n : Network()
-		exists(MemberOf(network == $n))
-		not(exists(Violation($p : particle, network == $n, time == $t, $s : severity)))
+		not(exists(Sanctioned(network == $n, time == $t, $l : level)))
 	then
-		double mFreq = $n.getMonitoringLevel();
+		double mFreq = $n.getMonitoringLevel();	
+		logger.info($n.toString() + " monitoring frequency: " + mFreq);
 		
-		mFreq = mFreq - 0.1 * mFreq;
+		mFreq = mFreq - 0.1 * mFreq;	
 		$n.setMonitoringLevel(mFreq);
+		
+		logger.info("Monitoring frequency now: " + $n.getMonitoringLevel());
+end
+
+rule "Increase monitoring frequency after any minor sanctions"
+	salience 1
+	when
+		Round($t : number, type == RoundType.APPROPRIATE)
+		$n : Network()
+		exists(Sanctioned(network == $n, time == $t, level == GraduationLevel.WARNING))
+	then
+		double mFreq = $n.getMonitoringLevel();		
+		logger.info($n.toString() + " monitoring frequency: " + mFreq);
+		
+		mFreq = mFreq + 0.1 * (1-mFreq);	
+		$n.setMonitoringLevel(mFreq);
+		
+		logger.info("Monitoring frequency now: " + mFreq);
+end
+
+rule "Increase monitoring frequency for any major sanctions"
+	salience 1
+	when
+		Round($t : number, type == RoundType.APPROPRIATE)
+		$n : Network()
+		exists(Sanctioned(network == $n, time == $t, level == GraduationLevel.EXPULSION))
+	then
+		double mFreq = $n.getMonitoringLevel();		
+		logger.info($n.toString() + " monitoring frequency: " + mFreq);
+		
+		mFreq = mFreq + 0.2 * (1-mFreq);	
+		$n.setMonitoringLevel(mFreq);
+				
+		logger.info("Monitoring frequency now: " + mFreq);
+end
+
+rule "Let particle go without sanctioning"
+	salience 4 // After monitoring & detection of cheating
+	when 
+		Round($t : number, type == RoundType.APPROPRIATE)
+		Violation($p : particle, $n : network, time == $t, severity < $n.getSeverityLB())
+		MemberOf(network == $n, particle == $p)
+	then
+		$p.updateObservedSanctionHistory(GraduationLevel.NO_SANCTION);
+	
+		Sanctioned sanc = new Sanctioned($p, $n, $t, GraduationLevel.NO_SANCTION, Boolean.FALSE);
+		insert(sanc);
+		logger.info(sanc);		
+end
+
+rule "Sanction particle for minor offense"
+	salience 4 // After monitoring & detection of cheating
+	when 
+		Round($t : number, type == RoundType.APPROPRIATE)
+		Violation($p : particle, $n : network, time == $t, $s : severity,
+			$s >= $n.getSeverityLB(), $s < $n.getSeverityUB())
+		MemberOf(network == $n, particle == $p)
+	then
+		$n.warn($p);
+		Sanctioned sanc = new Sanctioned($p, $n, $t);
+		
+		if ($n.getWarningCount($p) >= $n.getNoWarnings()) {
+			sanc.setLevel(GraduationLevel.EXPULSION);
+		} else {
+			sanc.setLevel(GraduationLevel.WARNING);
+		}
+		
+		if ($s - $n.getSeverityLB() > (($n.getSeverityLB() + $n.getSeverityUB())/2)) {
+			sanc.setAppealed(Boolean.FALSE);
+		} else {
+			sanc.setAppealed(Boolean.TRUE);
+		}
+		
+		insert(sanc);
+		logger.info(sanc);		
+end
+
+rule "Sanction particle for major offense"
+	salience 4 // After monitoring & detection of cheating
+	when 
+		Round($t : number, type == RoundType.APPROPRIATE)
+		Violation($p : particle, $n : network, time == $t, severity >= $n.getSeverityUB())
+		MemberOf(network == $n, particle == $p)
+	then				
+		Sanctioned sanc = new Sanctioned($p, $n, $t, GraduationLevel.EXPULSION, Boolean.TRUE);
+		insert(sanc);
+		logger.info(sanc);		
+end
+
+rule "Appeal against network sanctioning"
+	salience 3 // After all sanctioning
+	when 
+		Round($t : number, type == RoundType.APPROPRIATE)
+		$sanc : Sanctioned($p : particle, $n : network, time == $t, $l : level, appealed == Boolean.TRUE)
+		MemberOf(network == $n, particle == $p)
+	then
+		Appealed app = new Appealed($p, $n, $t);		
+		double chance = Random.randomDouble();
+		
+		if ($l == GraduationLevel.WARNING && chance > 0.75) {
+			$p.updateObservedSanctionHistory(GraduationLevel.NO_SANCTION);
+			$n.removeWarning($p);
+			retract($sanc);
+			logger.info("Retracted: " + $sanc);
+			app.setOutcome("won");
+		} else if ($l == GraduationLevel.EXPULSION && chance > 0.9) {
+			$p.updateObservedSanctionHistory(GraduationLevel.NO_SANCTION);
+			retract($sanc);
+			logger.info("Retracted: " + $sanc);
+			app.setOutcome("won");
+		} else {
+			$p.updateObservedSanctionHistory($l);
+			app.setOutcome("lost");
+		}
+		
+		insert(app);
+		logger.info(app);
+end
+
+rule "Expel particle for recurring offenses or severe violation"
+	salience 2 // After all appeals
+	when 
+		Round($t : number, type == RoundType.APPROPRIATE)
+		Sanctioned($p : particle, $n : network, time == $t, level == GraduationLevel.EXPULSION)
+		$m : MemberOf(particle == $p, network == $n)
+	then
+		$n.banParticle($p);	
+		
+		retract($m);
+		insert(new LeftNetwork($n));
+		logger.info("Expulsion: " + $p + " from " + $n);
 end
 
 rule "Observation of network sanctioning"
-	salience 1 // After sanctioning
+	salience 1
 	when 
 		Round($t : number, type == RoundType.APPROPRIATE)
-		Sanction($pSanc : particle, $n : network, time == $t, $l : level)
-		$m : MemberOf(network == $n, $p : particle)
-	then		
-		if (!$pSanc.equals($p)) {
-			$p.updateObservedCatchHistory(Boolean.TRUE);	
-			$p.updateObservedSanctionHistory($l);
-				
-			Observation obsv = new Observation($p, $pSanc, $n, $t);
-			insert(obsv);
-			logger.info(obsv);
-		}
+		Sanctioned($pSanc : particle, $n : network, time == $t, $l : level)
+		MemberOf(network == $n, $p : particle, !$pSanc.equals($p))
+	then	
+		logger.info($p.getName() + " observed " + $pSanc.getName() + " for " + $l);
+		$p.updateObservedCatchHistory(Boolean.TRUE);				
+		$p.updateObservedSanctionHistory($l);
 end	
 	
 rule "Detect cheat on provision"
-	salience 3
+	salience 5
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)
 		Monitored($p, $n, $t ;)
 		Generate(t == $t, $g : g, $q : q, particle == $p)
 		$provision : Provision(particle == $p, t == $t, quantity < $g)
-	then
+	then	
 		Violation v = new Violation($p, $n, $t);
 		v.setSeverity($g - $provision.getQuantity());
 		v.setOn("provision");
 		
 		logger.info(v);
 		insert(v);
+		
+		$p.updateObservedCatchHistory(Boolean.TRUE);						
 end
 
 rule "Could not detect cheat on provision"
-	salience 3
+	salience 5
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)
-		not Monitored($p, $n, $t ;)
+		not(Monitored($p, $n, $t ;))
 		Generate(t == $t, $g : g, $q : q, particle == $p)
 		Provision(particle == $p, t == $t, quantity < $g)
 	then
@@ -198,36 +290,38 @@ rule "Could not detect cheat on provision"
 end
 
 rule "Detect cheat on demand"
-	salience 3
+	salience 5
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)
 		Monitored($p, $n, $t ;)
 		Generate(t == $t, $g : g, $q : q, particle == $p)
 		$demand : Demand(particle == $p, t == $t, quantity > $q)
-	then	
+	then		
 		Violation v = new Violation($p, $n, $t);
 		v.setSeverity($demand.getQuantity() - $q);
 		v.setOn("demand");
 		
 		logger.info(v);
 		insert(v);
+		
+		$p.updateObservedCatchHistory(Boolean.TRUE);					
 end
 
 rule "Could not detect cheat on demand"
-	salience 3
+	salience 5
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)
-		not Monitored($p, $n, $t ;)
+		not(Monitored($p, $n, $t ;))
 		Generate(t == $t, $g : g, $q : q, particle == $p)
 		Demand(particle == $p, t == $t, quantity > $q)
 	then
-		$p.updateObservedCatchHistory(Boolean.FALSE);
+		$p.updateObservedCatchHistory(Boolean.FALSE);	
 end
 
 rule "Detect cheat on appropriate"
-	salience 3
+	salience 5
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)
@@ -235,26 +329,28 @@ rule "Detect cheat on appropriate"
 		Generate(t == $t, $g : g, $q : q, particle == $p)
 		Allocate($r : quantity, particle == $p, t == $t)
 		$approp : Appropriate($rP : quantity, particle == $p, t == $t, quantity > $r)
-	then	
+	then		
 		Violation v = new Violation($p, $n, $t);
 		v.setSeverity($approp.getQuantity() - $r);
 		v.setOn("appropriate");
 		
 		logger.info(v);
 		insert(v);
+		
+		$p.updateObservedCatchHistory(Boolean.TRUE);						
 end
 
 rule "Could not detect cheat on appropriate"
-	salience 3
+	salience 5
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)
-		not Monitored($p, $n, $t ;)
+		not(Monitored($p, $n, $t ;))
 		Generate(t == $t, $g : g, $q : q, particle == $p)
 		Allocate($r : quantity, particle == $p, t == $t)
 		Appropriate($rP : quantity, particle == $p, t == $t, quantity > $r)	
 	then
-		$p.updateObservedCatchHistory(Boolean.FALSE);		
+		$p.updateObservedCatchHistory(Boolean.FALSE);	
 end
 
 rule "Prune monitored"

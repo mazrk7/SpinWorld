@@ -281,7 +281,7 @@ public class SpinWorldAgent extends MobileAgent {
 		this.catchRate = this.resourcesGame.getObservedCatchRate(getID(), this.network);
 		
 		double reinforcement = 0.0;
-		if (benefit != 0.0 && risk != 0.0 && catchRate != 0) {
+		if (benefit != 0.0 && risk != 0.0 && catchRate != 0.0) {
 			double normBenefit = benefit/(benefit + risk + catchRate);
 			double normRisk = risk/(benefit + risk + catchRate);
 			double normCatchRate = catchRate/(benefit + risk + catchRate);

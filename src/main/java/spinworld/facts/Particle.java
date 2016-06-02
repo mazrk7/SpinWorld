@@ -38,7 +38,7 @@ public class Particle {
 		
 	// Size multiplier a.k.a. radius of particle acts as a weighting for resource allocation
 	double radius = 1;
-	
+		
 	Particle toJoin = null;
 	Set<Particle> links = new CopyOnWriteArraySet<Particle>();
 			
@@ -71,7 +71,8 @@ public class Particle {
 
 	@Override
 	public String toString() {
-		return "Particle [" + name + ", type=" + type + ", velocity=" + velocity + ", g=" + g + ", q=" + q + "]";
+		return "Particle [" + name + ", type=" + type +
+				", velocity=" + velocity + ", g=" + g + ", q=" + q + "]";
 	}
 
 	public UUID getId() {
