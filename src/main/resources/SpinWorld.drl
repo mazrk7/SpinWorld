@@ -3,6 +3,7 @@ package spinworld
 # List any import classes here.
 import java.util.List
 import java.util.ArrayList
+import java.util.Iterator
 import java.lang.Math
 import java.lang.Double
 import uk.ac.imperial.presage2.core.Action
@@ -285,6 +286,43 @@ rule "Surplus allocated pool"
 		}
 		
 		insert(new Processed($a));
+end
+
+rule "Update network state for round"
+	salience -99
+	when
+		$r : Round(type == RoundType.DEMAND)
+		$n : Network($utility : utilityData)
+		$poolMembers : List(size > 0) from accumulate(MemberOf(network == $n, $p : particle), collectList($p))
+	then
+		List members = new ArrayList($poolMembers);
+		Iterator it = members.iterator();
+		$n.incrementLongevity();
+		
+		logger.info($n.toString() + " aggregating stats.");
+		
+		while(it.hasNext()) {
+			Particle p = (Particle) it.next();
+			$utility.addValue(p.getUtility());
+		}
+
+		if (storage != null) {
+			storage.getSimulation().getEnvironment().setProperty("n"+ $n.getId() +"-longevity",
+					$r.getNumber(),
+					Integer.toString($n.getLongevity()));
+			storage.getSimulation().getEnvironment().setProperty("n"+ $n.getId() +"-utility-sum",
+					$r.getNumber(),
+					Double.toString($utility.getSum()));
+			storage.getSimulation().getEnvironment().setProperty("n"+ $n.getId() +"-utility-avg",
+					$r.getNumber(),
+					Double.toString($utility.getMean()));
+			storage.getSimulation().getEnvironment().setProperty("n"+ $n.getId() +"-utility-std",
+					$r.getNumber(),
+					Double.toString($utility.getStandardDeviation()));
+			storage.getSimulation().getEnvironment().setProperty("n"+ $n.getId() +"-monitoringLevel",
+					$r.getNumber(),
+					Double.toString($n.getMonitoringLevel()));
+		}
 end
 
 rule "Prune processed"

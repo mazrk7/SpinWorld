@@ -14,7 +14,6 @@ import com.google.inject.Singleton;
 
 import spinworld.facts.Particle;
 import spinworld.facts.Round;
-import spinworld.network.Network;
 import uk.ac.imperial.presage2.core.environment.EnvironmentRegistrationRequest;
 import uk.ac.imperial.presage2.core.environment.EnvironmentService;
 import uk.ac.imperial.presage2.core.environment.EnvironmentSharedStateAccess;
@@ -105,12 +104,16 @@ public class SpinWorldService extends EnvironmentService {
 		return getParticle(pId).getAppropriated();
 	}
 	
-	public double getObservedCatchRate(UUID pId, Network net) {
+	public double getObservedCatchRate(UUID pId) {
 		return getParticle(pId).getObservedCatchRate();
 	}
 	
-	public double getObservedRiskRate(UUID pId, Network net) {
+	public double getObservedRiskRate(UUID pId) {
 		return getParticle(pId).getObservedRiskRate();
+	}
+	
+	public void setUtility(UUID pId, double util) {
+		getParticle(pId).setUtility(util);
 	}
 	
 }

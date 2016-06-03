@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.math.stat.descriptive.SummaryStatistics;
+
 import spinworld.facts.Allocation;
 import spinworld.facts.Particle;
 
@@ -24,7 +26,15 @@ public class Network {
 	double severityUB = 0.8;
 	
 	// Number of warnings a network will give to a particle as punishment
-	int noWarnings = 3;
+	int noWarnings = 5;
+	
+	double forgiveness = 0.6;
+	
+	int compliantRounds = 0;
+	
+	int lifespan = 0;
+	
+	final SummaryStatistics utilityData;
 	
 	// List of particles that are banned from the network
 	Set<Particle> bannedParticles = new HashSet<Particle>();
@@ -34,6 +44,7 @@ public class Network {
 		super();
 		this.id = id;
 		this.allocationMethod = allocationMethod;
+		this.utilityData = new SummaryStatistics();
 	}
 	
 	public Network(int id, Allocation allocationMethod, 
@@ -46,12 +57,17 @@ public class Network {
 	
 	public Network(int id, Allocation allocationMethod, double monitoringLevel,
 			double monitoringCost, int noWarnings, double severityLB, double severityUB) {
-		this(id, allocationMethod);
-		this.monitoringLevel = monitoringLevel;
-		this.monitoringCost = monitoringCost;
-		this.noWarnings = noWarnings;
+		this(id, allocationMethod, monitoringLevel, monitoringCost, noWarnings);
 		this.severityLB = severityLB;
 		this.severityUB = severityUB;
+	}
+	
+	public Network(int id, Allocation allocationMethod, 
+			double monitoringLevel, double monitoringCost, int noWarnings, 
+			double severityLB, double severityUB, double forgiveness) {
+		this(id, allocationMethod, monitoringLevel, monitoringCost,
+				noWarnings, severityLB, severityUB);
+		this.forgiveness = forgiveness;
 	}
 	
 	@Override
@@ -67,6 +83,10 @@ public class Network {
 		return allocationMethod;
 	}
 	
+	public int getNoWarnings() {
+		return this.noWarnings;
+	}
+	
 	public double getMonitoringLevel() {
 		return monitoringLevel;
 	}
@@ -79,11 +99,7 @@ public class Network {
 	public double getMonitoringCost() {
 		return monitoringCost * 0.5;
 	}
-	
-	public int getNoWarnings() {
-		return this.noWarnings;
-	}
-	
+		
 	public void warn(Particle p) {
 		if (warnHistory.containsKey(p))
 			warnHistory.put(p, warnHistory.get(p) + 1);
@@ -92,7 +108,7 @@ public class Network {
 	}
 	
 	public void removeWarning(Particle p) {
-		if (warnHistory.containsKey(p))
+		if (warnHistory.containsKey(p) && warnHistory.get(p) > 1)
 			warnHistory.put(p, warnHistory.get(p) - 1);
 		else
 			warnHistory.remove(p);
@@ -129,6 +145,30 @@ public class Network {
 			return true;
 		else
 			return false;
+	}
+	
+	public double getForgiveness() {
+		return this.forgiveness;
+	}
+	
+	public int getCompliantRounds() {
+		return this.compliantRounds;
+	}
+	
+	public void setCompliantRounds(int count) {
+		this.compliantRounds = count;
+	}
+	
+	public int getLongevity() {
+		return this.lifespan;
+	}
+	
+	public void incrementLongevity() {
+		this.lifespan++;
+	}
+	
+	public SummaryStatistics getUtilityData() {
+		return utilityData;
 	}
 
 	@Override

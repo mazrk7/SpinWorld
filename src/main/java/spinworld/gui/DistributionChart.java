@@ -26,7 +26,7 @@ public class DistributionChart implements Chart {
 	final ChartPanel panel;
 	final String shortName;
 
-	DistributionChart(PersistentSimulation sim, int windowSize, String shortName) {
+	DistributionChart(PersistentSimulation sim, int windowSize, String shortName, double lb, double ub) {
 		super();
 		this.sim = sim;
 		this.windowSize = windowSize;
@@ -39,7 +39,7 @@ public class DistributionChart implements Chart {
 		panel = new ChartPanel(chart);
 
 		chart.getXYPlot().setBackgroundPaint(Color.WHITE);
-		chart.getXYPlot().getDomainAxis().setRange(-0.5, 3.0);
+		chart.getXYPlot().getDomainAxis().setRange(lb, ub);
 		chart.getXYPlot().getRangeAxis()
 				.setRange(0, windowSize + 1);
 	}

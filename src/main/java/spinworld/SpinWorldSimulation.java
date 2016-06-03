@@ -129,16 +129,19 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	
 	// Monitoring level of networks
 	@Parameter(name = "monitoringLevel", optional = true)
-	public double monitoringLevel = 0.7;	
+	public double monitoringLevel = 1.0;	
 	@Parameter(name = "monitoringCost", optional = true)
 	public double monitoringCost = 0.0;
 	@Parameter(name = "noWarnings", optional = true)
-	public int noWarnings = 3;
+	public int noWarnings = 5;
 	
-	@Parameter(name = "severityUB", optional = true)
-	public double severityUB = 0.8;
 	@Parameter(name = "severityLB", optional = true)
 	public double severityLB = 0.2;
+	@Parameter(name = "severityUB", optional = true)
+	public double severityUB = 0.8;
+	
+	@Parameter(name = "forgiveness", optional = true)
+	public double forgiveness = 0.6;
 	
 	public SpinWorldSimulation(Set<AbstractModule> modules) {
 		super(modules);
@@ -213,13 +216,13 @@ public class SpinWorldSimulation extends InjectedSimulation {
 		for (int n = 0; n < cAgents; n++) {
 			createParticle("c" + n, "C",
 					new Location(Random.randomInt(size), Random.randomInt(size)),
-					initVelocity, radius, cPCheat, getCheatOn(), scenario);
+					initVelocity, radius, cPCheat, getCheatOn(), scenario, false);
 		}
 		
 		for (int n = 0; n < ncAgents; n++) {
 			createParticle("nc" + n, "NC",
 					new Location(Random.randomInt(size), Random.randomInt(size)),
-					initVelocity, radius, ncPCheat, getCheatOn(), scenario);
+					initVelocity, radius, ncPCheat, getCheatOn(), scenario, true);
 		}
 		
 		// Generate resources needed
@@ -242,12 +245,15 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	}
 	
 	protected SpinWorldAgent createParticle(String name, String type, Location loc, int velocity, 
-			int radius, double pCheat, Cheat cheatOn, Scenario scenario) {
+			int radius, double pCheat, Cheat cheatOn, Scenario scenario, boolean adaptive) {
 		UUID pid = UUID.randomUUID();
 		
-		SpinWorldAgent ag = new SpinWorldAgent(pid, name, loc, velocity, radius,
-				a, b, c, pCheat, alpha, beta, cheatOn, getNetworkLeave(), 
-				resetSatisfaction, rnd.nextLong(), t1, t2, theta, phi);
+		SpinWorldAgent ag = adaptive ? new AdaptiveAgent(pid, name, loc, velocity, radius,
+						a, b, c, pCheat, alpha, beta, cheatOn, getNetworkLeave(), 
+						resetSatisfaction, rnd.nextLong(), t1, t2, theta, phi)
+						: new SpinWorldAgent(pid, name, loc, velocity, radius,
+								a, b, c, pCheat, alpha, beta, cheatOn, getNetworkLeave(), 
+								resetSatisfaction, rnd.nextLong(), t1, t2, theta, phi);
 		scenario.addParticipant(ag);
 		
 		Particle p = new Particle(pid, name, type, alpha, beta, radius, velocity, loc);		

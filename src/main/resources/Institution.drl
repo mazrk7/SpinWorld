@@ -101,20 +101,27 @@ rule "Monitor particles"
 		insert(new TaskComplete("monitoring", $t));
 end
 
-rule "Reduce monitoring frequency"
+rule "Reduce monitoring frequency after 3 consecutive rounds of compliance"
 	salience 1
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		$n : Network()
 		not(exists(Sanctioned(network == $n, time == $t, $l : level)))
-	then
-		double mFreq = $n.getMonitoringLevel();	
-		logger.info($n.toString() + " monitoring frequency: " + mFreq);
+	then	
+		int compliant = $n.getCompliantRounds();
+			
+		if (compliant > 2) {
+			double mFreq = $n.getMonitoringLevel();	
+			logger.info($n.toString() + " monitoring frequency: " + mFreq);
 		
-		mFreq = mFreq - 0.1 * mFreq;	
-		$n.setMonitoringLevel(mFreq);
+			mFreq = mFreq - 0.1 * mFreq;	
+			$n.setMonitoringLevel(mFreq);
+			$n.setCompliantRounds(0);
 		
-		logger.info("Monitoring frequency now: " + $n.getMonitoringLevel());
+			logger.info("Monitoring frequency now: " + $n.getMonitoringLevel());
+		} else {
+			$n.setCompliantRounds(compliant + 1);
+		}
 end
 
 rule "Increase monitoring frequency after any minor sanctions"
@@ -129,6 +136,7 @@ rule "Increase monitoring frequency after any minor sanctions"
 		
 		mFreq = mFreq + 0.1 * (1-mFreq);	
 		$n.setMonitoringLevel(mFreq);
+		$n.setCompliantRounds(0);
 		
 		logger.info("Monitoring frequency now: " + mFreq);
 end
@@ -145,6 +153,7 @@ rule "Increase monitoring frequency for any major sanctions"
 		
 		mFreq = mFreq + 0.2 * (1-mFreq);	
 		$n.setMonitoringLevel(mFreq);
+		$n.setCompliantRounds(0);
 				
 		logger.info("Monitoring frequency now: " + mFreq);
 end
@@ -212,24 +221,23 @@ rule "Appeal against network sanctioning"
 		Appealed app = new Appealed($p, $n, $t);		
 		double chance = Random.randomDouble();
 		
-		if ($l == GraduationLevel.WARNING && chance > 0.75) {
+		if (chance > $n.getForgiveness()) {
 			$p.updateObservedSanctionHistory(GraduationLevel.NO_SANCTION);
-			$n.removeWarning($p);
-			retract($sanc);
-			logger.info("Retracted: " + $sanc);
+			
+			if ($l == GraduationLevel.WARNING) $n.removeWarning($p);
+			
 			app.setOutcome("won");
-		} else if ($l == GraduationLevel.EXPULSION && chance > 0.9) {
-			$p.updateObservedSanctionHistory(GraduationLevel.NO_SANCTION);
+			logger.info(app);
 			retract($sanc);
-			logger.info("Retracted: " + $sanc);
-			app.setOutcome("won");
+			logger.info("Retracted: " + $sanc);		
 		} else {
 			$p.updateObservedSanctionHistory($l);
 			app.setOutcome("lost");
+			logger.info(app);
+			logger.info("Enforced: " + $sanc);			
 		}
 		
 		insert(app);
-		logger.info(app);
 end
 
 rule "Expel particle for recurring offenses or severe violation"
@@ -247,13 +255,12 @@ rule "Expel particle for recurring offenses or severe violation"
 end
 
 rule "Observation of network sanctioning"
-	salience 1
+	salience 2
 	when 
 		Round($t : number, type == RoundType.APPROPRIATE)
 		Sanctioned($pSanc : particle, $n : network, time == $t, $l : level)
 		MemberOf(network == $n, $p : particle, !$pSanc.equals($p))
 	then	
-		logger.info($p.getName() + " observed " + $pSanc.getName() + " for " + $l);
 		$p.updateObservedCatchHistory(Boolean.TRUE);				
 		$p.updateObservedSanctionHistory($l);
 end	

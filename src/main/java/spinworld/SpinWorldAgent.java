@@ -71,6 +71,11 @@ public class SpinWorldAgent extends MobileAgent {
 	@Inject
 	@Named("params.severityUB")
 	private double severityUB;
+	
+	// Factor for conflict resolution mechanism
+	@Inject
+	@Named("params.forgiveness")
+	private double forgiveness;
 
 	double g = 0; // Resources generated
 	double q = 0; // Resources needed
@@ -109,8 +114,6 @@ public class SpinWorldAgent extends MobileAgent {
 	boolean permCreateNetwork = false;
 	boolean dead = false;
 	boolean compliantRound = true;
-
-	double prevUtility = 0;
 	
 	double theta = .1;
 	double phi = .1;
@@ -225,7 +228,7 @@ public class SpinWorldAgent extends MobileAgent {
 				this.compliantRound = chooseStrategy();
 			else
 				this.compliantRound = (rnd.nextDouble() >= pCheat);
-
+			
 			// Facilitate cheating in the provision or demand of resources
 			if (!compliantRound && (this.cheatOn == Cheat.PROVISION || this.cheatOn == Cheat.DEMAND)) {
 				switch (this.cheatOn) {
@@ -256,42 +259,7 @@ public class SpinWorldAgent extends MobileAgent {
 	}
 
 	protected boolean chooseStrategy() {
-		// Choose strategies for each round				
-		double currentUtility = this.rollingUtility.getMean();					
-		
-		double benefit = currentUtility - prevUtility;
-			
-		// If you benefited from being compliant or lost out due to non-compliance, be more compliant
-		// Else, try your chance against the reinforcement algorithm
-		if ((benefit > 0 && this.compliantRound) || (benefit < 0 && !this.compliantRound))
-			this.pCheat = this.pCheat - phi * this.pCheat;
-		else if (benefit < 0 && this.compliantRound)
-			reinforcementToCheat(theta);
-		else
-			reinforcementToCheat(benefit);
-			
-		// Update previous round's utility
-		this.prevUtility = currentUtility;
-		
-		return (rnd.nextDouble() >= pCheat);
-	}
-	
-	private void reinforcementToCheat(double benefit) {
-		this.risk = this.resourcesGame.getObservedRiskRate(getID(), this.network);
-		this.catchRate = this.resourcesGame.getObservedCatchRate(getID(), this.network);
-		
-		double reinforcement = 0.0;
-		if (benefit != 0.0 && risk != 0.0 && catchRate != 0.0) {
-			double normBenefit = benefit/(benefit + risk + catchRate);
-			double normRisk = risk/(benefit + risk + catchRate);
-			double normCatchRate = catchRate/(benefit + risk + catchRate);
-			reinforcement = theta * (normBenefit - normRisk - normCatchRate);
-		}
-		
-		if (reinforcement > 0.0)
-			this.pCheat = this.pCheat + reinforcement * (1 - pCheat);
-		else
-			this.pCheat = this.pCheat + reinforcement * pCheat;
+		return rnd.nextDouble() >= pCheat;
 	}
 
 	// Demand amount d, act upon environment
@@ -349,7 +317,8 @@ public class SpinWorldAgent extends MobileAgent {
 		try {	
 			Allocation method = Allocation.RANDOM;
 			Network net = new Network(this.networkService.getNextNumNetwork(), method, 
-					this.monitoringLevel, this.monitoringCost, this.noWarnings, this.severityLB, this.severityUB);
+					this.monitoringLevel, this.monitoringCost, this.noWarnings, 
+					this.severityLB, this.severityUB, this.forgiveness);
 			this.network = net;
 			
 			this.networkService.createMembership(getID(), p, net);
@@ -398,8 +367,8 @@ public class SpinWorldAgent extends MobileAgent {
 	protected void calculateScores() {
 		double r = resourcesGame.getAllocated(getID());
 		double rP = resourcesGame.getAppropriated(getID());
-		this.risk = this.resourcesGame.getObservedRiskRate(getID(), this.network);
-		this.catchRate = this.resourcesGame.getObservedCatchRate(getID(), this.network);
+		this.risk = this.resourcesGame.getObservedRiskRate(getID());
+		this.catchRate = this.resourcesGame.getObservedCatchRate(getID());
 		
 		if (g == 0 && q == 0)
 			return;
@@ -416,7 +385,8 @@ public class SpinWorldAgent extends MobileAgent {
 		double rTotal = rP + (g - p);
 		// Total utility in this round
 		double u = ut.getUtility(g, q, d, p, r, rP);
-
+		this.resourcesGame.setUtility(getID(), u);
+		
 		if (rP >= d)
 			satisfaction = satisfaction + alpha * (1 - satisfaction);
 		else

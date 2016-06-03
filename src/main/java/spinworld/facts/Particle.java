@@ -38,12 +38,11 @@ public class Particle {
 		
 	// Size multiplier a.k.a. radius of particle acts as a weighting for resource allocation
 	double radius = 1;
-		
-	Particle toJoin = null;
-	Set<Particle> links = new CopyOnWriteArraySet<Particle>();
-			
+					
 	ArrayList<GraduationLevel> observedSanctionHistory = new ArrayList<GraduationLevel>();
 	ArrayList<Boolean> observedCatchHistory = new ArrayList<Boolean>();
+	
+	double utility = 0.0;
 		
 	public Particle(UUID id) {
 		super();
@@ -141,6 +140,14 @@ public class Particle {
 
 	public void setAppropriated(double appropriated) {
 		this.appropriated = appropriated;
+	}
+	
+	public double getUtility() {
+		return utility;
+	}
+	
+	public void setUtility(double util) {
+		this.utility = util;
 	}
 	
 	public double getAlpha() {

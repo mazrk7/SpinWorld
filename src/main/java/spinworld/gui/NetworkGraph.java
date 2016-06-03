@@ -8,7 +8,6 @@ import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import uk.ac.imperial.presage2.core.db.persistent.PersistentAgent;
 import uk.ac.imperial.presage2.core.db.persistent.PersistentSimulation;
 import uk.ac.imperial.presage2.core.db.persistent.TransientAgentState;
-import uk.ac.imperial.presage2.core.util.random.Random;
 
 public class NetworkGraph extends Container {
     
@@ -41,9 +40,9 @@ public class NetworkGraph extends Container {
 		  graph.removeEdge(e);
 		}
 		
-		double relation = Double.parseDouble(sim.getParameters().get("size"));
-		double xScale = layout.getSize().getWidth();
-		double yScale = layout.getSize().getHeight();
+		// double relation = Double.parseDouble(sim.getParameters().get("size"));
+		// double xScale = layout.getSize().getWidth();
+		// double yScale = layout.getSize().getHeight();
 
 		for (PersistentAgent a : sim.getAgents()) {
 			TransientAgentState as = a.getState(t);
@@ -52,13 +51,13 @@ public class NetworkGraph extends Container {
 				String aNet = as.getProperty("network");
 				if (!graph.containsVertex(a.getName())) {
 					graph.addVertex(a.getName());
-					double x = (Double.parseDouble(as.getProperty("x")) + Random.randomDouble())/relation;
+					// IF PHYSICAL LOCATIONS
+					/* double x = (Double.parseDouble(as.getProperty("x")) + Random.randomDouble())/relation;
 					x = (x > relation) ? relation * xScale : x * xScale;
 					double y = (Double.parseDouble(as.getProperty("y")) + Random.randomDouble())/relation;
 					y = (y > relation) ? relation * yScale : y * yScale;
 					layout.setLocation(a.getName(), x, y);
-					// IF PHYSICAL LOCATIONS
-					// layout.lock(a.getName(), true);
+					layout.lock(a.getName(), true); */
 				}
 
 				if (!aNet.equals("-1")) {
@@ -70,13 +69,13 @@ public class NetworkGraph extends Container {
 									&& bs.getProperty("network").equals(aNet)) {
 								if (!graph.containsVertex(b.getName())) {
 									graph.addVertex(b.getName());
-									double x = (Double.parseDouble(bs.getProperty("x")) + Random.randomDouble())/relation;
+									// IF PHYSICAL LOCATIONS
+									/* double x = (Double.parseDouble(bs.getProperty("x")) + Random.randomDouble())/relation;
 									x = (x > relation) ? relation * xScale : x * xScale;
 									double y = (Double.parseDouble(bs.getProperty("y")) + Random.randomDouble())/relation;
 									y = (y > relation) ? relation * yScale : y * yScale;
 									layout.setLocation(b.getName(), x, y);
-									// IF PHYSICAL LOCATIONS
-									layout.lock(b.getName(), true);
+									layout.lock(b.getName(), true); */
 								}
 								
 								String edge = a.getName() + "-N" + aNet + "-" + b.getName();

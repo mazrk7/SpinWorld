@@ -30,6 +30,7 @@ import org.jfree.chart.axis.CategoryLabelPositions;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.xy.DefaultXYDataset;
 import org.jfree.ui.RectangleEdge;
@@ -38,6 +39,7 @@ import uk.ac.imperial.presage2.core.db.DatabaseModule;
 import uk.ac.imperial.presage2.core.db.DatabaseService;
 import uk.ac.imperial.presage2.core.db.StorageService;
 import uk.ac.imperial.presage2.core.db.persistent.PersistentAgent;
+import uk.ac.imperial.presage2.core.db.persistent.PersistentEnvironment;
 import uk.ac.imperial.presage2.core.db.persistent.PersistentSimulation;
 import uk.ac.imperial.presage2.core.db.persistent.TransientAgentState;
 
@@ -217,7 +219,7 @@ public class SpinWorldGUI {
 			TimeSeriesChart satTimeChart = new TimeSeriesChart(sim, windowSize, 
 					"Agent Satisfaction over 50 round window", "Sat.", "o", "SatTime", 0.0, 1.0);
 	
-			DistributionChart utDistrChart = new DistributionChart(sim, windowSize, "UtiDistr");
+			DistributionChart utDistrChart = new DistributionChart(sim, windowSize, "UtiDistr", -0.5, utiMax);
 			
 			List<Chart> charts = new ArrayList<Chart>();
 			charts.add(allocChart);
@@ -352,6 +354,30 @@ public class SpinWorldGUI {
 	        utiPlot.getRangeAxis().setStandardTickUnits(NumberAxis.createIntegerTickUnits());
 	        utiPlot.getRangeAxis().setAutoRange(true);
 	        
+			DefaultCategoryDataset longevityData = new DefaultCategoryDataset();
+			JFreeChart longevityChart = ChartFactory.createBarChart(
+		                "Sustainability of Networks for Experiment: " + methodComp, // Chart title
+		                "Method", // Domain axis label
+		                "Average Longevity of Networks (% of Simulation Time)", // Range axis label
+		                longevityData, // Dataset
+		                PlotOrientation.VERTICAL,
+		                false, // Include legend
+		                false, // Tooltips
+		                false // URLs
+	                );
+			
+	        // Get a reference to the plot for further customisation...
+	        CategoryPlot longevityPlot = longevityChart.getCategoryPlot();
+	        
+	        longevityPlot.setBackgroundPaint(Color.WHITE);
+	        longevityPlot.getDomainAxis().setCategoryLabelPositions(CategoryLabelPositions.UP_90);
+
+	        // Set the range axis to display integers only...
+	        longevityPlot.getRangeAxis().setStandardTickUnits(NumberAxis.createIntegerTickUnits());
+	        longevityPlot.getRangeAxis().setAutoRange(true);
+			BarRenderer renderer = (BarRenderer) longevityPlot.getRenderer();
+			renderer.setItemMargin(0.0);
+	        
 			DefaultXYDataset satTimeData = new DefaultXYDataset();
 			JFreeChart satTimeChart = ChartFactory.createXYLineChart("Avg Agent Satisfaction for Experiment: " + methodComp,
 					"Satisfaction Scale", "Timestep", satTimeData, PlotOrientation.HORIZONTAL, true, false, false);
@@ -390,7 +416,8 @@ public class SpinWorldGUI {
 	        
 			String[] keys = new String[] { "c", "nc", "all" };
 			Map<String, Map<String, Double>> mapUSums = new HashMap<String, Map<String, Double>>();
-			
+			Map<String, Double> mapLongevity = new HashMap<String, Double>();
+
 			for (Long simId : simIds) {
 				t = 0;
 				sim = sto.getSimulationById(simId);
@@ -401,6 +428,8 @@ public class SpinWorldGUI {
 				for (String k : keys) {
 					uSums.put(k, 0.0);
 				}
+				
+				Map<String, Integer> networkLongevity = new HashMap<String, Integer>();
 
 				int length = (int)(sim.getFinishTime()/2);
 				
@@ -432,15 +461,22 @@ public class SpinWorldGUI {
 					catchMean[1][t-1] = t;
 					SummaryStatistics catchC = new SummaryStatistics();
 					SummaryStatistics catchNC = new SummaryStatistics();
-									
+					
+					PersistentEnvironment pEnv = sim.getEnvironment();
+					for (String prop : pEnv.getProperties(t).keySet()) {
+						if (prop.contains("longevity")) {
+							networkLongevity.put(prop.substring(0, 2), 
+									Integer.parseInt(pEnv.getProperty(prop, t)));
+						}
+					}
+					
 					Set<PersistentAgent> pAgents = sim.getAgents();
 					for (PersistentAgent a : pAgents) {
 						final String name = a.getName();
 						boolean compliant = name.startsWith("c");
 						TransientAgentState s = a.getState(t);
 						
-						if (s != null) {
-							
+						if (s != null) {			
 							if (s.getProperty("U") != null) {
 								double u = Double.parseDouble(s.getProperty("U"));
 	
@@ -503,7 +539,15 @@ public class SpinWorldGUI {
 					catchTimeData.addSeries(sim.getName(), catchMean);
 				}
 				
+				int sumLongevity = 0;
+				for (String k : networkLongevity.keySet())
+				{
+					sumLongevity += networkLongevity.get(k);
+				}
+				
+				double longevityPerc = ((double)(sumLongevity/networkLongevity.size())/length) * 100;
 				mapUSums.put(sim.getName(), uSums);	
+				mapLongevity.put(sim.getName(), longevityPerc);	
 			}
 			
 			for (String k : keys) {
@@ -512,8 +556,13 @@ public class SpinWorldGUI {
 				}
 			}	
 			
+			for (String method : methods) {
+				longevityData.addValue(mapLongevity.get(method), "Sustainability", method);
+			}
+			
 			if (exportMode) {
 				ChartUtils.saveChart(sumUtiChart, imagePath, "COMPARISON/" + "UTI_" + this.methodComp);
+				ChartUtils.saveChart(longevityChart, imagePath, "COMPARISON/" + "LONGEVITY_" + this.methodComp);
 				ChartUtils.saveChart(satTimeChart, imagePath, "COMPARISON/" + "SAT_TIME_" + this.methodComp);
 				ChartUtils.saveChart(pChTimeChart, imagePath, "COMPARISON/" + "PCHEAT_TIME_" + this.methodComp);
 				ChartUtils.saveChart(riskTimeChart, imagePath, "COMPARISON/" + "RISK_TIME_" + this.methodComp);
