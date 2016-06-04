@@ -3,11 +3,9 @@ package spinworld.network;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.apache.log4j.Logger;
@@ -176,17 +174,8 @@ public class NetworkService extends EnvironmentService {
 		return net.isBanned(getParticle(pId));
 	}
 	
-	// Get particles that are not part of a network
-	public Set<UUID> getOrphanParticles(){
-		Set<UUID> op = new HashSet<UUID>();
-		
-		for (Entry<UUID, Particle> p : this.particles.entrySet()){
-			if (getNetwork(p.getKey()) == null){
-				op.add(p.getKey());
-			}
-		}
-		
-		return op;
+	public int getWarningCount(final UUID pId, final Network net) {
+		return net.getWarningCount(getParticle(pId));
 	}
 	
 	public void printNetworks(Time t) {	

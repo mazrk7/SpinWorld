@@ -2,9 +2,7 @@ package spinworld.facts;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 import spinworld.GraduationLevel;
 import uk.ac.imperial.presage2.util.location.Location;

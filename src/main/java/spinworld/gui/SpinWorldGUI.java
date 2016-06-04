@@ -208,26 +208,24 @@ public class SpinWorldGUI {
 			double utiMax = 
 					((Double.parseDouble(sim.getParameters().get("a")) + Double.parseDouble(sim.getParameters().get("b"))) >= Double.parseDouble(sim.getParameters().get("c")))
 						? Double.parseDouble(sim.getParameters().get("a")) + Double.parseDouble(sim.getParameters().get("b")) : Double.parseDouble(sim.getParameters().get("c"));
-			BarChart utilityChart = new BarChart(sim, windowSize, "Average Utility over last 50 rounds", "Ut.", "U", "UtiBar", 0.0, utiMax);
+			BarChart utilityChart = new BarChart(sim, windowSize, "Average Utility over last 50 rounds", "Ut.", "U", "UtiBar", -utiMax, utiMax);
 			
-			TimeSeriesChart riskTimeChart = new TimeSeriesChart(sim, windowSize, 
-					"Agent Perceived Risk over 50 round window", "Risk", "risk", "RiskTime", 0.0, 2.0);
-			TimeSeriesChart catchTimeChart = new TimeSeriesChart(sim, windowSize, 
-					"Agent Perceived Catch Rate over 50 round window", "Catch Rate", "catchRate", "CatchTime", 0.0, 1.0);
+			// TimeSeriesChart riskTimeChart = new TimeSeriesChart(sim, windowSize, 
+					// "Agent Perceived Risk over 50 round window", "Risk", "risk", "RiskTime", 0.0, 2.0);
+			// TimeSeriesChart catchTimeChart = new TimeSeriesChart(sim, windowSize, 
+					// "Agent Perceived Catch Rate over 50 round window", "Catch Rate", "catchRate", "CatchTime", 0.0, 1.0);
 			TimeSeriesChart pCheatTimeChart = new TimeSeriesChart(sim, windowSize, 
 					"Agent Propensity to Cheat over 50 round window", "PCheat", "pCheat", "PchTime", 0.0, 1.0);
 			TimeSeriesChart satTimeChart = new TimeSeriesChart(sim, windowSize, 
 					"Agent Satisfaction over 50 round window", "Sat.", "o", "SatTime", 0.0, 1.0);
 	
-			DistributionChart utDistrChart = new DistributionChart(sim, windowSize, "UtiDistr", -0.5, utiMax);
+			DistributionChart utDistrChart = new DistributionChart(sim, windowSize, "UtiDistr", -utiMax, utiMax);
 			
 			List<Chart> charts = new ArrayList<Chart>();
-			charts.add(allocChart);
 			charts.add(utDistrChart);
 			charts.add(pCheatChart);
+			charts.add(allocChart);
 			charts.add(utilityChart);
-			charts.add(catchTimeChart);
-			charts.add(riskTimeChart);
 			charts.add(pCheatTimeChart);
 			charts.add(satTimeChart);
 	
@@ -374,7 +372,7 @@ public class SpinWorldGUI {
 
 	        // Set the range axis to display integers only...
 	        longevityPlot.getRangeAxis().setStandardTickUnits(NumberAxis.createIntegerTickUnits());
-	        longevityPlot.getRangeAxis().setAutoRange(true);
+	        longevityPlot.getRangeAxis().setRange(0, 100);
 			BarRenderer renderer = (BarRenderer) longevityPlot.getRenderer();
 			renderer.setItemMargin(0.0);
 	        

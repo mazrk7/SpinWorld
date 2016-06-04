@@ -216,7 +216,7 @@ public class SpinWorldSimulation extends InjectedSimulation {
 		for (int n = 0; n < cAgents; n++) {
 			createParticle("c" + n, "C",
 					new Location(Random.randomInt(size), Random.randomInt(size)),
-					initVelocity, radius, cPCheat, getCheatOn(), scenario, false);
+					initVelocity, radius, cPCheat, getCheatOn(), scenario, true);
 		}
 		
 		for (int n = 0; n < ncAgents; n++) {

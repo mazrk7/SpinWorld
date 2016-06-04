@@ -117,6 +117,8 @@ public class SpinWorldAgent extends MobileAgent {
 	
 	double theta = .1;
 	double phi = .1;
+	
+	int roundsWithoutDemand = 0;
 				
 	public SpinWorldAgent(UUID id, String name, Location myLocation, int velocity, double radius, 
 			double a, double b, double c, double pCheat, double alpha, double beta, Cheat cheatOn, 
@@ -265,6 +267,15 @@ public class SpinWorldAgent extends MobileAgent {
 	// Demand amount d, act upon environment
 	protected void demand(double d) {
 		try {
+			if (this.networkService.getWarningCount(getID(), this.network) > 0
+					&& this.networkService.getWarningCount(getID(), this.network) > roundsWithoutDemand) {
+				d = 0;
+				roundsWithoutDemand++;
+			}
+			else {
+				roundsWithoutDemand = 0;
+			}
+				
 			environment.act(new Demand(d), getID(), authkey);
 			this.d = d;
 		} catch (ActionHandlingException e) {
