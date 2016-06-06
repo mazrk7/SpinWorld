@@ -16,7 +16,6 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 
 import spinworld.facts.Particle;
-import uk.ac.imperial.presage2.core.Time;
 import uk.ac.imperial.presage2.core.environment.EnvironmentRegistrationRequest;
 import uk.ac.imperial.presage2.core.environment.EnvironmentService;
 import uk.ac.imperial.presage2.core.environment.EnvironmentServiceProvider;
@@ -165,14 +164,6 @@ public class MobilityService extends EnvironmentService {
 		
 		if (collisionHappened)
 			addCollision(pId, collisionCandidates);
-	}
-	
-	public void printCollisions(Time t) {
-		logger.info("Total running number of collisions at time cycle " + t + " is: " + noCollisions);
-
-		for (UUID id : this.collisions.keySet()) {
-			logger.info(getNoCollisions(id) + " time cycle collision(s) for particle " + getParticle(id).getName());
-		}		
 	}
 	
 	public void clearCollisions() {

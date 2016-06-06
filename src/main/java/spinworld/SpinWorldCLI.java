@@ -287,7 +287,7 @@ public class SpinWorldCLI extends Presage2CLI {
 	
 	void monitoring_cost(int repeats, int seed) {
 		// int rounds = 1002;
-		int rounds = 200;
+		int rounds = 1002;
 
 		for (int i = 0; i < repeats; i++) {
 			for (double mc : new double[] { .0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1.0 }) {

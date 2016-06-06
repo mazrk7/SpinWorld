@@ -34,14 +34,14 @@ public class DistributionChart implements Chart {
 		
 		data = new DefaultXYDataset();
 		chart = ChartFactory.createScatterPlot(
-				"Utility Distribution", "Ut.", "Compliant rounds", data,
+				"Utility Distribution per Time Step", "Ut.", "Compliant rounds", data,
 				PlotOrientation.HORIZONTAL, true, false, false);
-		panel = new ChartPanel(chart);
-
 		chart.getXYPlot().setBackgroundPaint(Color.WHITE);
 		chart.getXYPlot().getDomainAxis().setRange(lb, ub);
 		chart.getXYPlot().getRangeAxis()
 				.setRange(0, windowSize + 1);
+		
+		panel = new ChartPanel(chart);
 	}
 	
 	@Override

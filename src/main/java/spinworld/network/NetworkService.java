@@ -148,7 +148,7 @@ public class NetworkService extends EnvironmentService {
 	
 	public int getNoLinks(final UUID pId, final Network net) {
 		if (!getMembersOfNet(net).isEmpty())
-			return getMembersOfNet(net).size();
+			return getMembersOfNet(net).size() - 1;
 		else
 			return 0;
 	}

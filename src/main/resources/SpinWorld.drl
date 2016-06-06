@@ -299,7 +299,7 @@ rule "Update network state for round"
 		Iterator it = members.iterator();
 		$n.incrementLongevity();
 		
-		logger.info($n.toString() + " aggregating stats.");
+		logger.info($n.toString() + " aggregating state.");
 		
 		while(it.hasNext()) {
 			Particle p = (Particle) it.next();

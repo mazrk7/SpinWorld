@@ -148,14 +148,6 @@ public class Particle {
 		this.utility = util;
 	}
 	
-	public double getAlpha() {
-		return alpha;
-	}
-
-	public double getBeta() {
-		return beta;
-	}
-	
 	public void updateObservedSanctionHistory(GraduationLevel sanction) {
 		observedSanctionHistory.add(sanction);
 	}

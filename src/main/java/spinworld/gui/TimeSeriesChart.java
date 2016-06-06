@@ -36,11 +36,11 @@ public class TimeSeriesChart implements Chart {
 		data = new DefaultXYDataset();
 		chart = ChartFactory.createXYLineChart(title, yAxis,
 				"Timestep", data, PlotOrientation.HORIZONTAL, true, false, false);
-		panel = new ChartPanel(chart);
-
 		chart.getXYPlot().setBackgroundPaint(Color.WHITE);
 		chart.getXYPlot().getDomainAxis().setRange(lb, ub);
 		chart.getXYPlot().setWeight(2);
+		
+		panel = new ChartPanel(chart);
 	}
 
 	@Override

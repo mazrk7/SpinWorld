@@ -49,6 +49,10 @@ public class SpinWorldAgent extends MobileAgent {
 		THRESHOLD, UTILITY, AGE
 	};
 
+	@Inject
+	@Named("params.initVelocity")
+	private int initVelocity;
+	
 	// Monitoring level of networks
 	@Inject
 	@Named("params.monitoringLevel")
@@ -204,10 +208,13 @@ public class SpinWorldAgent extends MobileAgent {
 			if (this.collisions != null) {					
 				for (Particle p : collisions) {
 					formNetworks(p);
-				}
-				
-				this.mobilityService.updateVelocity(getID(), this.networkService.getNoLinks(getID(), this.network));
+				}	
 			}
+			
+			if (this.network == null)
+				this.mobilityService.setVelocity(getID(), initVelocity);
+			else
+				this.mobilityService.updateVelocity(getID(), this.networkService.getNoLinks(getID(), this.network));
 			
 			if (resourcesGame.getRoundNumber() > 1) {
 				// Determine utility gained from last round
@@ -400,7 +407,7 @@ public class SpinWorldAgent extends MobileAgent {
 			satisfaction = satisfaction + alpha * (1 - satisfaction);
 		else
 			satisfaction = satisfaction - beta * satisfaction;
-
+		
 		logger.info("[" + network + ", g=" + g + ", q=" + q + ", d=" + d + ", p=" + p + ", r=" + r + ", r'=" + rP
 				+ ", R=" + rTotal + ", U=" + u + ", o=" + satisfaction + "]");
 

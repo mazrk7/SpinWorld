@@ -81,7 +81,7 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	@Parameter(name = "initVelocity", optional = true)
 	public int initVelocity = 1;
 	
-	// Influential variability factor of velocity 
+	// Influential variability factor of velocity
 	@Parameter(name = "vConst", optional = true)
 	public int vConst = 1;
 	
@@ -276,7 +276,6 @@ public class SpinWorldSimulation extends InjectedSimulation {
 			session.insert(new Generate(p, resourcesGame.getRoundNumber() + 1, rnd));
 		}
 		
-		mobilityService.printCollisions(e.getTime());
 		mobilityService.clearCollisions();
 		networkService.printNetworks(e.getTime());
 	}

@@ -202,37 +202,49 @@ public class SpinWorldGUI {
 					System.exit(60);
 			}
 			
-			BarChart allocChart = new BarChart(sim, windowSize, "Average Allocation over last 50 rounds", "Alloc", "r", "AllBar", 0.0, 1.0);
-			BarChart pCheatChart = new BarChart(sim, windowSize, "Average Propensity to Cheat over last 50 rounds", "PCheat", "pCheat", "PchBar", 0.0, 1.0);
+			TimeSeriesChart riskTimeChart = new TimeSeriesChart(sim, windowSize, 
+					"Avg. Perceived Risk over 50 round window", "Risk", "risk", "RiskTime", 0.0, 2.0);
+			TimeSeriesChart catchTimeChart = new TimeSeriesChart(sim, windowSize, 
+					"Avg. Perceived Catch Rate over 50 round window", "Catch Rate", "catchRate", "CatchTime", 0.0, 1.0);
+			TimeSeriesChart pCheatTimeChart = new TimeSeriesChart(sim, windowSize, 
+					"Avg. Propensity to Cheat over 50 round window", "PCheat", "pCheat", "PchTime", 0.0, 1.0);
+			TimeSeriesChart satTimeChart = new TimeSeriesChart(sim, windowSize, 
+					"Avg. Satisfaction over 50 round window", "Sat.", "o", "SatTime", 0.0, 1.0);
+				
+			List<Chart> timeCharts = new ArrayList<Chart>();
+			timeCharts.add(satTimeChart);
+			timeCharts.add(catchTimeChart);
+			timeCharts.add(pCheatTimeChart);
+			timeCharts.add(riskTimeChart);
+			
+			BarChart allocChart = new BarChart(sim, windowSize, "Per agent Avg. Allocation over 50 round window", "Alloc", "r", "AllBar", 0.0, 1.0);
+			BarChart pCheatChart = new BarChart(sim, windowSize, "Per agent Avg. Propensity to Cheat over 50 round window", "PCheat", "pCheat", "PchBar", 0.0, 1.0);
 			
 			double utiMax = 
 					((Double.parseDouble(sim.getParameters().get("a")) + Double.parseDouble(sim.getParameters().get("b"))) >= Double.parseDouble(sim.getParameters().get("c")))
 						? Double.parseDouble(sim.getParameters().get("a")) + Double.parseDouble(sim.getParameters().get("b")) : Double.parseDouble(sim.getParameters().get("c"));
-			BarChart utilityChart = new BarChart(sim, windowSize, "Average Utility over last 50 rounds", "Ut.", "U", "UtiBar", -utiMax, utiMax);
-			
-			// TimeSeriesChart riskTimeChart = new TimeSeriesChart(sim, windowSize, 
-					// "Agent Perceived Risk over 50 round window", "Risk", "risk", "RiskTime", 0.0, 2.0);
-			// TimeSeriesChart catchTimeChart = new TimeSeriesChart(sim, windowSize, 
-					// "Agent Perceived Catch Rate over 50 round window", "Catch Rate", "catchRate", "CatchTime", 0.0, 1.0);
-			TimeSeriesChart pCheatTimeChart = new TimeSeriesChart(sim, windowSize, 
-					"Agent Propensity to Cheat over 50 round window", "PCheat", "pCheat", "PchTime", 0.0, 1.0);
-			TimeSeriesChart satTimeChart = new TimeSeriesChart(sim, windowSize, 
-					"Agent Satisfaction over 50 round window", "Sat.", "o", "SatTime", 0.0, 1.0);
-	
+			BarChart utilityChart = new BarChart(sim, windowSize, "Per agent Avg. Utility over 50 round window", "Ut.", "U", "UtiBar", -utiMax, utiMax);
 			DistributionChart utDistrChart = new DistributionChart(sim, windowSize, "UtiDistr", -utiMax, utiMax);
+
+			List<Chart> otherCharts = new ArrayList<Chart>();
+			otherCharts.add(allocChart);
+			otherCharts.add(pCheatChart);
+			otherCharts.add(utilityChart);
+			otherCharts.add(utDistrChart);
 			
-			List<Chart> charts = new ArrayList<Chart>();
-			charts.add(utDistrChart);
-			charts.add(pCheatChart);
-			charts.add(allocChart);
-			charts.add(utilityChart);
-			charts.add(pCheatTimeChart);
-			charts.add(satTimeChart);
+			SpiderWebChart spiderChart = new SpiderWebChart(sim, windowSize, 
+					"Spider Web Plot of Networks at each time step", "SpiPlot", -utiMax, utiMax);
 	
-			final Frame f = new Frame("SpinWorld Chart Plots");
-			final Panel p = new Panel(new GridLayout(2, 2));
+			final Frame fTime = new Frame("Time Series Plots");
+			final Panel pTime = new Panel(new GridLayout(2, 2));
+			
+			final Frame fOther = new Frame("Bar & Distribution Plots");
+			final Panel pOther = new Panel(new GridLayout(2, 2));
+			
+			final Frame fSpider = new Frame("Spider Web Plots");
+			final Panel pSpider = new Panel(new GridLayout(1, 1));
 						
-			final JFrame jf = new JFrame("SpinWorld Social Network Visualiser");
+			final JFrame jf = new JFrame("Social Network Visualiser");
 	        NetworkGraph ng = new NetworkGraph(sim);
 	        							
 	        FRLayout<String, String> layout = new FRLayout<String, String>(ng.getGraph());
@@ -255,15 +267,29 @@ public class SpinWorldGUI {
 		    vv.getRenderer().getVertexLabelRenderer().setPosition(Position.CNTR);
 		    
 			if (!exportMode) {
-				f.add(p);
+				fTime.add(pTime);
 				
-				for (Chart chart : charts) {
-					p.add(chart.getPanel());
+				for (Chart chart : timeCharts) {
+					pTime.add(chart.getPanel());
 				}
 				
-				f.pack();
-				f.setVisible(true);
-							
+				fTime.pack();
+				fTime.setVisible(true);
+				
+				fOther.add(pOther);
+
+				for (Chart chart : otherCharts) {
+					pOther.add(chart.getPanel());
+				}
+				
+				fOther.pack();
+				fOther.setVisible(true);
+				
+				fSpider.add(pSpider);
+				pSpider.add(spiderChart.getPanel());
+				fSpider.pack();
+				fSpider.setVisible(true);
+	
 	    		jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 				jf.getContentPane().add(vv);
 				jf.pack();
@@ -271,19 +297,32 @@ public class SpinWorldGUI {
 			}
 						
 			for (int i = 1; i <= t; i++) {
+				
+				spiderChart.redraw(i);
+
 				ng.updateGraph(i, layout);
 		        vv.setGraphLayout(layout);
 		        
-				if (exportMode)		
+				if (exportMode)	{	
+					ChartUtils.saveChart(spiderChart.getChart(), imagePath,
+							sim.getName() + "/" + spiderChart.getShortName(), t, t0);
+					
 					ChartUtils.saveGraph(vv, imagePath, sim.getName() + "/" + "Net", i);
+				}
 			}
 					
 			while (t < sim.getFinishTime() / 2) {
 				t++;
 				
-				for (Chart chart : charts) {
+				for (Chart chart : timeCharts) {
 					chart.redraw(t);
 				}
+				
+				for (Chart chart : otherCharts) {
+					chart.redraw(t);
+				}
+				
+				spiderChart.redraw(t);
 										
 				ng.updateGraph(t, layout);
 		        vv.setGraphLayout(layout);
@@ -292,11 +331,19 @@ public class SpinWorldGUI {
 					if (t0 == -1)
 						t0 = t;
 					
-					for (Chart chart : charts) {
+					for (Chart chart : timeCharts) {
 						ChartUtils.saveChart(chart.getChart(), imagePath,
 								sim.getName() + "/" + chart.getShortName(), t, t0);
 					}
-									
+					
+					for (Chart chart : otherCharts) {
+						ChartUtils.saveChart(chart.getChart(), imagePath,
+								sim.getName() + "/" + chart.getShortName(), t, t0);
+					}
+					
+					ChartUtils.saveChart(spiderChart.getChart(), imagePath,
+							sim.getName() + "/" + spiderChart.getShortName(), t, t0);
+														
 					ChartUtils.saveGraph(vv, imagePath, sim.getName() + "/Net", t);		
 				} else {
 					try {

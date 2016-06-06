@@ -42,10 +42,11 @@ public class BarChart implements Chart {
 		data = new DefaultCategoryDataset();
 		chart = ChartFactory.createBarChart(title, yAxis, "Particles", data,
 				PlotOrientation.VERTICAL, false, false, false);
-		panel = new ChartPanel(chart);
-
 		chart.getCategoryPlot().setBackgroundPaint(Color.WHITE);
 		chart.getCategoryPlot().getRangeAxis().setRange(lb, ub);
+		
+		panel = new ChartPanel(chart);
+
 		BarRenderer renderer = (BarRenderer) chart.getCategoryPlot().getRenderer();
 		renderer.setItemMargin(-.5);
 	}
