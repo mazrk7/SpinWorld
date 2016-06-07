@@ -31,6 +31,8 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.chart.title.LegendTitle;
+import org.jfree.chart.title.TextTitle;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.xy.DefaultXYDataset;
 import org.jfree.ui.RectangleEdge;
@@ -459,9 +461,24 @@ public class SpinWorldGUI {
 			catchTimeChart.getXYPlot().setWeight(3);
 			catchTimeChart.getXYPlot().getRangeAxis().setAutoRange(true);
 	        
+			DefaultCategoryDataset spiderWebData = new DefaultCategoryDataset();
+			RadarPlot radarPlot = new RadarPlot(spiderWebData);
+			radarPlot.setBackgroundPaint(Color.WHITE);
+			radarPlot.setAxisTickVisible(true);	        	        
+			radarPlot.setDrawOutOfRangePoints(true);
+			JFreeChart radarChart = new JFreeChart("Spider Web Plot of an Average Network's Appearance for Experiment: " + methodComp,
+					TextTitle.DEFAULT_FONT, radarPlot, false); 
+	        LegendTitle legendtitle = new LegendTitle(radarPlot); 
+	        legendtitle.setPosition(RectangleEdge.BOTTOM);   
+	        radarChart.addSubtitle(legendtitle); 
+	        
 			String[] keys = new String[] { "c", "nc", "all" };
-			Map<String, Map<String, Double>> mapUSums = new HashMap<String, Map<String, Double>>();
-			Map<String, Double> mapLongevity = new HashMap<String, Double>();
+			Map<String, Map<String, Double>> mapAgentUSums = new HashMap<String, Map<String, Double>>();
+			Map<String, Double> mapNetworkLongevity = new HashMap<String, Double>();
+			Map<String, Double> mapNetworkUtSum = new HashMap<String, Double>();
+			Map<String, Double> mapNetworkUtAvg = new HashMap<String, Double>();
+			Map<String, Double> mapNetworkUtStd = new HashMap<String, Double>();
+			Map<String, Double> mapNetworkMonitoring = new HashMap<String, Double>();
 
 			for (Long simId : simIds) {
 				t = 0;
@@ -474,7 +491,11 @@ public class SpinWorldGUI {
 					uSums.put(k, 0.0);
 				}
 				
-				Map<String, Integer> networkLongevity = new HashMap<String, Integer>();
+				SummaryStatistics networkLongevity = new SummaryStatistics();
+				SummaryStatistics networkSumUt = new SummaryStatistics();
+				SummaryStatistics networkAvgUt = new SummaryStatistics();
+				SummaryStatistics networkStdUt = new SummaryStatistics();
+				SummaryStatistics networkMonitoring = new SummaryStatistics();
 
 				int length = (int)(sim.getFinishTime()/2);
 				
@@ -509,10 +530,20 @@ public class SpinWorldGUI {
 					
 					PersistentEnvironment pEnv = sim.getEnvironment();
 					for (String prop : pEnv.getProperties(t).keySet()) {
+						String net = (prop.substring(0, 3).contains("-")) ? prop.substring(0, 2) : prop.substring(0, 3);
+						double val = Double.parseDouble(pEnv.getProperty(prop, t));
+						
 						if (prop.contains("longevity")) {
-							networkLongevity.put(prop.substring(0, 2), 
-									Integer.parseInt(pEnv.getProperty(prop, t)));
-						}
+							networkLongevity.addValue(val);
+						} else if (prop.contains("utility-avg")) {
+							networkAvgUt.addValue(val);
+						} else if (prop.contains("utility-std")) {
+							networkStdUt.addValue(val);
+						} else if (prop.contains("utility-sum")) {
+							networkSumUt.addValue(val);
+						} else if (prop.contains("monitoringLevel")) {
+							networkMonitoring.addValue(val);
+						}			
 					}
 					
 					Set<PersistentAgent> pAgents = sim.getAgents();
@@ -584,25 +615,29 @@ public class SpinWorldGUI {
 					catchTimeData.addSeries(sim.getName(), catchMean);
 				}
 				
-				int sumLongevity = 0;
-				for (String k : networkLongevity.keySet())
-				{
-					sumLongevity += networkLongevity.get(k);
-				}
+				mapAgentUSums.put(sim.getName(), uSums);	
 				
-				double longevityPerc = ((double)(sumLongevity/networkLongevity.size())/length) * 100;
-				mapUSums.put(sim.getName(), uSums);	
-				mapLongevity.put(sim.getName(), longevityPerc);	
+				mapNetworkLongevity.put(sim.getName(), (networkLongevity.getMean()/length) * 100);	
+				mapNetworkUtSum.put(sim.getName(), networkSumUt.getMean());	
+				mapNetworkUtAvg.put(sim.getName(), networkAvgUt.getMean());	
+				mapNetworkUtStd.put(sim.getName(), networkStdUt.getMean());	
+				mapNetworkMonitoring.put(sim.getName(), networkMonitoring.getMean());	
 			}
 			
 			for (String k : keys) {
 				for (String method : methods) {
-					utiData.addValue(mapUSums.get(method).get(k), k, method);
+					utiData.addValue(mapAgentUSums.get(method).get(k), k, method);
 				}
 			}	
 			
 			for (String method : methods) {
-				longevityData.addValue(mapLongevity.get(method), "Sustainability", method);
+				longevityData.addValue(mapNetworkLongevity.get(method), "Sustainability", method);
+				
+				spiderWebData.addValue(mapNetworkLongevity.get(method), method, "Longevity (%)");
+				spiderWebData.addValue(mapNetworkUtSum.get(method), method, "Ut. Sum");
+				spiderWebData.addValue(mapNetworkUtAvg.get(method), method, "Ut. Avg.");
+				spiderWebData.addValue(mapNetworkUtStd.get(method), method, "Ut. Std.");
+				spiderWebData.addValue(mapNetworkMonitoring.get(method), method, "Monitoring Frequency");
 			}
 			
 			if (exportMode) {
@@ -612,6 +647,7 @@ public class SpinWorldGUI {
 				ChartUtils.saveChart(pChTimeChart, imagePath, "COMPARISON/" + "PCHEAT_TIME_" + this.methodComp);
 				ChartUtils.saveChart(riskTimeChart, imagePath, "COMPARISON/" + "RISK_TIME_" + this.methodComp);
 				ChartUtils.saveChart(catchTimeChart, imagePath, "COMPARISON/" + "CATCH_TIME_" + this.methodComp);
+				ChartUtils.saveChart(radarChart, imagePath, "COMPARISON/" + "SPIDER_WEB_" + this.methodComp);
 			}
 
 			logger.info("Done building charts for " + this.methodComp + " methods.");	

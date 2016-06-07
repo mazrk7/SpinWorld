@@ -120,8 +120,7 @@ public class SpinWorldCLI extends Presage2CLI {
 	}
 
 	void large_pop(int repeats, int seed) {
-		// int rounds = 2002;
-		int rounds = 400;
+		int rounds = 2002;
 		int agents = 100;
 
 		for (int i = 0; i < repeats; i++) {
@@ -163,8 +162,7 @@ public class SpinWorldCLI extends Presage2CLI {
 
 	void cheat_strat(int repeats, int seed) {
 		Cheat[] cheatMethods = { Cheat.DEMAND, Cheat.PROVISION, Cheat.APPROPRIATE };
-		// int rounds = 1002;
-		int rounds = 200;
+		int rounds = 2002;
 
 		for (int i = 0; i < repeats; i++) {
 			for (Cheat ch : cheatMethods) {
@@ -202,8 +200,7 @@ public class SpinWorldCLI extends Presage2CLI {
 	}
 	
 	void sanction_count(int repeats, int seed) {
-		// int rounds = 1002;
-		int rounds = 1002;
+		int rounds = 2002;
 
 		for (int i = 0; i < repeats; i++) {
 			for (int sc : new int[] { 0, 1, 3, 5, 10, 15, 20, 50 }) {
@@ -241,8 +238,7 @@ public class SpinWorldCLI extends Presage2CLI {
 	}
 	
 	void severity_scale(int repeats, int seed) {
-		// int rounds = 1002;
-		int rounds = 200;
+		int rounds = 2002;
 
 		for (int i = 0; i < repeats; i++) {
 			for (double ub : new double[] { .1, .5, .8, 1.0 }) {
@@ -286,8 +282,7 @@ public class SpinWorldCLI extends Presage2CLI {
 	}
 	
 	void monitoring_cost(int repeats, int seed) {
-		// int rounds = 1002;
-		int rounds = 1002;
+		int rounds = 2002;
 
 		for (int i = 0; i < repeats; i++) {
 			for (double mc : new double[] { .0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1.0 }) {
@@ -325,8 +320,7 @@ public class SpinWorldCLI extends Presage2CLI {
 	}
 	
 	void forgiveness(int repeats, int seed) {
-		// int rounds = 1002;
-		int rounds = 200;
+		int rounds = 2002;
 
 		for (int i = 0; i < repeats; i++) {
 			for (double ff : new double[] { .0, .2, .5, .8, 1.0 }) {

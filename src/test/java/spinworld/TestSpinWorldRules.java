@@ -174,8 +174,8 @@ public class TestSpinWorldRules {
 			return this;
 		}
 
-		SimulatedWorld addPlayer(String name, double alpha, double beta, int network,
-				int velocity, Location loc) {
+		SimulatedWorld addPlayer(String name, double alpha, double beta, 
+				int network, int velocity, Location loc) {
 			Particle p = new Particle(Random.randomUUID(), name, "C", alpha, beta, velocity, loc);
 			particles.add(p);
 			session.insert(p);
