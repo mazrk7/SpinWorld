@@ -40,7 +40,7 @@ public class BarChart implements Chart {
 		this.shortName = shortName;
 
 		data = new DefaultCategoryDataset();
-		chart = ChartFactory.createBarChart(title, yAxis, "Particles", data,
+		chart = ChartFactory.createBarChart(title, "Particles", yAxis, data,
 				PlotOrientation.VERTICAL, false, false, false);
 		chart.getCategoryPlot().setBackgroundPaint(Color.WHITE);
 		chart.getCategoryPlot().getRangeAxis().setRange(lb, ub);

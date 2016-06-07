@@ -2,6 +2,7 @@ package spinworld.gui;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Frame;
 import java.awt.GridLayout;
 import java.awt.Panel;
@@ -13,7 +14,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.swing.JFrame;
 
@@ -32,7 +32,6 @@ import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.chart.title.LegendTitle;
-import org.jfree.chart.title.TextTitle;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.xy.DefaultXYDataset;
 import org.jfree.ui.RectangleEdge;
@@ -41,7 +40,6 @@ import uk.ac.imperial.presage2.core.db.DatabaseModule;
 import uk.ac.imperial.presage2.core.db.DatabaseService;
 import uk.ac.imperial.presage2.core.db.StorageService;
 import uk.ac.imperial.presage2.core.db.persistent.PersistentAgent;
-import uk.ac.imperial.presage2.core.db.persistent.PersistentEnvironment;
 import uk.ac.imperial.presage2.core.db.persistent.PersistentSimulation;
 import uk.ac.imperial.presage2.core.db.persistent.TransientAgentState;
 
@@ -205,13 +203,13 @@ public class SpinWorldGUI {
 			}
 			
 			TimeSeriesChart riskTimeChart = new TimeSeriesChart(sim, windowSize, 
-					"Avg. Perceived Risk over 50 round window", "Risk", "risk", "RiskTime", 0.0, 2.0);
+					"Moving Avg. Perceived Risk", "Risk", "risk", "RiskTime", 0.0, 2.0);
 			TimeSeriesChart catchTimeChart = new TimeSeriesChart(sim, windowSize, 
-					"Avg. Perceived Catch Rate over 50 round window", "Catch Rate", "catchRate", "CatchTime", 0.0, 1.0);
+					"Moving Avg. Perceived Catch Rate", "Catch Rate", "catchRate", "CatchTime", 0.0, 1.0);
 			TimeSeriesChart pCheatTimeChart = new TimeSeriesChart(sim, windowSize, 
-					"Avg. Propensity to Cheat over 50 round window", "PCheat", "pCheat", "PchTime", 0.0, 1.0);
+					"Moving Avg. Propensity to Cheat", "PCheat", "pCheat", "PchTime", 0.0, 1.0);
 			TimeSeriesChart satTimeChart = new TimeSeriesChart(sim, windowSize, 
-					"Avg. Satisfaction over 50 round window", "Sat.", "o", "SatTime", 0.0, 1.0);
+					"Moving Avg. Satisfaction", "Satisfaction", "o", "SatTime", 0.0, 1.0);
 				
 			List<Chart> timeCharts = new ArrayList<Chart>();
 			timeCharts.add(satTimeChart);
@@ -219,13 +217,13 @@ public class SpinWorldGUI {
 			timeCharts.add(pCheatTimeChart);
 			timeCharts.add(riskTimeChart);
 			
-			BarChart allocChart = new BarChart(sim, windowSize, "Per agent Avg. Allocation over 50 round window", "Alloc", "r", "AllBar", 0.0, 1.0);
-			BarChart pCheatChart = new BarChart(sim, windowSize, "Per agent Avg. Propensity to Cheat over 50 round window", "PCheat", "pCheat", "PchBar", 0.0, 1.0);
+			BarChart allocChart = new BarChart(sim, windowSize, "Allocated Resource Bar Plot", "Allocation", "r", "AllBar", 0.0, 1.0);
+			BarChart pCheatChart = new BarChart(sim, windowSize, "Propensity to Cheat Bar Plot", "PCheat", "pCheat", "PchBar", 0.0, 1.0);
 			
 			double utiMax = 
 					((Double.parseDouble(sim.getParameters().get("a")) + Double.parseDouble(sim.getParameters().get("b"))) >= Double.parseDouble(sim.getParameters().get("c")))
 						? Double.parseDouble(sim.getParameters().get("a")) + Double.parseDouble(sim.getParameters().get("b")) : Double.parseDouble(sim.getParameters().get("c"));
-			BarChart utilityChart = new BarChart(sim, windowSize, "Per agent Avg. Utility over 50 round window", "Ut.", "U", "UtiBar", -utiMax, utiMax);
+			BarChart utilityChart = new BarChart(sim, windowSize, "Utility Bar Plot", "Utility", "U", "UtiBar", -utiMax, utiMax);
 			DistributionChart utDistrChart = new DistributionChart(sim, windowSize, "UtiDistr", -utiMax, utiMax);
 
 			List<Chart> otherCharts = new ArrayList<Chart>();
@@ -235,7 +233,7 @@ public class SpinWorldGUI {
 			otherCharts.add(utDistrChart);
 			
 			SpiderWebChart spiderChart = new SpiderWebChart(sim, windowSize, 
-					"Spider Web Plot of Networks at each time step", "SpiPlot", -utiMax, utiMax);
+					"Radar Chart of Networks", "SpiPlot", -utiMax, utiMax);
 	
 			final Frame fTime = new Frame("Time Series Plots");
 			final Panel pTime = new Panel(new GridLayout(2, 2));
@@ -255,7 +253,7 @@ public class SpinWorldGUI {
 	        layout.setRepulsionMultiplier(5);
 	        
 	    	VisualizationViewer<String, String> vv = new VisualizationViewer<String, String>(layout, new Dimension(1080, 720));
-			vv.setBackground(Color.LIGHT_GRAY);
+			vv.setBackground(Color.WHITE);
 		    vv.setGraphMouse(new DefaultModalGraphMouse<String, String>());
 		    
 		    vv.getRenderContext().setVertexFillPaintTransformer(NetworkRenderer.getVertexPaintTransformer());
@@ -376,11 +374,9 @@ public class SpinWorldGUI {
 			
 			logger.info("Processing for " + methodComp + " methods...");
 			
-			List<String> methods = new ArrayList<String>();
-
 			DefaultCategoryDataset utiData = new DefaultCategoryDataset();
 			JFreeChart sumUtiChart = ChartFactory.createBarChart(
-		                "Total Utility for Experiment: " + methodComp, // Chart title
+		                "Total Utility Generated in Experiment: " + methodComp, // Chart title
 		                "Method", // Domain axis label
 		                "Sum of Utility", // Range axis label
 		                utiData, // Dataset
@@ -403,11 +399,11 @@ public class SpinWorldGUI {
 	        
 			DefaultCategoryDataset longevityData = new DefaultCategoryDataset();
 			JFreeChart longevityChart = ChartFactory.createBarChart(
-		                "Sustainability of Networks for Experiment: " + methodComp, // Chart title
+		                "Sustainability of Networks in Experiment: " + methodComp, // Chart title
 		                "Method", // Domain axis label
-		                "Average Longevity of Networks (% of Simulation Time)", // Range axis label
+		                "Avg. Longevity of Networks (% of Overall Simulation Time)", // Range axis label
 		                longevityData, // Dataset
-		                PlotOrientation.VERTICAL,
+		                PlotOrientation.HORIZONTAL,
 		                false, // Include legend
 		                false, // Tooltips
 		                false // URLs
@@ -417,74 +413,73 @@ public class SpinWorldGUI {
 	        CategoryPlot longevityPlot = longevityChart.getCategoryPlot();
 	        
 	        longevityPlot.setBackgroundPaint(Color.WHITE);
-	        longevityPlot.getDomainAxis().setCategoryLabelPositions(CategoryLabelPositions.UP_90);
-
+	        
 	        // Set the range axis to display integers only...
 	        longevityPlot.getRangeAxis().setStandardTickUnits(NumberAxis.createIntegerTickUnits());
 	        longevityPlot.getRangeAxis().setRange(0, 100);
-			BarRenderer renderer = (BarRenderer) longevityPlot.getRenderer();
-			renderer.setItemMargin(0.0);
+
 	        
 			DefaultXYDataset satTimeData = new DefaultXYDataset();
-			JFreeChart satTimeChart = ChartFactory.createXYLineChart("Avg Agent Satisfaction for Experiment: " + methodComp,
-					"Satisfaction Scale", "Timestep", satTimeData, PlotOrientation.HORIZONTAL, true, false, false);
+			JFreeChart satTimeChart = ChartFactory.createXYLineChart("Avg. Agent Satisfaction in Experiment: " + methodComp,
+					"Satisfaction", "Timestep", satTimeData, PlotOrientation.HORIZONTAL, true, false, false);
 
 			satTimeChart.getXYPlot().setBackgroundPaint(Color.WHITE);
 			satTimeChart.getXYPlot().getDomainAxis().setRange(0, 1);
 			satTimeChart.getXYPlot().setWeight(3);
 			satTimeChart.getXYPlot().getRangeAxis().setAutoRange(true);
-	        
+			satTimeChart.getLegend().setPosition(RectangleEdge.RIGHT);
+
 			DefaultXYDataset pChTimeData = new DefaultXYDataset();
-			JFreeChart pChTimeChart = ChartFactory.createXYLineChart("Avg Agent Propensity to Cheat for Experiment: " + methodComp, 
-					"PCheat Scale", "Timestep", pChTimeData, PlotOrientation.HORIZONTAL, true, false, false);
+			JFreeChart pChTimeChart = ChartFactory.createXYLineChart("Avg. Agent Propensity to Cheat in Experiment: " + methodComp, 
+					"PCheat", "Timestep", pChTimeData, PlotOrientation.HORIZONTAL, true, false, false);
 
 			pChTimeChart.getXYPlot().setBackgroundPaint(Color.WHITE);
 			pChTimeChart.getXYPlot().getDomainAxis().setRange(0.0, 1.0);
 			pChTimeChart.getXYPlot().setWeight(3);
 			pChTimeChart.getXYPlot().getRangeAxis().setAutoRange(true);
-			
+			pChTimeChart.getLegend().setPosition(RectangleEdge.RIGHT);
+
 			DefaultXYDataset riskTimeData = new DefaultXYDataset();
-			JFreeChart riskTimeChart = ChartFactory.createXYLineChart("Avg Agent Perceived Risk for Experiment: " + methodComp, 
-					"Risk Scale", "Timestep", riskTimeData, PlotOrientation.HORIZONTAL, true, false, false);
+			JFreeChart riskTimeChart = ChartFactory.createXYLineChart("Avg. Agent Perceived Risk in Experiment: " + methodComp, 
+					"Risk", "Timestep", riskTimeData, PlotOrientation.HORIZONTAL, true, false, false);
 
 			riskTimeChart.getXYPlot().setBackgroundPaint(Color.WHITE);
 			riskTimeChart.getXYPlot().getDomainAxis().setRange(0.0, 2.0);
 			riskTimeChart.getXYPlot().setWeight(3);
 			riskTimeChart.getXYPlot().getRangeAxis().setAutoRange(true);
-			
+			riskTimeChart.getLegend().setPosition(RectangleEdge.RIGHT);
+
 			DefaultXYDataset catchTimeData = new DefaultXYDataset();
-			JFreeChart catchTimeChart = ChartFactory.createXYLineChart("Avg Agent Perceived Catch Rate for Experiment: " + methodComp, 
-					"Catch Rate Scale", "Timestep", catchTimeData, PlotOrientation.HORIZONTAL, true, false, false);
+			JFreeChart catchTimeChart = ChartFactory.createXYLineChart("Avg. Agent Perceived Catch Rate for Experiment: " + methodComp, 
+					"Catch Rate", "Timestep", catchTimeData, PlotOrientation.HORIZONTAL, true, false, false);
 
 			catchTimeChart.getXYPlot().setBackgroundPaint(Color.WHITE);
 			catchTimeChart.getXYPlot().getDomainAxis().setRange(0.0, 1.0);
 			catchTimeChart.getXYPlot().setWeight(3);
 			catchTimeChart.getXYPlot().getRangeAxis().setAutoRange(true);
-	        
+			catchTimeChart.getLegend().setPosition(RectangleEdge.RIGHT);
+
 			DefaultCategoryDataset spiderWebData = new DefaultCategoryDataset();
 			RadarPlot radarPlot = new RadarPlot(spiderWebData);
 			radarPlot.setBackgroundPaint(Color.WHITE);
 			radarPlot.setAxisTickVisible(true);	        	        
 			radarPlot.setDrawOutOfRangePoints(true);
-			JFreeChart radarChart = new JFreeChart("Spider Web Plot of an Average Network's Appearance for Experiment: " + methodComp,
-					TextTitle.DEFAULT_FONT, radarPlot, false); 
+	        Font titleFont = new Font("Arial", Font.BOLD, 20);
+			JFreeChart radarChart = new JFreeChart("Radar Chart of the Avg. Network Sate in Experiment: " + methodComp,
+					titleFont, radarPlot, false); 
 	        LegendTitle legendtitle = new LegendTitle(radarPlot); 
-	        legendtitle.setPosition(RectangleEdge.BOTTOM);   
+	        legendtitle.setPosition(RectangleEdge.RIGHT);  
 	        radarChart.addSubtitle(legendtitle); 
+	        Font labelFont = new Font("Arial", Font.BOLD, 16);
+	        radarPlot.setLabelFont(labelFont);
 	        
 			String[] keys = new String[] { "c", "nc", "all" };
-			Map<String, Map<String, Double>> mapAgentUSums = new HashMap<String, Map<String, Double>>();
-			Map<String, Double> mapNetworkLongevity = new HashMap<String, Double>();
-			Map<String, Double> mapNetworkUtSum = new HashMap<String, Double>();
-			Map<String, Double> mapNetworkUtAvg = new HashMap<String, Double>();
-			Map<String, Double> mapNetworkUtStd = new HashMap<String, Double>();
-			Map<String, Double> mapNetworkMonitoring = new HashMap<String, Double>();
 
 			for (Long simId : simIds) {
 				t = 0;
 				sim = sto.getSimulationById(simId);
 
-				methods.add(sim.getName());
+				String method = sim.getName();
 				
 				Map<String, Double> uSums = new HashMap<String, Double>();
 				for (String k : keys) {
@@ -513,41 +508,33 @@ public class SpinWorldGUI {
 					t++;
 
 					satMean[1][t-1] = t;
-					SummaryStatistics satC = new SummaryStatistics();
-					SummaryStatistics satNC = new SummaryStatistics();
+					SummaryStatistics sat = new SummaryStatistics();
 					
 					pchMean[1][t-1] = t;
-					SummaryStatistics pchC = new SummaryStatistics();
-					SummaryStatistics pchNC = new SummaryStatistics();
+					SummaryStatistics pch = new SummaryStatistics();
 					
 					riskMean[1][t-1] = t;
-					SummaryStatistics riskC = new SummaryStatistics();
-					SummaryStatistics riskNC = new SummaryStatistics();
+					SummaryStatistics risk = new SummaryStatistics();
 					
 					catchMean[1][t-1] = t;
-					SummaryStatistics catchC = new SummaryStatistics();
-					SummaryStatistics catchNC = new SummaryStatistics();
+					SummaryStatistics catchR = new SummaryStatistics();
 					
-					PersistentEnvironment pEnv = sim.getEnvironment();
-					for (String prop : pEnv.getProperties(t).keySet()) {
-						String net = (prop.substring(0, 3).contains("-")) ? prop.substring(0, 2) : prop.substring(0, 3);
-						double val = Double.parseDouble(pEnv.getProperty(prop, t));
+					for (String prop : sim.getEnvironment().getProperties(t).keySet()) {
+						double val = Double.parseDouble(sim.getEnvironment().getProperty(prop, t));
 						
-						if (prop.contains("longevity")) {
+						if (prop.contains("longevity"))
 							networkLongevity.addValue(val);
-						} else if (prop.contains("utility-avg")) {
+						else if (prop.contains("utility-avg"))
 							networkAvgUt.addValue(val);
-						} else if (prop.contains("utility-std")) {
+						else if (prop.contains("utility-std"))
 							networkStdUt.addValue(val);
-						} else if (prop.contains("utility-sum")) {
+						else if (prop.contains("utility-sum"))
 							networkSumUt.addValue(val);
-						} else if (prop.contains("monitoringLevel")) {
-							networkMonitoring.addValue(val);
-						}			
+						else if (prop.contains("monitoringLevel"))
+							networkMonitoring.addValue(val);			
 					}
 					
-					Set<PersistentAgent> pAgents = sim.getAgents();
-					for (PersistentAgent a : pAgents) {
+					for (PersistentAgent a : sim.getAgents()) {
 						final String name = a.getName();
 						boolean compliant = name.startsWith("c");
 						TransientAgentState s = a.getState(t);
@@ -564,49 +551,31 @@ public class SpinWorldGUI {
 							
 							if (s.getProperty("o") != null) {
 								double o = Double.parseDouble(s.getProperty("o"));
-	
-								if (compliant)
-									satC.addValue(o);
-								else 								
-									satNC.addValue(o);
+								sat.addValue(o);
 							}
 							
 							if (s.getProperty("pCheat") != null) {
 								double pc = Double.parseDouble(s.getProperty("pCheat"));
-	
-								if (compliant)
-									pchC.addValue(pc);
-								else 								
-									pchNC.addValue(pc);
+								pch.addValue(pc);
 							}
 							
 							if (s.getProperty("risk") != null) {
 								double r = Double.parseDouble(s.getProperty("risk"));
-	
-								if (compliant)
-									riskC.addValue(r);
-								else 								
-									riskNC.addValue(r);
+								risk.addValue(r);
 							}
 							
 							if (s.getProperty("catchRate") != null) {
 								double cr = Double.parseDouble(s.getProperty("catchRate"));
-	
-								if (compliant)
-									catchC.addValue(cr);
-								else 								
-									catchNC.addValue(cr);
+								catchR.addValue(cr);
 							}
 						}
 						
-						satMean[0][t-1] = (satC.getMean() + satNC.getMean())/2;
-						pchMean[0][t-1] = (pchC.getMean() + pchNC.getMean())/2;
-						riskMean[0][t-1] = (riskC.getMean() + riskNC.getMean())/2;
-						catchMean[0][t-1] = (catchC.getMean() + catchNC.getMean())/2;
+						satMean[0][t-1] = sat.getMean();
+						pchMean[0][t-1] = pch.getMean();
+						riskMean[0][t-1] = risk.getMean();
+						catchMean[0][t-1] = catchR.getMean();
 					}
-										
-					pAgents = null;
-					
+															
 					uSums.put("all", uSums.get("c") + uSums.get("nc"));
 					
 					satTimeData.addSeries(sim.getName(), satMean);
@@ -615,30 +584,18 @@ public class SpinWorldGUI {
 					catchTimeData.addSeries(sim.getName(), catchMean);
 				}
 				
-				mapAgentUSums.put(sim.getName(), uSums);	
-				
-				mapNetworkLongevity.put(sim.getName(), (networkLongevity.getMean()/length) * 100);	
-				mapNetworkUtSum.put(sim.getName(), networkSumUt.getMean());	
-				mapNetworkUtAvg.put(sim.getName(), networkAvgUt.getMean());	
-				mapNetworkUtStd.put(sim.getName(), networkStdUt.getMean());	
-				mapNetworkMonitoring.put(sim.getName(), networkMonitoring.getMean());	
-			}
-			
-			for (String k : keys) {
-				for (String method : methods) {
-					utiData.addValue(mapAgentUSums.get(method).get(k), k, method);
+				for (String k : keys) {
+					utiData.addValue(uSums.get(k), k, method);
 				}
-			}	
-			
-			for (String method : methods) {
-				longevityData.addValue(mapNetworkLongevity.get(method), "Sustainability", method);
 				
-				spiderWebData.addValue(mapNetworkLongevity.get(method), method, "Longevity (%)");
-				spiderWebData.addValue(mapNetworkUtSum.get(method), method, "Ut. Sum");
-				spiderWebData.addValue(mapNetworkUtAvg.get(method), method, "Ut. Avg.");
-				spiderWebData.addValue(mapNetworkUtStd.get(method), method, "Ut. Std.");
-				spiderWebData.addValue(mapNetworkMonitoring.get(method), method, "Monitoring Frequency");
-			}
+				double longPerc = (networkLongevity.getMean()/length) * 100;
+				longevityData.addValue(longPerc, "Sustainability", method);
+				spiderWebData.addValue(longPerc, method, "Longevity (%)");
+				spiderWebData.addValue(networkSumUt.getMean(), method, "Ut. Sum");
+				spiderWebData.addValue(networkAvgUt.getMean(), method, "Ut. Avg.");
+				spiderWebData.addValue(networkStdUt.getMean(), method, "Ut. Std.");
+				spiderWebData.addValue(networkMonitoring.getMean(), method, "Monitoring Frequency");
+			}	
 			
 			if (exportMode) {
 				ChartUtils.saveChart(sumUtiChart, imagePath, "COMPARISON/" + "UTI_" + this.methodComp);

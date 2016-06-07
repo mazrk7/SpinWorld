@@ -9,6 +9,7 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.DefaultXYDataset;
+import org.jfree.ui.RectangleEdge;
 
 import uk.ac.imperial.presage2.core.db.persistent.PersistentAgent;
 import uk.ac.imperial.presage2.core.db.persistent.PersistentSimulation;
@@ -39,6 +40,7 @@ public class TimeSeriesChart implements Chart {
 		chart.getXYPlot().setBackgroundPaint(Color.WHITE);
 		chart.getXYPlot().getDomainAxis().setRange(lb, ub);
 		chart.getXYPlot().setWeight(2);
+        chart.getLegend().setPosition(RectangleEdge.RIGHT);
 		
 		panel = new ChartPanel(chart);
 	}

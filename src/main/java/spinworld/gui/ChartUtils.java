@@ -59,7 +59,7 @@ public abstract class ChartUtils {
 			    new VisualizationImageServer<String, String>(vv.getGraphLayout(),
 			        vv.getGraphLayout().getSize());
 
-		vis.setBackground(Color.LIGHT_GRAY);
+		vis.setBackground(Color.WHITE);
 		
         vis.getRenderContext().setVertexFillPaintTransformer(NetworkRenderer.getVertexPaintTransformer());
         vis.getRenderContext().setVertexShapeTransformer(NetworkRenderer.getVertexLabelTransformer());

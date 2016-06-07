@@ -1,11 +1,11 @@
 package spinworld.gui;
 
 import java.awt.Color;
+import java.awt.Font;
 
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.title.LegendTitle;
-import org.jfree.chart.title.TextTitle;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.ui.RectangleEdge;
 
@@ -39,11 +39,14 @@ public class SpiderWebChart implements Chart {
         
         plot.setDrawOutOfRangePoints(true);
 
-		chart = new JFreeChart(title, TextTitle.DEFAULT_FONT, plot, false); 
-        LegendTitle legendtitle = new LegendTitle(plot); 
-        legendtitle.setPosition(RectangleEdge.BOTTOM);   
+        Font titleFont = new Font("Arial", Font.BOLD, 20);
+		chart = new JFreeChart(title, titleFont, plot, false); 
+        LegendTitle legendtitle = new LegendTitle(plot);
+        legendtitle.setPosition(RectangleEdge.RIGHT);  
         chart.addSubtitle(legendtitle); 
-
+        Font labelFont = new Font("Arial", Font.BOLD, 16);
+        plot.setLabelFont(labelFont);
+        
 		panel = new ChartPanel(chart);
 	}
 

@@ -11,6 +11,7 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.data.xy.DefaultXYDataset;
+import org.jfree.ui.RectangleEdge;
 
 import uk.ac.imperial.presage2.core.db.persistent.PersistentAgent;
 import uk.ac.imperial.presage2.core.db.persistent.PersistentSimulation;
@@ -34,13 +35,14 @@ public class DistributionChart implements Chart {
 		
 		data = new DefaultXYDataset();
 		chart = ChartFactory.createScatterPlot(
-				"Utility Distribution per Time Step", "Ut.", "Compliant rounds", data,
+				"Utility Distribution by Compliance", "Utitility", "No. of Compliant Rounds", data,
 				PlotOrientation.HORIZONTAL, true, false, false);
 		chart.getXYPlot().setBackgroundPaint(Color.WHITE);
 		chart.getXYPlot().getDomainAxis().setRange(lb, ub);
 		chart.getXYPlot().getRangeAxis()
 				.setRange(0, windowSize + 1);
-		
+        chart.getLegend().setPosition(RectangleEdge.RIGHT);
+
 		panel = new ChartPanel(chart);
 	}
 	

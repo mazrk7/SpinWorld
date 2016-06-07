@@ -26,7 +26,7 @@ public abstract class NetworkRenderer {
 	public static Transformer<String, Font> getVertexFontTransformer() {
 	    Transformer<String, Font> vertexFont = new Transformer<String, Font>() {
 	    	public Font transform(String i) {
-	    		return new Font("Verdana", Font.BOLD, 10);
+	    		return new Font("Arial", Font.BOLD, 12);
 	    	}
 	    };
 	    
@@ -71,7 +71,7 @@ public abstract class NetworkRenderer {
 	public static Transformer<String, Font> getEdgeFontTransformer() {
 	    Transformer<String, Font> edgeFont = new Transformer<String, Font>() {
 	    	public Font transform(String i) {
-	    		return new Font("Verdana", Font.ITALIC, 10);
+	    		return new Font("Arial", Font.ITALIC, 10);
 	    	}
 	    };
 	    
