@@ -26,11 +26,9 @@ import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import org.apache.log4j.Logger;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.CategoryLabelPositions;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.chart.title.LegendTitle;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.xy.DefaultXYDataset;
@@ -390,7 +388,6 @@ public class SpinWorldGUI {
 	        CategoryPlot utiPlot = sumUtiChart.getCategoryPlot();
 	        
 	        utiPlot.setBackgroundPaint(Color.WHITE);
-	        utiPlot.getDomainAxis().setCategoryLabelPositions(CategoryLabelPositions.UP_90);
 	        sumUtiChart.getLegend().setPosition(RectangleEdge.RIGHT);
 
 	        // Set the range axis to display integers only...
@@ -459,19 +456,32 @@ public class SpinWorldGUI {
 			catchTimeChart.getXYPlot().getRangeAxis().setAutoRange(true);
 			catchTimeChart.getLegend().setPosition(RectangleEdge.RIGHT);
 
+	        Font titleFont = new Font("Arial", Font.BOLD, 20);
+	        Font labelFont = new Font("Arial", Font.BOLD, 16);
+
 			DefaultCategoryDataset spiderWebData = new DefaultCategoryDataset();
 			RadarPlot radarPlot = new RadarPlot(spiderWebData);
 			radarPlot.setBackgroundPaint(Color.WHITE);
 			radarPlot.setAxisTickVisible(true);	        	        
 			radarPlot.setDrawOutOfRangePoints(true);
-	        Font titleFont = new Font("Arial", Font.BOLD, 20);
-			JFreeChart radarChart = new JFreeChart("Radar Chart of the Avg. Network Sate in Experiment: " + methodComp,
+			JFreeChart radarChart = new JFreeChart("Radar Chart of Network Properties for Experiment: " + methodComp,
 					titleFont, radarPlot, false); 
 	        LegendTitle legendtitle = new LegendTitle(radarPlot); 
 	        legendtitle.setPosition(RectangleEdge.RIGHT);  
 	        radarChart.addSubtitle(legendtitle); 
-	        Font labelFont = new Font("Arial", Font.BOLD, 16);
 	        radarPlot.setLabelFont(labelFont);
+	        
+			DefaultCategoryDataset bestWebData = new DefaultCategoryDataset();
+			RadarPlot bestRadarPlot = new RadarPlot(bestWebData);
+			bestRadarPlot.setBackgroundPaint(Color.WHITE);
+			bestRadarPlot.setAxisTickVisible(true);	        	        
+			bestRadarPlot.setDrawOutOfRangePoints(true);
+			JFreeChart bestRadarChart = new JFreeChart("Radar Chart of Most Sustainable Network Properties for Experiment: " + methodComp,
+					titleFont, bestRadarPlot, false); 
+	        LegendTitle bestWebLegendtitle = new LegendTitle(bestRadarPlot); 
+	        bestWebLegendtitle.setPosition(RectangleEdge.RIGHT);  
+	        bestRadarChart.addSubtitle(legendtitle); 
+	        bestRadarPlot.setLabelFont(labelFont);
 	        
 			String[] keys = new String[] { "c", "nc", "all" };
 
@@ -493,6 +503,12 @@ public class SpinWorldGUI {
 				SummaryStatistics networkMonitoring = new SummaryStatistics();
 
 				int length = (int)(sim.getFinishTime()/2);
+				
+				int totalNumNetworks = 0;
+				
+				String bestNet = "";
+				double bestLongevity = 0.0;
+				int bestTime = 0;
 				
 				double[][] satMean = new double[2][length];
 				double[][] pchMean = new double[2][length];
@@ -522,16 +538,27 @@ public class SpinWorldGUI {
 					for (String prop : sim.getEnvironment().getProperties(t).keySet()) {
 						double val = Double.parseDouble(sim.getEnvironment().getProperty(prop, t));
 						
-						if (prop.contains("longevity"))
-							networkLongevity.addValue(val);
-						else if (prop.contains("utility-avg"))
-							networkAvgUt.addValue(val);
-						else if (prop.contains("utility-std"))
-							networkStdUt.addValue(val);
-						else if (prop.contains("utility-sum"))
-							networkSumUt.addValue(val);
-						else if (prop.contains("monitoringLevel"))
-							networkMonitoring.addValue(val);			
+						if (t == length || sim.getEnvironment().getProperty(prop, t + 1) == null) {
+							totalNumNetworks++;
+							
+							if (prop.contains("longevity")) {
+								networkLongevity.addValue(val);
+								
+								if (val > bestLongevity) {
+									bestLongevity = val;
+									bestNet = prop.substring(0, prop.indexOf("-"));
+									bestTime = t;
+								}
+							}
+							else if (prop.contains("utility-avg"))
+								networkAvgUt.addValue(val);
+							else if (prop.contains("utility-std"))
+								networkStdUt.addValue(val);
+							else if (prop.contains("utility-sum"))
+								networkSumUt.addValue(val);
+							else if (prop.contains("monitoringLevel"))
+								networkMonitoring.addValue(val);	
+						}
 					}
 					
 					for (PersistentAgent a : sim.getAgents()) {
@@ -590,11 +617,27 @@ public class SpinWorldGUI {
 				
 				double longPerc = (networkLongevity.getMean()/length) * 100;
 				longevityData.addValue(longPerc, "Sustainability", method);
+				
 				spiderWebData.addValue(longPerc, method, "Longevity (%)");
 				spiderWebData.addValue(networkSumUt.getMean(), method, "Ut. Sum");
 				spiderWebData.addValue(networkAvgUt.getMean(), method, "Ut. Avg.");
 				spiderWebData.addValue(networkStdUt.getMean(), method, "Ut. Std.");
 				spiderWebData.addValue(networkMonitoring.getMean(), method, "Monitoring Frequency");
+				spiderWebData.addValue((double)(totalNumNetworks)/5.0, method, "Total No. of Networks Formed");
+				
+				bestWebData.addValue((bestLongevity/length) * 100, method, "Longevity (%)");
+				bestWebData.addValue(Double.parseDouble(sim.getEnvironment()
+						.getProperty(bestNet + "-utility-sum", bestTime)), 
+						method, "Ut. Sum");
+				bestWebData.addValue(Double.parseDouble(sim.getEnvironment()
+						.getProperty(bestNet + "-utility-avg", bestTime)), 
+						method, "Ut. Avg");
+				bestWebData.addValue(Double.parseDouble(sim.getEnvironment()
+						.getProperty(bestNet + "-utility-std", bestTime)), 
+						method, "Ut. Std");
+				bestWebData.addValue(Double.parseDouble(sim.getEnvironment()
+						.getProperty(bestNet + "-monitoringLevel", bestTime)), 
+						method, "Monitoring Frequency");
 			}	
 			
 			if (exportMode) {
@@ -605,6 +648,7 @@ public class SpinWorldGUI {
 				ChartUtils.saveChart(riskTimeChart, imagePath, "COMPARISON/" + "RISK_TIME_" + this.methodComp);
 				ChartUtils.saveChart(catchTimeChart, imagePath, "COMPARISON/" + "CATCH_TIME_" + this.methodComp);
 				ChartUtils.saveChart(radarChart, imagePath, "COMPARISON/" + "SPIDER_WEB_" + this.methodComp);
+				ChartUtils.saveChart(bestRadarChart, imagePath, "COMPARISON/" + "BEST_WEB_" + this.methodComp);
 			}
 
 			logger.info("Done building charts for " + this.methodComp + " methods.");	

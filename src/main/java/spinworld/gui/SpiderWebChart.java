@@ -2,6 +2,8 @@ package spinworld.gui;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -68,22 +70,33 @@ public class SpiderWebChart implements Chart {
 	@Override
 	public void redraw(int t) {				
 		PersistentEnvironment pEnv = sim.getEnvironment();
+		Set<String> netsToRemove = new HashSet<String>();
+		
 		for (String prop : pEnv.getProperties(t).keySet()) {
-			String net = (prop.substring(0, 3).contains("-")) ? prop.substring(0, 2) : prop.substring(0, 3);
+			String net = prop.substring(0, prop.indexOf("-"));
 			Double val = Double.parseDouble(pEnv.getProperty(prop, t));
 			
-			if (prop.contains("longevity")) {
-				double perc = (val/(sim.getFinishTime()/2)) * 100;
-				data.addValue(perc, net, "Longevity (%)");
-			} else if (prop.contains("utility-avg")) {
-				data.addValue(val, net, "Utility Avg.");
-			} else if (prop.contains("utility-std")) {
-				data.addValue(val, net, "Utility Std.");
-			} else if (prop.contains("utility-sum")) {
-				data.addValue(val, net, "Utility Cumulative Sum");
-			} else if (prop.contains("monitoringLevel")) {
-				data.addValue(val, net, "Monitoring Level");
+			if (sim.getEnvironment().getProperty(prop, t + 1) != null) {
+				if (prop.contains("longevity")) {
+					double perc = (val/(sim.getFinishTime()/2)) * 100;
+					data.addValue(perc, net, "Longevity (%)");
+				} else if (prop.contains("utility-avg")) {
+					data.addValue(val, net, "Utility Avg.");
+				} else if (prop.contains("utility-std")) {
+					data.addValue(val, net, "Utility Std.");
+				} else if (prop.contains("utility-sum")) {
+					data.addValue(val, net, "Utility Cumulative Sum");
+				} else if (prop.contains("monitoringLevel")) {
+					data.addValue(val, net, "Monitoring Level");
+				}
+			} else {
+				netsToRemove.add(net);
 			}
+		}
+		
+		for (String net : netsToRemove) {
+			if (data.getRowKeys().contains(net))
+				data.removeRow(net);
 		}
 	}
 	
