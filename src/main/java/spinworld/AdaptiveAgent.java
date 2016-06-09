@@ -7,6 +7,7 @@ import uk.ac.imperial.presage2.util.location.Location;
 public class AdaptiveAgent extends SpinWorldAgent {
 
 	double prevUtility = 0;
+	double dynamicRange;
 
 	public AdaptiveAgent(UUID id, String name, Location myLocation, int velocity, double radius, 
 			double a, double b, double c, double pCheat, double alpha, double beta, Cheat cheatOn, 
@@ -15,6 +16,8 @@ public class AdaptiveAgent extends SpinWorldAgent {
 		super(id, name, myLocation, velocity, radius, a, b, c, pCheat, 
 				alpha, beta, cheatOn, netLeave, resetSatisfaction, rndSeed, 
 				t1, t2, theta, phi);
+		
+		dynamicRange = a + b + c;
 	}
 
 	@Override
@@ -22,14 +25,15 @@ public class AdaptiveAgent extends SpinWorldAgent {
 		// Choose strategies for each round				
 		double currentUtility = this.rollingUtility.getMean();					
 		
-		double benefit = currentUtility - prevUtility;
+		// Normalised by total utility range
+		double benefit = (currentUtility - prevUtility)/dynamicRange;
 			
 		// If you benefited from being compliant or lost out due to non-compliance, be more compliant
 		// Else, try your chance against the reinforcement algorithm
 		if ((benefit > 0 && this.compliantRound) || (benefit < 0 && !this.compliantRound))
 			this.pCheat = this.pCheat - phi * this.pCheat;
 		else if (benefit < 0 && this.compliantRound)
-			reinforcementToCheat(theta);
+			reinforcementToCheat(-benefit);
 		else
 			reinforcementToCheat(benefit);
 			
@@ -48,7 +52,7 @@ public class AdaptiveAgent extends SpinWorldAgent {
 			double normBenefit = benefit/(benefit + risk + catchRate);
 			double normRisk = risk/(benefit + risk + catchRate);
 			double normCatchRate = catchRate/(benefit + risk + catchRate);
-			reinforcement = theta * (normBenefit - normRisk - normCatchRate);
+			reinforcement = theta * normBenefit - phi * (normRisk + normCatchRate);
 		}
 		
 		if (reinforcement > 0.0)

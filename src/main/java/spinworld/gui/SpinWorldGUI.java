@@ -93,6 +93,8 @@ public class SpinWorldGUI {
 				}
 				
 				gui.buildForMethods(simIds);
+				// List<Chart> charts = gui.buildForMethods(simIds);
+				// gui.combineMethodCharts(charts);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -359,7 +361,7 @@ public class SpinWorldGUI {
 		}
 	}
 	
-	private void buildForMethods(List<Long> simIds) {
+	private void/*List<Charts>*/ buildForMethods(List<Long> simIds) {
 		if (outputComparisonCharts) {
 			if (exportMode) {
 				File exportDir = new File(imagePath + "COMPARISON");
@@ -650,10 +652,84 @@ public class SpinWorldGUI {
 				ChartUtils.saveChart(radarChart, imagePath, "COMPARISON/" + "SPIDER_WEB_" + this.methodComp);
 				ChartUtils.saveChart(bestRadarChart, imagePath, "COMPARISON/" + "BEST_WEB_" + this.methodComp);
 			}
+			
+			/*List<Chart> charts = new ArrayList<Chart>();
+			charts.add(allocChart);
+			charts.add(pCheatChart);
+			charts.add(utilityChart);
+			charts.add(utDistrChart);*/
 
 			logger.info("Done building charts for " + this.methodComp + " methods.");	
 		}
 	}
+	
+	/**
+	 * Take the map from {choiceMethod:{chartType:chart}} and build one chart for each chartType
+	 * Each chart has on it an avg line for each choiceMethod
+	 * 
+	 * @param methodCharts
+	 * @param endTime
+	 */
+	/* private void combineMethodCharts(List<Chart> methodCharts) {
+		logger.info("Combining data from method types...");
+		HashMap<String,XYDataset> outputData = new HashMap<String,XYDataset>();
+		for (Entry<OwnChoiceMethod, HashMap<String, Chart>> methodEntry : methodCharts.entrySet()) {
+			OwnChoiceMethod method = methodEntry.getKey();
+			HashMap<String,Chart> chartMap = methodEntry.getValue();
+			logger.debug("Getting data from method \"" + method + "\"...");
+			for (Entry<String,Chart> chartEntry : chartMap.entrySet()) {
+				String chartType = chartEntry.getKey();
+				Chart chart = chartEntry.getValue();
+				if (!outputData.containsKey(chartType)) {
+					outputData.put(chartType, new XYSeriesCollection());
+				}
+				// get avg series from chart to put into output dataset
+				XYPlot xyPlot = chart.getChart().getXYPlot();
+				XYSeries series = null;
+				// sanity check
+				if (xyPlot.getDatasetCount()!=1) {
+					try {
+						series = (XYSeries) ((XYSeriesCollection)xyPlot.getDataset(1)).getSeries(0).clone();
+					} catch (CloneNotSupportedException e) {
+						e.printStackTrace();
+					}
+				}
+				if (series!=null) {
+					logger.debug("Got data from method \"" + method + "\".");
+					series.setKey(method.toString());
+					((XYSeriesCollection)outputData.get(chartType)).addSeries(series);
+				}
+			}
+		}
+		logger.info("Got all method data. Drawing charts...");
+		LinkedHashSet<Chart> finalCharts = new LinkedHashSet<Chart>();
+		for (Entry<String,XYDataset> dataEntry : outputData.entrySet()) {
+			String chartType = dataEntry.getKey();
+			XYDataset dataset = dataEntry.getValue();
+			logger.debug("Drawing " + chartType);
+			logger.debug("Drawing comparison of " + chartType + " chart...");
+			Chart chart = new CombinedTimeSeriesChart(chartType, dataset, endTime);
+			finalCharts.add(chart);
+			if (chart!=null && outputComparisonCharts) {
+				ChartUtils.saveChart(chart.getChart(), imagePath, "_comparison", chartType);
+			}
+		}
+		
+		if (!headlessMode && outputComparisonCharts) {
+			Frame frame = new Frame("Comparison Results");
+			Panel panel = new Panel(new GridLayout(0,2));
+			frame.add(panel);
+			for (Chart chart : finalCharts) {
+				panel.add(chart.getPanel());
+			}
+			panel.add(globalLengthBAW.getPanel());
+			frame.pack();
+			frame.setVisible(true);
+			ChartUtils.savePanel(panel, imagePath, "_", "comparison"); // won't draw if not visible...
+		}
+		
+		logger.info("Done drawing comparison charts.");
+	} */
 	
 	private List<Long> getSimulationList() {
 		List<Long> result = null;
