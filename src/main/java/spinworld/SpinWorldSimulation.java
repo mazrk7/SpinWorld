@@ -129,19 +129,19 @@ public class SpinWorldSimulation extends InjectedSimulation {
 	
 	// Monitoring level of networks
 	@Parameter(name = "monitoringLevel", optional = true)
-	public double monitoringLevel = 1.0;	
+	public double monitoringLevel = 0.0;	
 	@Parameter(name = "monitoringCost", optional = true)
-	public double monitoringCost = 0.0;
-	@Parameter(name = "noWarnings", optional = true)
-	public int noWarnings = 5;
+	public double monitoringCost = 1.0;
+	@Parameter(name = "sanctionLevel", optional = true)
+	public int noWarnings = Integer.MAX_VALUE;
 	
 	@Parameter(name = "severityLB", optional = true)
 	public double severityLB = 0.2;
 	@Parameter(name = "severityUB", optional = true)
-	public double severityUB = 0.8;
+	public double severityUB = 1.0;
 	
 	@Parameter(name = "forgiveness", optional = true)
-	public double forgiveness = 0.6;
+	public double forgiveness = 1.0;
 	
 	public SpinWorldSimulation(Set<AbstractModule> modules) {
 		super(modules);

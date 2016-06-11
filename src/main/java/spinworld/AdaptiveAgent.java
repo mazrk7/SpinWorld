@@ -25,7 +25,7 @@ public class AdaptiveAgent extends SpinWorldAgent {
 		// Choose strategies for each round				
 		double currentUtility = this.rollingUtility.getMean();					
 		
-		// Normalised by total utility range
+		// Normalised by dynamic range
 		double benefit = (currentUtility - prevUtility)/dynamicRange;
 			
 		// If you benefited from being compliant or lost out due to non-compliance, be more compliant
@@ -33,7 +33,7 @@ public class AdaptiveAgent extends SpinWorldAgent {
 		if ((benefit > 0 && this.compliantRound) || (benefit < 0 && !this.compliantRound))
 			this.pCheat = this.pCheat - phi * this.pCheat;
 		else if (benefit < 0 && this.compliantRound)
-			reinforcementToCheat(-benefit);
+			reinforcementToCheat(theta);
 		else
 			reinforcementToCheat(benefit);
 			

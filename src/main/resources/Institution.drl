@@ -63,7 +63,7 @@ query compliantRound(Network n, Particle p, int $t)
 end
 
 rule "Monitor particles"
-	salience 9 // After provision
+	salience 15 // After provision
 	no-loop
 	when
 		Round($t : number, type == RoundType.DEMAND)
@@ -162,7 +162,7 @@ rule "Let particle go without sanctioning"
 	salience 4 // After monitoring & detection of cheating
 	when 
 		Round($t : number, type == RoundType.APPROPRIATE)
-		Violation($p : particle, $n : network, time == $t, severity < $n.getSeverityLB())
+		Violation($p : particle, $n : network, time == $t, severity <= $n.getSeverityLB())
 		MemberOf(network == $n, particle == $p)
 	then
 		$p.updateObservedSanctionHistory(GraduationLevel.NO_SANCTION);
@@ -177,7 +177,7 @@ rule "Sanction particle for minor offense"
 	when 
 		Round($t : number, type == RoundType.APPROPRIATE)
 		Violation($p : particle, $n : network, time == $t, $s : severity,
-			$s >= $n.getSeverityLB(), $s < $n.getSeverityUB())
+			$s > $n.getSeverityLB(), $s <= $n.getSeverityUB())
 		MemberOf(network == $n, particle == $p)
 	then
 		$n.warn($p);
@@ -203,7 +203,7 @@ rule "Sanction particle for major offense"
 	salience 4 // After monitoring & detection of cheating
 	when 
 		Round($t : number, type == RoundType.APPROPRIATE)
-		Violation($p : particle, $n : network, time == $t, severity >= $n.getSeverityUB())
+		Violation($p : particle, $n : network, time == $t, severity > $n.getSeverityUB())
 		MemberOf(network == $n, particle == $p)
 	then				
 		Sanctioned sanc = new Sanctioned($p, $n, $t, GraduationLevel.EXPULSION, Boolean.TRUE);
@@ -224,7 +224,9 @@ rule "Appeal against network sanctioning"
 		if (chance > $n.getForgiveness()) {
 			$p.updateObservedSanctionHistory(GraduationLevel.NO_SANCTION);
 			
-			if ($l == GraduationLevel.WARNING) $n.removeWarning($p);
+			if ($l == GraduationLevel.WARNING || $n.getWarningCount($p) >= $n.getNoWarnings()) {
+				$n.removeWarning($p);
+			}
 			
 			app.setOutcome("won");
 			logger.info(app);
@@ -266,7 +268,7 @@ rule "Observation of network sanctioning"
 end	
 	
 rule "Detect cheat on provision"
-	salience 5
+	salience 10
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)
@@ -285,7 +287,7 @@ rule "Detect cheat on provision"
 end
 
 rule "Could not detect cheat on provision"
-	salience 5
+	salience 7
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)
@@ -297,7 +299,7 @@ rule "Could not detect cheat on provision"
 end
 
 rule "Detect cheat on demand"
-	salience 5
+	salience 10
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)
@@ -316,7 +318,7 @@ rule "Detect cheat on demand"
 end
 
 rule "Could not detect cheat on demand"
-	salience 5
+	salience 7
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)
@@ -328,7 +330,7 @@ rule "Could not detect cheat on demand"
 end
 
 rule "Detect cheat on appropriate"
-	salience 5
+	salience 10
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)
@@ -348,7 +350,7 @@ rule "Detect cheat on appropriate"
 end
 
 rule "Could not detect cheat on appropriate"
-	salience 5
+	salience 7
 	when
 		Round($t : number, type == RoundType.APPROPRIATE)
 		MemberOf($p : particle, $n : network)

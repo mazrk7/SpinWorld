@@ -154,8 +154,9 @@ public class Particle {
 	
 	public double getObservedRiskRate() {	
 		if (!observedSanctionHistory.isEmpty()) {
-			int sanctionCount = Collections.frequency(observedSanctionHistory, GraduationLevel.WARNING)
-				+ (Collections.frequency(observedSanctionHistory, GraduationLevel.EXPULSION) * 2);
+			int sanctionCount = 
+					(int)(Collections.frequency(observedSanctionHistory, GraduationLevel.WARNING) * 0.5)
+				+ Collections.frequency(observedSanctionHistory, GraduationLevel.EXPULSION);
 			double risk = ((double) sanctionCount)/observedSanctionHistory.size();
 			
 			return risk;

@@ -63,9 +63,9 @@ public class SpinWorldAgent extends MobileAgent {
 	@Named("params.monitoringCost")
 	private double monitoringCost;
 	
-	// Number of warnings in created networks
+	// Number of sanction levels in created networks
 	@Inject
-	@Named("params.noWarnings")
+	@Named("params.sanctionLevel")
 	private int noWarnings;
 	
 	// Upper and lower bound of severity scale for networks
@@ -275,17 +275,25 @@ public class SpinWorldAgent extends MobileAgent {
 	// Demand amount d, act upon environment
 	protected void demand(double d) {
 		try {
-			if (this.networkService.getWarningCount(getID(), this.network) > prevWarning) {
-				roundsWithoutDemand = this.networkService.getWarningCount(getID(), this.network);
-				prevWarning = this.networkService.getWarningCount(getID(), this.network);
-			} else if (this.networkService.getWarningCount(getID(), this.network) < prevWarning) {
-				prevWarning = 0;
-				roundsWithoutDemand = 0;
-			}
-			
-			if (roundsWithoutDemand > 0) {
+			// If no graduated sanctions
+			// Else level punishments
+			if (this.noWarnings == Integer.MAX_VALUE 
+					&& this.networkService.getWarningCount(getID(), this.network) > prevWarning) {
 				d = 0;
-				roundsWithoutDemand--;
+				prevWarning = this.networkService.getWarningCount(getID(), this.network);
+			} else {
+				if (this.networkService.getWarningCount(getID(), this.network) > prevWarning) {
+					roundsWithoutDemand = this.networkService.getWarningCount(getID(), this.network);
+					prevWarning = this.networkService.getWarningCount(getID(), this.network);
+				} else if (this.networkService.getWarningCount(getID(), this.network) < prevWarning) {
+					prevWarning = 0;
+					roundsWithoutDemand = 0;
+				}
+				
+				if (roundsWithoutDemand > 0) {
+					d = 0;
+					roundsWithoutDemand--;
+				}
 			}
 				
 			environment.act(new Demand(d), getID(), authkey);
@@ -326,7 +334,7 @@ public class SpinWorldAgent extends MobileAgent {
 					joinNetwork(p, otherNetwork);
 			}
 			else if (network != null) {
-				if (otherNetwork == null) {
+				if (otherNetwork == null && !this.networkService.isBanned(p.getId(), network)) {
 					logger.info("Reserved particle " + p.getName() + " joined network: " + network.toString());
 					this.networkService.joinMembership(p.getId(), getID(), network);
 				}
@@ -339,6 +347,7 @@ public class SpinWorldAgent extends MobileAgent {
 	protected void createNetwork(Particle p) {
 		try {	
 			Allocation method = Allocation.RANDOM;
+			
 			Network net = new Network(this.networkService.getNextNumNetwork(), method, 
 					this.monitoringLevel, this.monitoringCost, this.noWarnings, 
 					this.severityLB, this.severityUB, this.forgiveness);
@@ -406,7 +415,7 @@ public class SpinWorldAgent extends MobileAgent {
 
 		// Total resources of agent
 		double rTotal = rP + (g - p);
-		// Total utility in this round
+		// Total utility from last round
 		double u = ut.getUtility(g, q, d, p, r, rP);
 		this.resourcesGame.setUtility(getID(), u);
 		

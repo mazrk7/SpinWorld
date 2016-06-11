@@ -203,7 +203,7 @@ public class SpinWorldGUI {
 			}
 			
 			TimeSeriesChart riskTimeChart = new TimeSeriesChart(sim, windowSize, 
-					"Moving Avg. Perceived Risk", "Risk", "risk", "RiskTime", 0.0, 2.0);
+					"Moving Avg. Perceived Risk", "Risk", "risk", "RiskTime", 0.0, 1.0);
 			TimeSeriesChart catchTimeChart = new TimeSeriesChart(sim, windowSize, 
 					"Moving Avg. Perceived Catch Rate", "Catch Rate", "catchRate", "CatchTime", 0.0, 1.0);
 			TimeSeriesChart pCheatTimeChart = new TimeSeriesChart(sim, windowSize, 
@@ -443,7 +443,7 @@ public class SpinWorldGUI {
 					"Risk", "Timestep", riskTimeData, PlotOrientation.HORIZONTAL, true, false, false);
 
 			riskTimeChart.getXYPlot().setBackgroundPaint(Color.WHITE);
-			riskTimeChart.getXYPlot().getDomainAxis().setRange(0.0, 2.0);
+			riskTimeChart.getXYPlot().getDomainAxis().setRange(0.0, 1.0);
 			riskTimeChart.getXYPlot().setWeight(3);
 			riskTimeChart.getXYPlot().getRangeAxis().setAutoRange(true);
 			riskTimeChart.getLegend().setPosition(RectangleEdge.RIGHT);
@@ -653,7 +653,7 @@ public class SpinWorldGUI {
 				ChartUtils.saveChart(bestRadarChart, imagePath, "COMPARISON/" + "BEST_WEB_" + this.methodComp);
 			}
 			
-			/*List<Chart> charts = new ArrayList<Chart>();
+			/*List<JFreeChart> charts = new ArrayList<JFreeChart>();
 			charts.add(allocChart);
 			charts.add(pCheatChart);
 			charts.add(utilityChart);

@@ -142,7 +142,7 @@ rule "AllocationPool mirrors ProvisionPool increases"
 end
 
 rule "Accumulate Provisions"
-	salience 10
+	salience 20
     when
 		$r : Round(type == RoundType.DEMAND)
 		$n : Network()
@@ -160,7 +160,7 @@ rule "Accumulate Provisions"
 end
 
 rule "Process Demand"
-	salience 10
+	salience 20
 	when
 		$r : Round(type == RoundType.DEMAND)
 		$d : Demand(this coincides $r, $p : particle, $q : quantity)
@@ -226,7 +226,7 @@ rule "Process Appropriate"
 end
 
 rule "Create network"
-	salience 20
+	salience 30
 	when
 		$a : CreateNetwork($n : network, $p : particle)
 		not Processed($a ;)
@@ -238,7 +238,7 @@ rule "Create network"
 end
 
 rule "Join network"
-	salience 11
+	salience 21
 	when
 		$j : JoinNetwork($n : network, $p : particle)
 		not Processed($j ;)
@@ -248,7 +248,7 @@ rule "Join network"
 end
 
 rule "Leave network"
-	salience 12
+	salience 22
 	when
 		$a : LeaveNetwork($n : network, $p : particle)
 		not Processed($a ;)
@@ -259,7 +259,7 @@ rule "Leave network"
 end
 
 rule "Check empty network"
-	salience 10
+	salience 20
 	when
 		$n : Network()
 		not(exists(MemberOf(network == $n)))

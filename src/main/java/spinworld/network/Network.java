@@ -18,17 +18,18 @@ public class Network {
 	// Allocation method for a network
 	Allocation allocationMethod;
 	
-	// Monitoring parameters within network
+	// DoF to have no monitoring
 	double monitoringLevel = 0.0;
-	double monitoringCost = 0.0;
+	double monitoringCost = 1.0;
 	
 	double severityLB = 0.2;
-	double severityUB = 0.8;
+	double severityUB = 1.0;
 	
-	// Number of warnings a network will give to a particle as punishment
-	int noWarnings = 5;
+	// Number of levels before expulsion
+	int noWarnings = Integer.MAX_VALUE;
 	
-	double forgiveness = 0.6;
+	// No conflict-resoluton mechanism
+	double forgiveness = 1.0;
 	
 	int compliantRounds = 0;
 	
@@ -48,25 +49,14 @@ public class Network {
 	}
 	
 	public Network(int id, Allocation allocationMethod, 
-			double monitoringLevel, double monitoringCost, int noWarnings) {
+			double monitoringLevel, double monitoringCost, int noWarnings, 
+			double severityLB, double severityUB, double forgiveness) {
 		this(id, allocationMethod);
 		this.monitoringLevel = monitoringLevel;
 		this.monitoringCost = monitoringCost;
 		this.noWarnings = noWarnings;
-	}
-	
-	public Network(int id, Allocation allocationMethod, double monitoringLevel,
-			double monitoringCost, int noWarnings, double severityLB, double severityUB) {
-		this(id, allocationMethod, monitoringLevel, monitoringCost, noWarnings);
 		this.severityLB = severityLB;
 		this.severityUB = severityUB;
-	}
-	
-	public Network(int id, Allocation allocationMethod, 
-			double monitoringLevel, double monitoringCost, int noWarnings, 
-			double severityLB, double severityUB, double forgiveness) {
-		this(id, allocationMethod, monitoringLevel, monitoringCost,
-				noWarnings, severityLB, severityUB);
 		this.forgiveness = forgiveness;
 	}
 	
