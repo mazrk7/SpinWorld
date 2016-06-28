@@ -30,6 +30,7 @@ All simulation data is stored into a PostgreSQL database (>= v9.1) and requires 
 The spinworld-cli script is an alias of mvn exec:java, which offers the user the ability to add and run simulations. Navigate to the project directory and run the script with no arguments in order to view all available commands: 
 
 cd /path/to/SpinWorld
+
 ./spinworld-cli
 
 There are a few different experiments provided via the 'insert' command. This command will insert a set of simulations with parameters configured according to the specified experiments undergoing evaluation. A number of repeats to run for the experiment must be provided as a command line argument and a starting random seed may also optionally be assigned. 
