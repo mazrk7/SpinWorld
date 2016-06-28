@@ -31,7 +31,10 @@ The spinworld-cli script is an alias of mvn exec:java, which offers the user the
 cd /path/to/SpinWorld
 ./spinworld-cli
 
-There are a few different experiments provided via the 'insert' command. This command will insert a set of simulations with parameters configured according to the specified experiments undergoing evaluation. A number of repeats to run for the experiment must be provided as a command line argument and a starting random seed may also optionally be assigned. For example, 7 repeats of the 'graduated_sanctions' experiment with seeds starting at 21 would be run as follows:
+There are a few different experiments provided via the 'insert' command. This command will insert a set of simulations with parameters configured according to the specified experiments undergoing evaluation. A number of repeats to run for the experiment must be provided as a command line argument and a starting random seed may also optionally be assigned. 
+
+For example, 7 repeats of the 'graduated_sanctions' experiment with seeds starting at 21 would be run as follows:
 
 ./spinworld-cli insert graduated_sanctions 7 --seed 21
+
 This will insert the simulations into the database. To actually run these simulations from the database, the runall command should be used. This runs all simulations which have yet to be executed.
