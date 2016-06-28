@@ -5,7 +5,7 @@ This project is a multi-agent implementation of a system of retributive justice 
 * Jeremy Pitt and Julia Schaumeier, "Provision and Appropriation of Common-Pool Resources without Full Disclosure" PRIMA 2012.
 
 ## Usage ##
-In order to run this project, both maven [a link](http://maven.apache.org/) and a JDK must be installed.
+In order to run this project, both [maven](http://maven.apache.org/) and a JDK must be installed.
 Additional dependencies are:
 
 * JUNG 2.0.1 for network visualisation
