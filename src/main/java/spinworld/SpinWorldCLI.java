@@ -139,7 +139,7 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("finishTime", Integer.toString(rounds));
 				sim.addParameter("size", Integer.toString(5));
 				sim.addParameter("alpha", Double.toString(0.1));
-				sim.addParameter("beta", Double.toString(0.2));
+				sim.addParameter("beta", Double.toString(0.1));
 				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
 				sim.addParameter("a", Double.toString(2));
@@ -176,7 +176,7 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("size", Integer.toString(5));
 				sim.addParameter("alpha", Double.toString(0.1));
 				sim.addParameter("beta", Double.toString(0.1));
-				sim.addParameter("theta", Double.toString(0.2));
+				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
 				sim.addParameter("a", Double.toString(2));
 				sim.addParameter("b", Double.toString(1));
@@ -210,7 +210,7 @@ public class SpinWorldCLI extends Presage2CLI {
 			sim.addParameter("size", Integer.toString(5));
 			sim.addParameter("alpha", Double.toString(0.1));
 			sim.addParameter("beta", Double.toString(0.1));
-			sim.addParameter("theta", Double.toString(0.2));
+			sim.addParameter("theta", Double.toString(0.1));
 			sim.addParameter("phi", Double.toString(0.1));
 			sim.addParameter("a", Double.toString(2));
 			sim.addParameter("b", Double.toString(1));
@@ -241,7 +241,7 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("size", Integer.toString(5));
 				sim.addParameter("alpha", Double.toString(0.1));
 				sim.addParameter("beta", Double.toString(0.1));
-				sim.addParameter("theta", Double.toString(0.2));
+				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
 				sim.addParameter("a", Double.toString(2));
 				sim.addParameter("b", Double.toString(1));
@@ -282,7 +282,7 @@ public class SpinWorldCLI extends Presage2CLI {
 					sim.addParameter("size", Integer.toString(5));
 					sim.addParameter("alpha", Double.toString(0.1));
 					sim.addParameter("beta", Double.toString(0.1));
-					sim.addParameter("theta", Double.toString(0.2));
+					sim.addParameter("theta", Double.toString(0.1));
 					sim.addParameter("phi", Double.toString(0.1));				
 					sim.addParameter("a", Double.toString(2));
 					sim.addParameter("b", Double.toString(1));
@@ -319,7 +319,7 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("size", Integer.toString(5));
 				sim.addParameter("alpha", Double.toString(0.1));
 				sim.addParameter("beta", Double.toString(0.1));
-				sim.addParameter("theta", Double.toString(0.2));
+				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
 				sim.addParameter("a", Double.toString(2));
 				sim.addParameter("b", Double.toString(1));
@@ -355,7 +355,7 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("size", Integer.toString(5));
 				sim.addParameter("alpha", Double.toString(0.1));
 				sim.addParameter("beta", Double.toString(0.1));
-				sim.addParameter("theta", Double.toString(0.2));
+				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
 				sim.addParameter("a", Double.toString(2));
 				sim.addParameter("b", Double.toString(1));
@@ -392,7 +392,7 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("size", Integer.toString(sz));
 				sim.addParameter("alpha", Double.toString(0.1));
 				sim.addParameter("beta", Double.toString(0.1));
-				sim.addParameter("theta", Double.toString(0.2));
+				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
 				sim.addParameter("a", Double.toString(2));
 				sim.addParameter("b", Double.toString(1));

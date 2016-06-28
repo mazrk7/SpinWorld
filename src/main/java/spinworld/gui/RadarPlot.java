@@ -213,7 +213,7 @@ public class RadarPlot extends Plot implements Cloneable, Serializable {
      * <code>maxValue</code> has always higher priority. If it is set this field
      * is ignored.
      */
-    private Map/*<Integer, Double>*/ maxValues;
+    private Map<Integer, Double> maxValues;
 
     /** The origin common for all categories axes. */
     private Double origin;
@@ -223,7 +223,7 @@ public class RadarPlot extends Plot implements Cloneable, Serializable {
      * <code>origin</code> has always higher priority. If it is set this field
      * is ignored.
      */
-    private Map/*<Integer, Double>*/ origins;
+    private Map<Integer, Double> origins;
 
     /**
      * The data extract order (BY_ROW or BY_COLUMN). This denotes whether
@@ -355,8 +355,8 @@ public class RadarPlot extends Plot implements Cloneable, Serializable {
 
         this.legendItemShape = DEFAULT_LEGEND_ITEM_CIRCLE;
 
-        this.origins = new HashMap();
-        this.maxValues = new HashMap();
+        this.origins = new HashMap<Integer, Double>();
+        this.maxValues = new HashMap<Integer, Double>();
     }
 
     /**
@@ -1238,7 +1238,7 @@ public class RadarPlot extends Plot implements Cloneable, Serializable {
         if (getDataset() == null) {
             return result;
         }
-        List keys = null;
+        List<?> keys = null;
         if (this.dataExtractOrder == TableOrder.BY_ROW) {
             keys = this.dataset.getRowKeys();
         }
@@ -1250,10 +1250,10 @@ public class RadarPlot extends Plot implements Cloneable, Serializable {
         }
 
         int series = 0;
-        Iterator iterator = keys.iterator();
+        Iterator<?> iterator = keys.iterator();
         Shape shape = getLegendItemShape();
         while (iterator.hasNext()) {
-            Comparable key = (Comparable) iterator.next();
+            Comparable<?> key = (Comparable<?>) iterator.next();
             String label = key.toString();
             String description = label;
             Paint paint = getSeriesPaint(series);
@@ -2003,12 +2003,5 @@ public class RadarPlot extends Plot implements Cloneable, Serializable {
             this.dataset.addChangeListener(this);
         }
     }
-
-    /**
-     * TODO: Copy-paste from DefaultDrawingSupplier. Consider to put into some
-     * utility class.
-     */
-    private static int[] intArray(double a, double b, double c) {
-        return new int[]{(int) a, (int) b, (int) c};
-    }
+    
 }
