@@ -1,5 +1,5 @@
 # SpinWorld #
-This project is a multi-agent implementation of a system of retributive justice that uses the agent-based Java simulator, Presage2, coupled with the integrated Drools rule engine. The testbed used for experimentation with this system was the LPG' game, which is a variant of the Linear Public Good game and is described in the following research sources:
+This project is a multi-agent implementation of a system of retributive justice that uses the agent-based Java simulator, Presage2, coupled with the integrated Drools rule engine. The testbed used for experimentation with this system was the LPG' game, which is a variant of the Linear Public Good game and is described in the following papers:
 
 * Jeremy Pitt, Julia Schaumeier, Didac Busquests and Sam Macbeth, "Self-Organising Common-Pool Resource Allocation and Canons of Distributive Justice" SASO 2012.
 * Jeremy Pitt and Julia Schaumeier, "Provision and Appropriation of Common-Pool Resources without Full Disclosure" PRIMA 2012.
@@ -8,8 +8,9 @@ This project is a multi-agent implementation of a system of retributive justice 
 In order to run this project, both [maven](http://maven.apache.org/) and a JDK must be installed.
 
 A complete and introductory guide for setting up projects in the Eclipse IDE to use with Presage2 is available at the following link:
-http://www.presage2.info/w/Getting_Started_Guide
-This link may provide useful information for setting up this particular project, and describes database setup.
+http://www.presage2.info/w/Getting_Started_Guide.
+
+This link will hopefully provide more general information for getting started with Presage2, which may assist with this particular project's setup.
 
 Additional dependencies are:
 
