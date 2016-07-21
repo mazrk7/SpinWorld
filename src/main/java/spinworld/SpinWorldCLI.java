@@ -51,11 +51,12 @@ public class SpinWorldCLI extends Presage2CLI {
 		Map<String, String> experiments = new HashMap<String, String>();
 		experiments.put("large_pop", "Large population.");
 		experiments.put("cheat_strat", "Test different cheating strategies.");
-		experiments.put("base", "Base case scenario, no principles 4, 5, or 6.");
+		experiments.put("base", "Base case scenario.");
 		experiments.put("graduated_sanctions", "Test different sanction levels.");
 		experiments.put("deterrence", "Test different severity scales.");
 		experiments.put("monitoring_cost", "Test different network monitoring costs.");
 		experiments.put("conflict_resolution", "Test different forgiveness levels.");
+		experiments.put("optimal", "Test different mechanisms.");
 
 		OptionGroup exprOptions = new OptionGroup();
 		for (String key : experiments.keySet()) {
@@ -122,6 +123,8 @@ public class SpinWorldCLI extends Presage2CLI {
 			conflict_resolution(repeats, seed);
 		else if (args[1].equalsIgnoreCase("size"))
 			size(repeats, seed);
+		else if (args[1].equalsIgnoreCase("optimal"))
+			optimal(repeats, seed);
 	}
 
 	void large_pop(int repeats, int seed) {
@@ -139,7 +142,7 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("finishTime", Integer.toString(rounds));
 				sim.addParameter("size", Integer.toString(5));
 				sim.addParameter("alpha", Double.toString(0.1));
-				sim.addParameter("beta", Double.toString(0.2));
+				sim.addParameter("beta", Double.toString(0.1));
 				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
 				sim.addParameter("a", Double.toString(2));
@@ -176,7 +179,7 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("size", Integer.toString(5));
 				sim.addParameter("alpha", Double.toString(0.1));
 				sim.addParameter("beta", Double.toString(0.1));
-				sim.addParameter("theta", Double.toString(0.2));
+				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
 				sim.addParameter("a", Double.toString(2));
 				sim.addParameter("b", Double.toString(1));
@@ -210,7 +213,7 @@ public class SpinWorldCLI extends Presage2CLI {
 			sim.addParameter("size", Integer.toString(5));
 			sim.addParameter("alpha", Double.toString(0.1));
 			sim.addParameter("beta", Double.toString(0.1));
-			sim.addParameter("theta", Double.toString(0.2));
+			sim.addParameter("theta", Double.toString(0.1));
 			sim.addParameter("phi", Double.toString(0.1));
 			sim.addParameter("a", Double.toString(2));
 			sim.addParameter("b", Double.toString(1));
@@ -241,7 +244,7 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("size", Integer.toString(5));
 				sim.addParameter("alpha", Double.toString(0.1));
 				sim.addParameter("beta", Double.toString(0.1));
-				sim.addParameter("theta", Double.toString(0.2));
+				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
 				sim.addParameter("a", Double.toString(2));
 				sim.addParameter("b", Double.toString(1));
@@ -282,7 +285,7 @@ public class SpinWorldCLI extends Presage2CLI {
 					sim.addParameter("size", Integer.toString(5));
 					sim.addParameter("alpha", Double.toString(0.1));
 					sim.addParameter("beta", Double.toString(0.1));
-					sim.addParameter("theta", Double.toString(0.2));
+					sim.addParameter("theta", Double.toString(0.1));
 					sim.addParameter("phi", Double.toString(0.1));				
 					sim.addParameter("a", Double.toString(2));
 					sim.addParameter("b", Double.toString(1));
@@ -319,7 +322,7 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("size", Integer.toString(5));
 				sim.addParameter("alpha", Double.toString(0.1));
 				sim.addParameter("beta", Double.toString(0.1));
-				sim.addParameter("theta", Double.toString(0.2));
+				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
 				sim.addParameter("a", Double.toString(2));
 				sim.addParameter("b", Double.toString(1));
@@ -355,7 +358,7 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("size", Integer.toString(5));
 				sim.addParameter("alpha", Double.toString(0.1));
 				sim.addParameter("beta", Double.toString(0.1));
-				sim.addParameter("theta", Double.toString(0.2));
+				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
 				sim.addParameter("a", Double.toString(2));
 				sim.addParameter("b", Double.toString(1));
@@ -379,6 +382,111 @@ public class SpinWorldCLI extends Presage2CLI {
 		stopDatabase();
 	}
 	
+	void optimal(int repeats, int seed) {
+		int rounds = 2002;
+
+		for (int i = 0; i < repeats; i++) {
+			PersistentSimulation base = getDatabase().createSimulation("Base", "spinworld.SpinWorldSimulation",
+						"AUTO START", rounds);
+
+			base.addParameter("finishTime", Integer.toString(rounds));
+			base.addParameter("size", Integer.toString(7));
+			base.addParameter("alpha", Double.toString(0.1));
+			base.addParameter("beta", Double.toString(0.1));
+			base.addParameter("theta", Double.toString(0.1));
+			base.addParameter("phi", Double.toString(0.1));
+			base.addParameter("a", Double.toString(2));
+			base.addParameter("b", Double.toString(1));
+			base.addParameter("c", Double.toString(3));
+			base.addParameter("cAgents", Integer.toString(20));
+			base.addParameter("cPCheat", Double.toString(0.025));
+			base.addParameter("ncAgents", Integer.toString(20));
+			base.addParameter("ncPCheat", Double.toString(0.25));
+			base.addParameter("seed", Integer.toString(seed + i));
+			base.addParameter("cheatOn", Cheat.PROVISION.name());
+				
+			logger.info("Created sim: " + base.getID() + " - " + base.getName());
+			
+			PersistentSimulation retr = getDatabase().createSimulation("Principles 4|5", "spinworld.SpinWorldSimulation",
+					"AUTO START", rounds);
+
+			retr.addParameter("finishTime", Integer.toString(rounds));
+			retr.addParameter("size", Integer.toString(7));
+			retr.addParameter("alpha", Double.toString(0.1));
+			retr.addParameter("beta", Double.toString(0.1));
+			retr.addParameter("theta", Double.toString(0.1));
+			retr.addParameter("phi", Double.toString(0.1));
+			retr.addParameter("a", Double.toString(2));
+			retr.addParameter("b", Double.toString(1));
+			retr.addParameter("c", Double.toString(3));
+			retr.addParameter("cAgents", Integer.toString(20));
+			retr.addParameter("cPCheat", Double.toString(0.025));
+			retr.addParameter("ncAgents", Integer.toString(20));
+			retr.addParameter("ncPCheat", Double.toString(0.25));
+			retr.addParameter("seed", Integer.toString(seed + i));
+			retr.addParameter("cheatOn", Cheat.PROVISION.name());
+			retr.addParameter("sanctionLevel", Integer.toString(3));
+			retr.addParameter("severityLB", Double.toString(0.3));
+			retr.addParameter("monitoringCost", Double.toString(0.2));
+			retr.addParameter("monitoringLevel", Double.toString(0.4));
+				
+			logger.info("Created sim: " + retr.getID() + " - " + retr.getName());
+			
+			PersistentSimulation conflict = getDatabase().createSimulation("Principles 4|5|6", "spinworld.SpinWorldSimulation",
+					"AUTO START", rounds);
+
+			conflict.addParameter("finishTime", Integer.toString(rounds));
+			conflict.addParameter("size", Integer.toString(7));
+			conflict.addParameter("alpha", Double.toString(0.1));
+			conflict.addParameter("beta", Double.toString(0.1));
+			conflict.addParameter("theta", Double.toString(0.1));
+			conflict.addParameter("phi", Double.toString(0.1));
+			conflict.addParameter("a", Double.toString(2));
+			conflict.addParameter("b", Double.toString(1));
+			conflict.addParameter("c", Double.toString(3));
+			conflict.addParameter("cAgents", Integer.toString(20));
+			conflict.addParameter("cPCheat", Double.toString(0.025));
+			conflict.addParameter("ncAgents", Integer.toString(20));
+			conflict.addParameter("ncPCheat", Double.toString(0.25));
+			conflict.addParameter("seed", Integer.toString(seed + i));
+			conflict.addParameter("cheatOn", Cheat.PROVISION.name());
+			conflict.addParameter("sanctionLevel", Integer.toString(3));
+			conflict.addParameter("severityLB", Double.toString(0.3));
+			conflict.addParameter("monitoringCost", Double.toString(0.2));
+			conflict.addParameter("monitoringLevel", Double.toString(0.4));
+			conflict.addParameter("forgiveness", Double.toString(0.7));
+
+			logger.info("Created sim: " + conflict.getID() + " - " + conflict.getName());
+			
+			PersistentSimulation det = getDatabase().createSimulation("Deterrence", "spinworld.SpinWorldSimulation",
+					"AUTO START", rounds);
+
+			det.addParameter("finishTime", Integer.toString(rounds));
+			det.addParameter("size", Integer.toString(7));
+			det.addParameter("alpha", Double.toString(0.1));
+			det.addParameter("beta", Double.toString(0.1));
+			det.addParameter("theta", Double.toString(0.1));
+			det.addParameter("phi", Double.toString(0.1));
+			det.addParameter("a", Double.toString(2));
+			det.addParameter("b", Double.toString(1));
+			det.addParameter("c", Double.toString(3));
+			det.addParameter("cAgents", Integer.toString(20));
+			det.addParameter("cPCheat", Double.toString(0.025));
+			det.addParameter("ncAgents", Integer.toString(20));
+			det.addParameter("ncPCheat", Double.toString(0.25));
+			det.addParameter("seed", Integer.toString(seed + i));
+			det.addParameter("cheatOn", Cheat.PROVISION.name());
+			det.addParameter("severityLB", Double.toString(0.4));
+			det.addParameter("severityUB", Double.toString(0.6));
+			det.addParameter("monitoringCost", Double.toString(0.2));
+			det.addParameter("monitoringLevel", Double.toString(0.4));
+				
+			logger.info("Created sim: " + det.getID() + " - " + det.getName());
+		}
+
+		stopDatabase();
+	}
+	
 	void size(int repeats, int seed) {
 		int rounds = 2002;
 
@@ -392,7 +500,7 @@ public class SpinWorldCLI extends Presage2CLI {
 				sim.addParameter("size", Integer.toString(sz));
 				sim.addParameter("alpha", Double.toString(0.1));
 				sim.addParameter("beta", Double.toString(0.1));
-				sim.addParameter("theta", Double.toString(0.2));
+				sim.addParameter("theta", Double.toString(0.1));
 				sim.addParameter("phi", Double.toString(0.1));
 				sim.addParameter("a", Double.toString(2));
 				sim.addParameter("b", Double.toString(1));

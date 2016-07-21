@@ -93,8 +93,6 @@ public class SpinWorldGUI {
 				}
 				
 				gui.buildForMethods(simIds);
-				// List<Chart> charts = gui.buildForMethods(simIds);
-				// gui.combineMethodCharts(charts);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -361,7 +359,7 @@ public class SpinWorldGUI {
 		}
 	}
 	
-	private void/*List<Charts>*/ buildForMethods(List<Long> simIds) {
+	private void buildForMethods(List<Long> simIds) {
 		if (outputComparisonCharts) {
 			if (exportMode) {
 				File exportDir = new File(imagePath + "COMPARISON");
@@ -374,10 +372,14 @@ public class SpinWorldGUI {
 			
 			logger.info("Processing for " + methodComp + " methods...");
 			
+	        Font titleFont = new Font("Arial", Font.BOLD, 34);
+	        Font labelFont = new Font("Arial", Font.BOLD, 32);
+	        Font tickFont = new Font("Arial", Font.BOLD, 24);
+	        
 			DefaultCategoryDataset utiData = new DefaultCategoryDataset();
 			JFreeChart sumUtiChart = ChartFactory.createBarChart(
 		                "Total Utility Generated in Experiment: " + methodComp, // Chart title
-		                "Method", // Domain axis label
+		                "", // Domain axis label
 		                "Sum of Utility", // Range axis label
 		                utiData, // Dataset
 		                PlotOrientation.VERTICAL,
@@ -385,22 +387,29 @@ public class SpinWorldGUI {
 		                false, // Tooltips
 		                false // URLs
 	                );
-			
+
+			sumUtiChart.getTitle().setVisible(false);
+
 	        // Get a reference to the plot for further customisation...
 	        CategoryPlot utiPlot = sumUtiChart.getCategoryPlot();
 	        
 	        utiPlot.setBackgroundPaint(Color.WHITE);
 	        sumUtiChart.getLegend().setPosition(RectangleEdge.RIGHT);
+	        sumUtiChart.getLegend().setItemFont(tickFont);
 
 	        // Set the range axis to display integers only...
 	        utiPlot.getRangeAxis().setStandardTickUnits(NumberAxis.createIntegerTickUnits());
 	        utiPlot.getRangeAxis().setAutoRange(true);
+	        utiPlot.getDomainAxis().setLabelFont(labelFont);
+	        utiPlot.getDomainAxis().setTickLabelFont(tickFont);
+	        utiPlot.getRangeAxis().setLabelFont(labelFont);
+	        utiPlot.getRangeAxis().setTickLabelFont(tickFont);
 	        
 			DefaultCategoryDataset longevityData = new DefaultCategoryDataset();
 			JFreeChart longevityChart = ChartFactory.createBarChart(
 		                "Sustainability of Networks in Experiment: " + methodComp, // Chart title
-		                "Method", // Domain axis label
-		                "Avg. Longevity of Networks (% of Overall Simulation Time)", // Range axis label
+		                "", // Domain axis label
+		                "% of Overall Simulation Time", // Range axis label
 		                longevityData, // Dataset
 		                PlotOrientation.HORIZONTAL,
 		                false, // Include legend
@@ -408,6 +417,8 @@ public class SpinWorldGUI {
 		                false // URLs
 	                );
 			
+			longevityChart.getTitle().setVisible(false);
+						
 	        // Get a reference to the plot for further customisation...
 	        CategoryPlot longevityPlot = longevityChart.getCategoryPlot();
 	        
@@ -415,8 +426,11 @@ public class SpinWorldGUI {
 	        
 	        // Set the range axis to display integers only...
 	        longevityPlot.getRangeAxis().setStandardTickUnits(NumberAxis.createIntegerTickUnits());
-	        longevityPlot.getRangeAxis().setRange(0, 100);
-
+	        longevityPlot.getRangeAxis().setAutoRange(true);
+	        longevityPlot.getDomainAxis().setLabelFont(labelFont);
+	        longevityPlot.getDomainAxis().setTickLabelFont(tickFont);
+	        longevityPlot.getRangeAxis().setLabelFont(labelFont);
+	        longevityPlot.getRangeAxis().setTickLabelFont(tickFont);
 	        
 			DefaultXYDataset satTimeData = new DefaultXYDataset();
 			JFreeChart satTimeChart = ChartFactory.createXYLineChart("Avg. Agent Satisfaction in Experiment: " + methodComp,
@@ -427,16 +441,22 @@ public class SpinWorldGUI {
 			satTimeChart.getXYPlot().setWeight(3);
 			satTimeChart.getXYPlot().getRangeAxis().setAutoRange(true);
 			satTimeChart.getLegend().setPosition(RectangleEdge.RIGHT);
-
+	        
 			DefaultXYDataset pChTimeData = new DefaultXYDataset();
 			JFreeChart pChTimeChart = ChartFactory.createXYLineChart("Avg. Agent Propensity to Cheat in Experiment: " + methodComp, 
 					"PCheat", "Timestep", pChTimeData, PlotOrientation.HORIZONTAL, true, false, false);
 
+			pChTimeChart.getTitle().setVisible(false); 
 			pChTimeChart.getXYPlot().setBackgroundPaint(Color.WHITE);
-			pChTimeChart.getXYPlot().getDomainAxis().setRange(0.0, 1.0);
+			pChTimeChart.getXYPlot().getDomainAxis().setAutoRange(true);
 			pChTimeChart.getXYPlot().setWeight(3);
 			pChTimeChart.getXYPlot().getRangeAxis().setAutoRange(true);
+			pChTimeChart.getXYPlot().getDomainAxis().setLabelFont(labelFont);
+			pChTimeChart.getXYPlot().getDomainAxis().setTickLabelFont(tickFont);
+			pChTimeChart.getXYPlot().getRangeAxis().setLabelFont(labelFont);
+			pChTimeChart.getXYPlot().getRangeAxis().setTickLabelFont(tickFont);
 			pChTimeChart.getLegend().setPosition(RectangleEdge.RIGHT);
+			pChTimeChart.getLegend().setItemFont(tickFont);
 
 			DefaultXYDataset riskTimeData = new DefaultXYDataset();
 			JFreeChart riskTimeChart = ChartFactory.createXYLineChart("Avg. Agent Perceived Risk in Experiment: " + methodComp, 
@@ -457,9 +477,6 @@ public class SpinWorldGUI {
 			catchTimeChart.getXYPlot().setWeight(3);
 			catchTimeChart.getXYPlot().getRangeAxis().setAutoRange(true);
 			catchTimeChart.getLegend().setPosition(RectangleEdge.RIGHT);
-
-	        Font titleFont = new Font("Arial", Font.BOLD, 20);
-	        Font labelFont = new Font("Arial", Font.BOLD, 16);
 
 			DefaultCategoryDataset spiderWebData = new DefaultCategoryDataset();
 			RadarPlot radarPlot = new RadarPlot(spiderWebData);
@@ -652,84 +669,10 @@ public class SpinWorldGUI {
 				ChartUtils.saveChart(radarChart, imagePath, "COMPARISON/" + "SPIDER_WEB_" + this.methodComp);
 				ChartUtils.saveChart(bestRadarChart, imagePath, "COMPARISON/" + "BEST_WEB_" + this.methodComp);
 			}
-			
-			/*List<JFreeChart> charts = new ArrayList<JFreeChart>();
-			charts.add(allocChart);
-			charts.add(pCheatChart);
-			charts.add(utilityChart);
-			charts.add(utDistrChart);*/
 
 			logger.info("Done building charts for " + this.methodComp + " methods.");	
 		}
 	}
-	
-	/**
-	 * Take the map from {choiceMethod:{chartType:chart}} and build one chart for each chartType
-	 * Each chart has on it an avg line for each choiceMethod
-	 * 
-	 * @param methodCharts
-	 * @param endTime
-	 */
-	/* private void combineMethodCharts(List<Chart> methodCharts) {
-		logger.info("Combining data from method types...");
-		HashMap<String,XYDataset> outputData = new HashMap<String,XYDataset>();
-		for (Entry<OwnChoiceMethod, HashMap<String, Chart>> methodEntry : methodCharts.entrySet()) {
-			OwnChoiceMethod method = methodEntry.getKey();
-			HashMap<String,Chart> chartMap = methodEntry.getValue();
-			logger.debug("Getting data from method \"" + method + "\"...");
-			for (Entry<String,Chart> chartEntry : chartMap.entrySet()) {
-				String chartType = chartEntry.getKey();
-				Chart chart = chartEntry.getValue();
-				if (!outputData.containsKey(chartType)) {
-					outputData.put(chartType, new XYSeriesCollection());
-				}
-				// get avg series from chart to put into output dataset
-				XYPlot xyPlot = chart.getChart().getXYPlot();
-				XYSeries series = null;
-				// sanity check
-				if (xyPlot.getDatasetCount()!=1) {
-					try {
-						series = (XYSeries) ((XYSeriesCollection)xyPlot.getDataset(1)).getSeries(0).clone();
-					} catch (CloneNotSupportedException e) {
-						e.printStackTrace();
-					}
-				}
-				if (series!=null) {
-					logger.debug("Got data from method \"" + method + "\".");
-					series.setKey(method.toString());
-					((XYSeriesCollection)outputData.get(chartType)).addSeries(series);
-				}
-			}
-		}
-		logger.info("Got all method data. Drawing charts...");
-		LinkedHashSet<Chart> finalCharts = new LinkedHashSet<Chart>();
-		for (Entry<String,XYDataset> dataEntry : outputData.entrySet()) {
-			String chartType = dataEntry.getKey();
-			XYDataset dataset = dataEntry.getValue();
-			logger.debug("Drawing " + chartType);
-			logger.debug("Drawing comparison of " + chartType + " chart...");
-			Chart chart = new CombinedTimeSeriesChart(chartType, dataset, endTime);
-			finalCharts.add(chart);
-			if (chart!=null && outputComparisonCharts) {
-				ChartUtils.saveChart(chart.getChart(), imagePath, "_comparison", chartType);
-			}
-		}
-		
-		if (!headlessMode && outputComparisonCharts) {
-			Frame frame = new Frame("Comparison Results");
-			Panel panel = new Panel(new GridLayout(0,2));
-			frame.add(panel);
-			for (Chart chart : finalCharts) {
-				panel.add(chart.getPanel());
-			}
-			panel.add(globalLengthBAW.getPanel());
-			frame.pack();
-			frame.setVisible(true);
-			ChartUtils.savePanel(panel, imagePath, "_", "comparison"); // won't draw if not visible...
-		}
-		
-		logger.info("Done drawing comparison charts.");
-	} */
 	
 	private List<Long> getSimulationList() {
 		List<Long> result = null;
