@@ -1,10 +1,25 @@
 # SpinWorld #
-This project is a multi-agent implementation of a system of retributive justice that uses the agent-based Java simulator, Presage2, coupled with the integrated Drools rule engine. The testbed used for experimentation with this system was the LPG' game, which is a variant of the Linear Public Good game and is described in the following papers:
+
+This project is a multi-agent implementation of a system of retributive justice that uses the agent-based Java simulator, [Presage2](https://github.com/Presage/Presage2), coupled with the integrated [Drools](https://www.drools.org/) rule engine. Please cite the following work if you make use of this repository:
+
+```
+@inproceedings{Zolotas2016,
+author = {M. Zolotas and J. Pitt},
+title = {Self-Organising Error Detection and Correction in Open Multi-agent Systems},
+booktitle = {IEEE 1st International Workshops on Foundations and Applications of Self* Systems (FAS*W)},
+year = {2016},
+month = {Sept},
+pages = {180-185}
+}
+```
+
+The testbed used for experimentation with this system was the LPG' game, which is a variant of the Linear Public Good game, as described in the following works:
 
 * Jeremy Pitt, Julia Schaumeier, Didac Busquests and Sam Macbeth, "Self-Organising Common-Pool Resource Allocation and Canons of Distributive Justice" SASO 2012.
 * Jeremy Pitt and Julia Schaumeier, "Provision and Appropriation of Common-Pool Resources without Full Disclosure" PRIMA 2012.
 
 ## Usage ##
+
 In order to run this project, both [maven](http://maven.apache.org/) and a JDK must be installed.
 
 A complete and introductory guide for setting up projects in the Eclipse IDE to use with Presage2 is available at the following link:
@@ -23,6 +38,7 @@ Other sources of code that influenced development:
 * [Patches](https://github.com/mkrauskopf/jfreechart-patches) for radar/spider chart plotting in the GUI section of the project.
 
 ## Database Configuration ##
+
 All simulation data is stored into a PostgreSQL database (>= v9.1) and requires the hstore extension. A src/main/resources/db.properties file should be added to the project source directory and should include login details for database setup. See the [presage2-sqldb](https://github.com/Presage/presage2-sqldb) docs for full configuration options.
 
 ## Command Line Interface (CLI) usage ##
