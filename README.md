@@ -4,12 +4,11 @@ This project is a multi-agent implementation of a system of retributive justice 
 
 ```
 @inproceedings{Zolotas2016,
-author = {M. Zolotas and J. Pitt},
-title = {Self-Organising Error Detection and Correction in Open Multi-agent Systems},
-booktitle = {IEEE 1st International Workshops on Foundations and Applications of Self* Systems (FAS*W)},
-year = {2016},
-month = {Sept},
-pages = {180-185}
+  author = {M. Zolotas and J. Pitt},
+  title = {Self-Organising Error Detection and Correction in Open Multi-agent Systems},
+  booktitle = {IEEE 1st International Workshops on Foundations and Applications of Self* Systems (FAS*W)},
+  year = {2016},
+  pages = {180-185}
 }
 ```
 
